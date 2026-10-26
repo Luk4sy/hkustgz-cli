@@ -17,7 +17,7 @@ doctor、browser install 仍为 Task 9；19项业务查询能力全部 pending�
 ## 验证
 
 - 新增基础测试先因缺少实现失败；控制命令、清理超时、锁归属、空壳误认证、信号到达 page setup、网络错误及原始错误类别均有失败到通过的回归记录。
-- 完整验证：58项全部通过、0失败、0跳过，含10项真实Chrome集成测试；`HKUSTGZ_TEST_BROWSER=1 npm test`（含构建）及 `npm run typecheck`。浏览器测试使用真实 Chrome、本机 HTTP 和合成页面，不使用学校登录或真实业务数据。默认 `npm test` 跳过浏览器用例；启用变量才能覆盖该层。
+- 完整验证：60项全部通过、0失败、0跳过，含10项真实Chrome集成测试；`HKUSTGZ_TEST_BROWSER=1 npm test`（含构建）及 `npm run typecheck`。浏览器测试使用真实 Chrome、本机 HTTP 和合成页面，不使用学校登录或真实业务数据。默认 `npm test` 跳过浏览器用例；启用变量才能覆盖该层。
 - 实际编译后 CLI、已授权专用 profile：`auth status --all` 退出0；Portal/SIS/Canvas authenticated，Catalog/Booking/Library unknown。详见 [分服务冷启动记录](session-reuse.md)。
 
 ## 独立代码审阅
@@ -45,3 +45,9 @@ node bin/hkustgz-cli.mjs capabilities
 2. 允许有效SSO无人工输入恢复，发现人工认证就停止普通检查；未知状态不猜成功或过期。观察窗口过短可能返回 unknown，用户可显式重查或登录。
 3. 严格只允许记录的来源；未验证弹窗或新增上游身份域名会被阻止，可能需要补证后更新。不会为兼容自动放宽到通配域名。
 4. 仅 macOS 本人账号做真实验收；其他平台、第二名学生账号与业务适配器验收未完成。此模块不构成五系统稳定版或发布批准。
+
+## 用户审查修复：清理期间的中断
+
+用户发现处理器在关闭浏览器、释放锁之前移除，清理窗口内的 SIGINT/SIGTERM 可能触发默认进程退出并遗留锁。新增两项回归在修复前均失败（调用错误返回成功）；修复后处理器持续保留至关闭和释放锁结束，再返回对应中断130/143。close 只执行一次，即使信号在 close 内同步到达也不会重入。清理失败仍优先报告 CLEANUP_FAILED，并保留中断原因。
+
+本轮完整60项测试通过（含10项真实Chrome本地合成网页测试），构建、类型检查与差异检查通过。第二模块等待用户复审，未进入第三模块。

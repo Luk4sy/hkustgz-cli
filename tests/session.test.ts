@@ -54,3 +54,13 @@ test('failed cleanup retains the classified network cause without exposing raw d
   assert.equal((e as {code:string}).code,'CLEANUP_FAILED');assert.match((e as {remediation:string}).remediation,/NETWORK_REQUIRED/);assert.doesNotMatch(JSON.stringify(e),/private-/);return true;
  });
 });
+for(const [signal,code,exitCode] of [['SIGINT','INTERRUPTED',130],['SIGTERM','TERMINATED',143]] as const)test(`${signal} during cleanup waits for close, releases lock and preserves interruption`,async t=>{
+ let closed=0;let handlerPresent=false;
+ const {runner,paths,signals}=await setup(t,async()=>{
+  closed++;handlerPresent=signals.emit(signal);await Promise.resolve();
+ });
+ await assert.rejects(runner('sis',options(),async()=>42),{code});
+ assert.equal(handlerPresent,true);assert.equal(closed,1);assert.equal(signals.listenerCount(signal),0);
+ const {classifyError,CliFailure}=await import('../src/core/errors.js');assert.equal(classifyError(new CliFailure(code)).exitCode,exitCode);
+ const next=await acquireProfileLock(join(paths.profile,'chrome'));await next.release();
+});

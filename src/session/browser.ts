@@ -65,7 +65,7 @@ export function createSessionRunner(paths:DataPaths,dependencies:{launch?:Launch
   const cancellation=new Promise<never>((_,reject)=>{rejectCancellation=reject;});
   // A signal can arrive during browser launch; keep the rejection observed until the callback race exists.
   void cancellation.catch(()=>{});
-  const close=()=>closing??(closing=context?context.close():Promise.resolve());
+  const close=()=>closing??(closing=Promise.resolve().then(async()=>{if(context)await context.close();}));
   const cancel=(code:string)=>{if(cancelled)return;cancelled=new CliFailure(code);abort.abort();rejectCancellation(cancelled);if(context)void close().catch(()=>{});};
   const int=()=>cancel('INTERRUPTED');const term=()=>cancel('TERMINATED');
   signals.on('SIGINT',int);signals.on('SIGTERM',term);
@@ -95,14 +95,18 @@ export function createSessionRunner(paths:DataPaths,dependencies:{launch?:Launch
    throw primary;
   }
   finally{
-   clearTimeout(timer);signals.removeListener('SIGINT',int);signals.removeListener('SIGTERM',term);
+   clearTimeout(timer);
    let cleanupTimer:ReturnType<typeof setTimeout>|undefined;
    try{
     await Promise.race([close(),new Promise<never>((_,reject)=>{cleanupTimer=setTimeout(()=>reject(new CliFailure('CLEANUP_FAILED')),5000);})]);
     await lock.release();
    }
-   catch{throw new CliFailure('CLEANUP_FAILED',`Session cleanup failed; the profile may remain locked. Original result: ${failed?classifyError(primary).error.code:'success'}. Inspect the owned browser and lock manually.`);}
-   finally{if(cleanupTimer)clearTimeout(cleanupTimer);}
+   catch{throw new CliFailure('CLEANUP_FAILED',`Session cleanup failed; the profile may remain locked. Original result: ${cancelled?cancelled.code:failed?classifyError(primary).error.code:'success'}. Inspect the owned browser and lock manually.`);}
+   finally{
+    if(cleanupTimer)clearTimeout(cleanupTimer);
+    signals.removeListener('SIGINT',int);signals.removeListener('SIGTERM',term);
+   }
+   if(cancelled)throw cancelled;
   }
  };
 }

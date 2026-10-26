@@ -73,7 +73,7 @@
 
 ### Task 2：专用浏览器、认证状态与进程互斥
 
-**状态：实现完成，58项测试全部通过（含10项真实Chrome本地集成测试），构建及类型检查通过；实际编译后CLI验证Portal/SIS/Canvas会话恢复成功。等待用户审查，不进入Task 3。见 docs/acceptance/session-auth.md。**
+**状态：实现完成，用户审查修复完成，60项测试全部通过（含10项真实Chrome本地集成测试），构建及类型检查通过；实际编译后CLI验证Portal/SIS/Canvas会话恢复成功。等待用户复审，不进入Task 3。见 docs/acceptance/session-auth.md。**
 
 **Files:** Create `src/session/{paths,browser,lock,auth}.ts`、`tests/{paths,session,auth}.test.ts`。Modify `src/core/contracts.ts`（落实本节类型），`src/cli/main.ts`（注册控制命令）。
 
