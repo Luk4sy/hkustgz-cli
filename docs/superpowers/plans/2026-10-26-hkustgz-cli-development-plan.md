@@ -87,7 +87,7 @@
 
 ### Task 3：有界查询、分页、日期与脱敏
 
-**状态：实现完成，92项完整测试（含10项既有Chrome测试）、构建和类型检查通过；独立审阅两项Important已修复。等待用户审查，不进入Task 4。见docs/acceptance/query-core.md。**
+**状态：用户复审修复完成，95项完整测试（含10项既有Chrome测试）、构建和类型检查通过；独立审阅两项Important及用户复审三项中等问题均已修复。等待用户复审，不进入Task 4。见docs/acceptance/query-core.md。**
 
 **Files:** Create `src/core/{query,policy,sanitize}.ts`、`tests/{query,policy,sanitize}.test.ts`。Modify `src/core/contracts.ts`、`src/cli/{main,render}.ts`、`src/session/browser.ts`（传递结构化中断原因）；补 `tests/query-cli.test.ts`。
 

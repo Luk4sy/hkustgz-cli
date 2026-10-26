@@ -68,3 +68,12 @@ test('different actual host timezones produce the same school date range',async(
  assert.notEqual(hosts[0],hosts[1]);
  for(const window of windows)assert.deepEqual(window,{from:'2026-10-27',to:'2026-11-03',timezone:'Asia/Shanghai'});
 });
+test('late failed reads observe the same 30-second cutoff as successful reads and never retry',async()=>{
+ for(const elapsed of [30000,30001]){
+  const time=clock();let calls=0;const policy=createQueryPolicy(90000,time);
+  await assert.rejects(policy.run('https://late-failure.test',async()=>{
+   calls++;if(calls===1){time.advance(elapsed);throw new CliFailure('NETWORK_REQUIRED');}return 'unexpected retry';
+  },{readOnly:true}),{code:'QUERY_TIMEOUT'});
+  assert.equal(calls,1);
+ }
+});

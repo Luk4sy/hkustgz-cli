@@ -83,7 +83,9 @@ export class QueryPolicy {
     const raw=Promise.resolve().then(()=>read(controller.signal));
     raw.then(value=>{
      if(this.clock.now()>=until)stop(new CliFailure('QUERY_TIMEOUT'));else finish(true,value);
-    },error=>finish(false,error));
+    },error=>{
+     if(this.clock.now()>=until)stop(new CliFailure('QUERY_TIMEOUT'));else finish(false,error);
+    });
     // Retain origin ownership until the actual operation settles, even if it ignores abort.
     try{await raw;}catch{}
     queue.lastFinished=this.clock.now();

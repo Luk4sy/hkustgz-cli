@@ -41,3 +41,25 @@ test('path-relative nested redirects are cleaned without changing their relative
   assert.equal(result.exitCode,0);assert.doesNotMatch(result.stdout+result.stderr,/private-marker/);assert.match(decodeURIComponent(result.stdout),/course=IPEN/);
  }
 });
+test('relative href and other link fields cannot leak tickets in either CLI format',async()=>{
+ const links={href:'/callback?ticket=private-marker&course=IPEN',src:'../callback?access_token=private-marker&course=IPEN',link:'callback?ticket=private-marker&course=IPEN',location:'#/callback?token=private-marker&course=IPEN',other:'/callback?ticket=private-marker&course=IPEN',otherPath:'/callback/token=private-marker'};
+ assert.doesNotMatch(JSON.stringify(sanitizeValue(links)),/private-marker/);
+ for(const format of ['json','table']){
+  const result=await executeCommand(['catalog','search','Synthetic','--format',format],{capabilities:[{id:'catalog.search',service:'catalog',state:'verified',reason:null,evidenceId:'synthetic-only'}],handlers:{'catalog.search':async()=>({ok:true,data:{items:[{code:'IPEN1000',state:'open',...links}]},meta:queryMeta()})}});
+  assert.equal(result.exitCode,0);assert.doesNotMatch(result.stdout+result.stderr,/private-marker/);assert.match(result.stdout,/course=IPEN/);assert.match(result.stdout,/IPEN1000/);
+ }
+ assert.equal(links.href,'/callback?ticket=private-marker&course=IPEN');
+ assert.deepEqual(sanitizeValue({location:'Room #class A'}),{location:'Room #class A'});
+});
+test('prefixed diagnostics recursively sanitize multiply serialized payloads',async()=>{
+ for(const levels of [1,2,3]){
+  let payload=JSON.stringify({access_token:'private-marker',courseCode:'IPEN1000',state:'open'});
+  for(let n=1;n<levels;n++)payload=JSON.stringify(payload);
+  const message='response: '+JSON.stringify({payload,href:'/callback?ticket=private-marker&course=IPEN'})+'; complete';
+  for(const format of ['json','table']){
+   const result=await executeCommand(['catalog','search','Synthetic','--format',format],{capabilities:[{id:'catalog.search',service:'catalog',state:'verified',reason:null,evidenceId:'synthetic-only'}],handlers:{'catalog.search':async()=>({ok:true,data:{items:[{code:'IPEN1000',state:'open',message}]},meta:queryMeta()})}});
+   assert.equal(result.exitCode,0);assert.doesNotMatch(result.stdout+result.stderr,/private-marker/);assert.match(result.stdout,/response:/);assert.match(result.stdout,/complete/);assert.match(result.stdout,/IPEN1000/);
+  }
+ }
+ const plain='response: { "courseCode": "IPEN1000", "state": "open" }; complete';assert.equal(sanitizeValue(plain),plain);
+});
