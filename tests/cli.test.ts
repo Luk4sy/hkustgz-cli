@@ -27,8 +27,7 @@ test('unknown options and missing or invalid parameters exit 2', async () => {
     ['catalog', 'search', 'AI', '--limit', '1.5'], ['catalog', 'search', 'AI', '--limit', '2x'],
     ['canvas', 'assignments'], ['booking', 'rooms', '--provider', 'https://evil.example'],
     ['sis', 'today', '--refresh'], ['auth', 'login', 'anything'], ['auth', 'status'],
-    ['auth', 'status', 'sis', '--all'], ['portal', 'apps', '--format', 'xml'], ['unknown'],
-    ['sis', 'today', '--format', 'table', '--limit', '2'] ]) {
+    ['auth', 'status', 'sis', '--all'], ['portal', 'apps', '--format', 'xml'], ['unknown'] ]) {
     const result = await executeCommand(args, { sessionRunner: noSession });
     assert.equal(result.exitCode, 2, args.join(' '));
     assert.equal(JSON.parse(result.stdout).error.code, 'INVALID_ARGUMENT');
@@ -139,4 +138,20 @@ test('verified table results use the same payload and metadata as JSON', async (
   assert.equal(result.exitCode, 0);
   assert.match(result.stdout, /TEST1000\tSynthetic course/);
   assert.match(result.stdout, /Coverage: complete/);
+});
+
+test('parse errors honor an already valid table format', async () => {
+  for (const args of [['--format', 'table', 'catalog', 'search'], ['catalog', 'search', 'AI', '--format', 'table', '--limit', '0'], ['sis', 'today', '--format', 'table', '--limit', '2']]) {
+    const result = await executeCommand(args);
+    assert.equal(result.exitCode, 2);
+    assert.match(result.stdout, /^INVALID_ARGUMENT:/);
+  }
+});
+
+test('invalid limits identify the command and give safe actionable guidance', async () => {
+  const result = await executeCommand(['catalog', 'search', 'AI', '--limit', 'private-marker']);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.meta.command, 'catalog search');
+  assert.match(payload.error.remediation, /--limit.*1.*2000/);
+  assert.doesNotMatch(result.stdout + result.stderr, /private-marker/);
 });

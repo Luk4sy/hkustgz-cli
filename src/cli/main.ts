@@ -18,7 +18,7 @@ const identifier = (value: string): string => {
   return text;
 };
 const limit = (value: string): number => {
-  if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 2000) throw new InvalidArgumentError('Limit must be an integer from 1 to 2000.');
+  if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 2000) throw new CliFailure('INVALID_ARGUMENT', 'Use --limit with an integer from 1 to 2000.');
   return Number(value);
 };
 function validateArguments(definition: CommandDefinition, args: Record<string, unknown>): void {
@@ -40,17 +40,29 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
     .addOption(new Option('--format <format>', 'Output format').choices(['json', 'table']).default('json'))
     .configureOutput({writeOut: (text) => {stdout += text;}, writeErr: () => {}});
   const groups = new Map<string, Command>();
+  const identities = new Map<Command, string>();
+  let activeCommand = program;
+  const trackCommand = (_parent: Command, child: Command): void => {
+    activeCommand = child;
+    commandName = identities.get(child) ?? 'hkustgz-cli';
+  };
+  program.hook('preSubcommand', trackCommand);
   try {
     for (const definition of COMMANDS) {
       const parts = definition.path.split(' ');
       let parent = program;
       if (parts.length === 2) {
         const group = parts[0]!;
-        if (!groups.has(group)) {const child = program.command(group).description(`${group} commands`); child.action(() => {child.help();}); groups.set(group, child);}
+        if (!groups.has(group)) {
+          const child = program.command(group).description(`${group} commands`);
+          child.hook('preSubcommand', trackCommand).action(() => {child.help();});
+          groups.set(group, child); identities.set(child, group);
+        }
         parent = groups.get(group)!;
       }
       const command = parent.command(parts.at(-1)!).description(definition.description)
         .addOption(new Option('--format <format>', 'Output format').choices(['json', 'table']));
+      identities.set(command, definition.path);
       for (const argument of definition.args ?? []) {
         const arg = new Argument(argument.syntax);
         if (argument.kind === 'service') arg.choices(ServiceSchema.options);
@@ -96,7 +108,11 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
     await program.parseAsync(argv, {from: 'user'});
   } catch (cause) {
     if (cause instanceof CommanderError && cause.exitCode === 0) return {exitCode: 0, stdout, stderr};
-    const {error, exitCode: failedCode} = classifyError(cause instanceof CommanderError ? new CliFailure('INVALID_ARGUMENT') : cause);
+    const parsedFormat: unknown = activeCommand.optsWithGlobals().format;
+    if (parsedFormat === 'json' || parsedFormat === 'table') outputFormat = parsedFormat;
+    const {error, exitCode: failedCode} = classifyError(cause instanceof CommanderError
+      ? new CliFailure('INVALID_ARGUMENT', `Run hkustgz-cli ${commandName === 'hkustgz-cli' ? '' : `${commandName} `}--help to check arguments and required options.`)
+      : cause);
     exitCode = failedCode;
     const failure: Failure = {ok: false, error, meta: {schemaVersion: '1', command: commandName}};
     stdout = renderOutput(failure, outputFormat);

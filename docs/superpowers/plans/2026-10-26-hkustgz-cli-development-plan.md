@@ -57,15 +57,17 @@
 
 ### Task 1：可安装入口、统一结果与能力表
 
+**状态：实现完成，24项测试及类型检查通过；等待用户审查。**
+
 **Files:** Create `package.json`、`package-lock.json`、`tsconfig.json`、`tsconfig.build.json`、`.gitignore`、`bin/hkustgz-cli.mjs`、`src/cli/{main,render}.ts`、`src/core/{contracts,errors,capabilities}.ts`、`tests/{contracts,cli,capabilities}.test.ts`。
 
 **Interfaces:** Consumes：Spec §4 的全部公开结构与 Task 0 evidence index。Produces：`executeCommand`、`classifyError`；`CliDependencies` 含 `now:()=>number`、`capabilities:Capability[]`、`sessionRunner:SessionRunner`、`handlers:Record<string,CommandHandler>`；`CommandHandler=(args:Readonly<Record<string,unknown>>, deps:CliDependencies)=>Promise<QueryResult<unknown>|ControlResult<unknown>>`；`ControlResult<T>={ok:true,data:T,meta:{schemaVersion:'1',command:string}}`。失败统一由 CLI 捕获为 Failure。SessionRunner 接口在本任务定义，Task 2 实现。
 
-- [ ] Step 1：建立本任务测试运行必需的最小 package/TS 配置，锁定工具链；确认现有上位设计、Spec、计划位于本仓库 docs，并纳入后续版本管理。`build` 采用 tsc，bin 导入 `dist/cli/main.js`；测试使用 `node --import tsx --test <test-file>`。
-- [ ] Step 2：写失败测试 `help_does_not_open_browser`、`unknown_option_exits_2`、`pending_capability_exits_8`、`one_json_document_on_stdout`。示例断言：`assert.equal(result.exitCode, 8); assert.equal(JSON.parse(result.stdout).error.code, 'CAPABILITY_PENDING'); assert.equal(openCount, 0)`。
-- [ ] Step 3：运行 `node --import tsx --test tests/contracts.test.ts tests/cli.test.ts tests/capabilities.test.ts`，确认因为尚无 executeCommand/能力检查而失败；不是依赖或语法错误。
-- [ ] Step 4：实现上述接口、所有拟定命令的帮助与参数 schema；仅注册 verified handler。控制命令可用，pending/unsupported 不启动浏览器；JSON/table 使用同一数据模型，日志不混入 stdout。实现 Spec 的退出码映射，strip 临时 sourceUrl 参数。
-- [ ] Step 5：运行同一测试命令及 `npm run build`，全部通过后提交 `feat: establish cli contracts and capability registry`；帮助/版本在编译后 bin 上复验。
+- [x] Step 1：建立本任务测试运行必需的最小 package/TS 配置，锁定工具链；确认现有上位设计、Spec、计划位于本仓库 docs，并纳入后续版本管理。`build` 采用 tsc，bin 导入 `dist/cli/main.js`；测试使用 `node --import tsx --test <test-file>`。
+- [x] Step 2：写失败测试 `help_does_not_open_browser`、`unknown_option_exits_2`、`pending_capability_exits_8`、`one_json_document_on_stdout`。示例断言：`assert.equal(result.exitCode, 8); assert.equal(JSON.parse(result.stdout).error.code, 'CAPABILITY_PENDING'); assert.equal(openCount, 0)`。
+- [x] Step 3：运行 `node --import tsx --test tests/contracts.test.ts tests/cli.test.ts tests/capabilities.test.ts`，确认因为尚无 executeCommand/能力检查而失败；不是依赖或语法错误。
+- [x] Step 4：实现上述接口、所有拟定命令的帮助与参数 schema；仅注册 verified handler。控制命令可用，pending/unsupported 不启动浏览器；JSON/table 使用同一数据模型，日志不混入 stdout。实现 Spec 的退出码映射，strip 临时 sourceUrl 参数。
+- [x] Step 5：运行同一测试命令及 `npm run build`，全部通过后提交 `feat: establish cli contracts and capability registry`；帮助/版本在编译后 bin 上复验。
 
 ### Task 2：专用浏览器、认证状态与进程互斥
 

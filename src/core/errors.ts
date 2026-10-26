@@ -1,6 +1,6 @@
 import type { CliError } from './contracts.js';
 export class CliFailure extends Error {
-  constructor(public readonly code: string) { super(code); }
+  constructor(public readonly code: string, public readonly remediation?: string) { super(code); }
 }
 const errors: Record<string, {exitCode: number; message: string; remediation: string; retryable?: boolean}> = {
   INVALID_ARGUMENT: {exitCode: 2, message: 'Invalid command or arguments.', remediation: 'Run hkustgz-cli <command> --help.'},
@@ -19,5 +19,7 @@ const errors: Record<string, {exitCode: number; message: string; remediation: st
 export function classifyError(error: unknown): {error: CliError; exitCode: number} {
   const code = error instanceof CliFailure && Object.hasOwn(errors, error.code) ? error.code : 'INTERNAL_ERROR';
   const descriptor = errors[code]!;
-  return {exitCode: descriptor.exitCode, error: {code, message: descriptor.message, remediation: descriptor.remediation, retryable: descriptor.retryable ?? false}};
+  return {exitCode: descriptor.exitCode, error: {code, message: descriptor.message,
+    remediation: error instanceof CliFailure ? error.remediation ?? descriptor.remediation : descriptor.remediation,
+    retryable: descriptor.retryable ?? false}};
 }
