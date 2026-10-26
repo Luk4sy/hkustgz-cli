@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "1",
+  "observedAt": "2026-10-26",
+  "status": "in_progress",
+  "note": "Research observations only; no adapter or per-service cold-start acceptance. Runtime capabilities remain pending.",
+  "entries": [
+    {
+      "capabilityId": "portal.apps",
+      "service": "portal",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/portal.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "portal.notices",
+      "service": "portal",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/portal.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "portal.notice",
+      "service": "portal",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/portal.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "portal.agenda",
+      "service": "portal",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/portal.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "sis.terms",
+      "service": "sis",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/sis.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "sis.timetable",
+      "service": "sis",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/sis.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "sis.today",
+      "service": "sis",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/sis.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "sis.history",
+      "service": "sis",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/sis.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "sis.grades",
+      "service": "sis",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/sis.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "catalog.search",
+      "service": "catalog",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/catalog.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "catalog.course",
+      "service": "catalog",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/catalog.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "canvas.courses",
+      "service": "canvas",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/canvas.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "canvas.announcements",
+      "service": "canvas",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/canvas.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "canvas.assignments",
+      "service": "canvas",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/canvas.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "canvas.agenda",
+      "service": "canvas",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/canvas.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "booking.providers",
+      "service": "booking",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/booking-library.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "booking.library.rooms",
+      "service": "booking-library",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/booking-library.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "booking.library.availability",
+      "service": "booking-library",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/booking-library.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    },
+    {
+      "capabilityId": "booking.library.mine",
+      "service": "booking-library",
+      "state": "pending",
+      "evidenceId": null,
+      "readMethod": null,
+      "documentPath": "docs/research/booking-library.md",
+      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+    }
+  ]
+}

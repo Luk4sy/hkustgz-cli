@@ -2,7 +2,7 @@
 
 面向香港科技大学（广州）学生的本地校园服务 CLI，非学校官方产品。
 
-## 当前进度：基础 CLI，待用户审查
+## 当前进度：基础 CLI 已验收，正在补齐真实读取与会话证据
 
 版本 `0.1.0-alpha.1`。已实现命令解析、所有规划命令的帮助、JSON/table 输出、错误与退出码、能力状态检查。19 项学校业务能力均为 `pending`，不会访问学校或打开浏览器。登录、doctor、浏览器管理仅有命令帮助，实际调用返回 `CAPABILITY_PENDING`。
 
@@ -36,5 +36,7 @@ node bin/hkustgz-cli.mjs catalog search AI
 - [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md)
 - [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md)
 - [本模块审查与验收](docs/acceptance/cli-foundation.md)
+- [读取证据索引](docs/research/evidence-index.json)
+- [专用会话实验（尚未通过）](docs/acceptance/session-reuse.md)
 
 后续开发继续在本目录进行；每完成一个模块，等待用户审查后再推进。

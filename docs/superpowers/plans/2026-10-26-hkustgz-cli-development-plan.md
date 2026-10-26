@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。当前执行范围为 Task 1 基础 CLI；Task 0、2–9 未完成，登录实验和发布不因基础模块开发而自动执行。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；当前执行 Task 0。用户已同意并配合专用 profile 登录实验；Task 2–9 尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -45,6 +45,8 @@
 
 ### Task 0：五模块读取证据与专用会话实验
 
+**状态：进行中。已建立五系统研究记录与19项 pending 证据索引；已做专用 profile 实验，但各服务本人数据冷启动尚未通过，见 docs/acceptance/session-reuse.md。不得据此启动未验证的认证或真实适配器路线。**
+
 **Files:** Create `docs/research/{portal,sis,catalog,canvas,booking-library}.md`、`docs/research/evidence-index.json`、`docs/acceptance/session-reuse.md`。
 
 **Interfaces:** Consumes：技术方案 E1–E6、开发 Spec §8。Produces：每能力的 evidenceId、确认的读取路线、源字段映射、已核实域名/重定向链、分页结束/空数据/认证判据；`evidence-index.json` 条目包含 capabilityId/service/state/evidenceId/readMethod/documentPath；没有证据的 state=pending。
@@ -57,7 +59,7 @@
 
 ### Task 1：可安装入口、统一结果与能力表
 
-**状态：实现及首轮审查修复完成，27项测试及类型检查通过；等待用户复审。**
+**状态：3681ae2 已获用户复审通过并验收；27项测试、构建和类型检查通过。用户已授权继续下一阶段。**
 
 **Files:** Create `package.json`、`package-lock.json`、`tsconfig.json`、`tsconfig.build.json`、`.gitignore`、`bin/hkustgz-cli.mjs`、`src/cli/{main,render}.ts`、`src/core/{contracts,errors,capabilities}.ts`、`tests/{contracts,cli,capabilities}.test.ts`。
 

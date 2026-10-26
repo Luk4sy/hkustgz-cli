@@ -314,4 +314,4 @@ R0/R1 失败不能通过关闭 TLS 校验、导入个人 Chrome Cookie、硬编�
 
 ### 当前没有做的事
 
-项目目录和文档已归集，开发 Spec 与分阶段计划已创建；Git 仓库、产品依赖和基础 CLI 已建立，Task 1 等待用户审查。尚未捕获学校接口、验证新 profile 或发布 npm 包。后续以开发 Spec 和实施计划为工作依据，具体执行状态记录在计划中。
+项目目录和文档已归集，开发 Spec 与分阶段计划已创建；Git 仓库、产品依赖和基础 CLI 已建立，Task 1 已验收。Task 0 已观察部分真实页面请求并进行专用 profile 实验，冷启动本人数据读取尚未通过；详见 docs/research 和 docs/acceptance/session-reuse.md。尚未发布 npm 包。后续以开发 Spec 和实施计划为工作依据，具体执行状态记录在计划中。
