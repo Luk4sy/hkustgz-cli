@@ -1,7 +1,7 @@
 # hkustgz-cli 开发 Spec v0.1
 
 日期：2026-10-26（Asia/Shanghai）  
-状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；其余业务取证仍进行中，发布未获授权。
+状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3 查询基础层实现待审查；其余业务取证仍进行中，发布未获授权。
 上位设计：[技术方案](2026-10-26-hkustgz-cli-design.md)  
 执行配套：[分阶段开发计划](../plans/2026-10-26-hkustgz-cli-development-plan.md)
 
@@ -69,7 +69,7 @@ skills/hkustgz-cli/SKILL.md     可选调用指南
 
 ## 4. 核心接口契约
 
-以下是内部边界，不是已实现 API；后续模块计划应直接引用这些签名。
+以下为内部边界与契约，不是学校业务 API；实现状态以计划及模块验收为准。后续模块计划直接引用这些签名。
 
 ```ts
 type ServiceId = 'portal' | 'sis' | 'catalog' | 'canvas' | 'booking' | 'booking-library';
@@ -89,6 +89,17 @@ interface QueryOptions {
   limit?: number;
   refresh: boolean;
   deadlineMs: number; // 同一次查询共用的绝对截止时间
+  signal?: AbortSignal;
+}
+interface PageBatch<T> { items:T[]; next:string|null; exhausted:boolean; emptyConfirmed:boolean }
+interface PageSource<T> {
+  readPage:(cursor:string|null,signal:AbortSignal)=>Promise<PageBatch<T>>;
+  origin?:string; // 只用于已验证服务的调度分组，不是请求目标
+  readOnly?:boolean; // 显式确认后才允许自动重试
+}
+interface Collected<T> {
+  items:T[]; pagesRead:number; recordsRead:number; coverage:Coverage;
+  truncationReason:QueryMeta['truncationReason']; failure?:CliError;
 }
 interface DateRange { from: string; to: string; timezone: 'Asia/Shanghai' }
 interface QueryMeta {
@@ -127,9 +138,9 @@ interface AuthReport {
 - `resolveDataPaths(env: NodeJS.ProcessEnv): DataPaths`，位于 paths.ts。
 - `withSession<T>(service:ServiceId, options:SessionOptions, run:(session:Session)=>Promise<T>):Promise<T>`，位于 browser.ts；回调结束或抛错均负责关闭本工具上下文，清理失败必须显式报告。
 - `checkAuth(service:ServiceId, session:Session):Promise<AuthReport>`，位于 auth.ts。
-- `collectPages<T>(source:PageSource<T>, options:QueryOptions):Promise<Collected<T>>`，位于 query.ts；必须用上游确定的结束信号完成，不以固定等待后“没看到更多”当作结束。
+- `collectPages<T>(source:PageSource<T>, options:QueryOptions, policy?:QueryPolicy):Promise<Collected<T>>`，位于 query.ts；必须用上游确定的结束信号完成，不以固定等待后“没看到更多”当作结束。
 
-`CliDependencies`、`DataPaths`、`SessionOptions`、`Session`、`PageSource`、`Collected` 的精确定义见配套计划 Task 1/2；不得在不同模块重新定义同名契约。
+`CliDependencies`、`DataPaths`、`SessionOptions`、`Session`、`PageSource`、`Collected` 的精确定义见配套计划 Task 1/2/3；不得在不同模块重新定义同名契约。
 
 ## 5. 全局运行规则
 
@@ -147,6 +158,10 @@ interface AuthReport {
 | G-10 | 不跨来源模糊去重日程；保留来源/ID，最多标重复候选 |
 | G-11 | 私有查询不跨命令落盘缓存；公开 Catalog 可缓存 5 分钟，未证明公开前禁用缓存 |
 | G-12 | 不保存凭据参数、原始抓包、个人页面或其他人的预约主题；不默认遥测 |
+
+Task 3 落实：CLI对相关命令应用学校日期默认和校验，并给未来查询handler传递单个90秒绝对deadline。查询软截止最多提前250ms（短预算10%），为可信部分结果交接预留时间；每次读操作仍不超过30秒。同来源读取结束至下一次开始至少500ms；只读重试最多一次，Retry-After约束该逻辑请求的重试。底层读取忽略取消时不提前释放来源队列，避免重叠。
+
+收集与返回至多2000条；最终上游页过大时recordsRead披露实际收到数量，返回数仍受限，未来适配器应限制页尺寸。准确耗尽且未省略数据时，恰达边界可complete。`buildQueryResult`统一包装部分结果/退出7及原因；中断仍保持130/143。`sanitizeSourceUrl`和`sanitizeValue`用于统一输出，针对识别到的认证字段、URL临时参数及诊断文本，不变异输入业务对象。具体测试与裁定见docs/acceptance/query-core.md。
 
 全局参数 `--format json|table`、`--headed`、`--refresh`、`--limit <positive-int>` 应由命令 schema 声明适用范围。不支持的参数直接退出 2，不能静默忽略；限定 --limit<=2000，不提供解除读取上限的隐藏选项。
 

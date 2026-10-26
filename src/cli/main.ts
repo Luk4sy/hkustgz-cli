@@ -6,6 +6,7 @@ import {DEFAULT_CAPABILITIES, requireCapability} from '../core/capabilities.js';
 import {classifyError, CliFailure} from '../core/errors.js';
 import {COMMANDS, type CommandDefinition} from './commands.js';
 import {renderOutput, type Output} from './render.js';
+import {resolveDateRange} from '../core/policy.js';
 
 const {version} = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as {version: string};
 const nonEmpty = (value: string): string => {
@@ -92,6 +93,14 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
           if (value !== undefined) args[argument.key] = value;
         }
         validateArguments(definition, args);
+        if(definition.capabilityId){
+          const now=deps.now();args.deadlineMs=now+90000;
+          if(['portal agenda','canvas agenda','booking mine'].includes(definition.path)){
+            const range=resolveDateRange({...typeof args.from==='string'?{from:args.from}:{},...typeof args.to==='string'?{to:args.to}:{}},now);
+            args.from=range.from;args.to=range.to;
+          }
+          if(['sis today','booking availability'].includes(definition.path))args.date=resolveDateRange(typeof args.date==='string'?{from:args.date}:{},now).from;
+        }
         if (definition.path === 'capabilities') {
           const items = deps.capabilities.map((item) => {const result = CapabilitySchema.safeParse(item); if (!result.success) throw new CliFailure('ADAPTER_CHANGED'); return result.data;});
           stdout += renderOutput({ok: true, data: {items}, meta: {schemaVersion: '1', command: commandName}}, args.format as 'json' | 'table');

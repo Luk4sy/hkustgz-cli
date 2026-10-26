@@ -6,7 +6,19 @@ export type ReadMethod = 'api' | 'response' | 'dom';
 export type Coverage = 'complete' | 'partial';
 export type CapabilityState = 'pending' | 'verified' | 'unsupported' | 'disabled';
 export interface Capability { id: string; service: ServiceId; state: CapabilityState; reason: string | null; evidenceId: string | null }
-export interface QueryOptions { limit?: number; refresh: boolean; deadlineMs: number }
+export interface QueryOptions { limit?: number; refresh: boolean; deadlineMs: number; signal?: AbortSignal }
+export interface PageBatch<T> { items:T[]; next:string|null; exhausted:boolean; emptyConfirmed:boolean }
+export interface PageSource<T> {
+  readPage:(cursor:string|null,signal:AbortSignal)=>Promise<PageBatch<T>>;
+  /** Confirmed read-only operation; only this opt-in permits automatic retries. */
+  readOnly?:boolean;
+  /** Normalized service origin used for shared scheduling; never a request target. */
+  origin?:string;
+}
+export interface Collected<T> {
+  items:T[]; pagesRead:number; recordsRead:number; coverage:Coverage;
+  truncationReason:QueryMeta['truncationReason']; failure?:CliError;
+}
 export interface DateRange { from: string; to: string; timezone: 'Asia/Shanghai' }
 export interface CliError { code: string; message: string; retryable: boolean; remediation: string }
 export interface QueryMeta {

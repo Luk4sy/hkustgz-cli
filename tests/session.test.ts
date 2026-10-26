@@ -27,8 +27,9 @@ test('deadline closes context, aborts callback signal, and releases lock',async 
  assert.equal(closed,1);assert.equal(aborted,true);const lock=await acquireProfileLock(join(paths.profile,'chrome'));await lock.release();
 });
 for(const [signal,code] of [['SIGINT','INTERRUPTED'],['SIGTERM','TERMINATED']])test(`${signal} cleans up and removes listeners`,async t=>{
- let closed=0;const {runner,paths,signals}=await setup(t,async()=>{closed++;});
- await assert.rejects(runner('sis',options(),async()=>{signals.emit(signal!);return new Promise(()=>{});}),{code:code!});
+ let closed=0;let reason:unknown;const {runner,paths,signals}=await setup(t,async()=>{closed++;});
+ await assert.rejects(runner('sis',options(),async session=>{signals.emit(signal!);reason=session.signal?.reason;return new Promise(()=>{});}),{code:code!});
+ assert.equal((reason as {code?:string})?.code,code);
  assert.equal(closed,1);assert.equal(signals.listenerCount(signal!),0);const lock=await acquireProfileLock(join(paths.profile,'chrome'));await lock.release();
 });
 test('failed browser cleanup is reported with original failure and lock retained',async t=>{

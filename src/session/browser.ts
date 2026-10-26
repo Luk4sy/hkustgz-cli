@@ -66,7 +66,7 @@ export function createSessionRunner(paths:DataPaths,dependencies:{launch?:Launch
   // A signal can arrive during browser launch; keep the rejection observed until the callback race exists.
   void cancellation.catch(()=>{});
   const close=()=>closing??(closing=Promise.resolve().then(async()=>{if(context)await context.close();}));
-  const cancel=(code:string)=>{if(cancelled)return;cancelled=new CliFailure(code);abort.abort();rejectCancellation(cancelled);if(context)void close().catch(()=>{});};
+  const cancel=(code:string)=>{if(cancelled)return;cancelled=new CliFailure(code);abort.abort(cancelled);rejectCancellation(cancelled);if(context)void close().catch(()=>{});};
   const int=()=>cancel('INTERRUPTED');const term=()=>cancel('TERMINATED');
   signals.on('SIGINT',int);signals.on('SIGTERM',term);
   const timer=setTimeout(()=>cancel('QUERY_TIMEOUT'),Math.max(1,options.deadlineMs-Date.now()));

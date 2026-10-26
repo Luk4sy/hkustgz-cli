@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2 已实现待审查，Task 3–9 尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3 已实现待审查，Task 4–9 尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -45,7 +45,7 @@
 
 ### Task 0：五模块读取证据与专用会话实验
 
-**状态：进行中。已建立五系统研究记录与19项 pending 证据索引；已做专用 profile 实验，但各服务本人数据冷启动尚未通过，见 docs/acceptance/session-reuse.md。不得据此启动未验证的认证或真实适配器路线。**
+**状态：进行中。已建立五系统研究记录与19项 pending 证据索引；专用profile的Portal/SIS/Canvas认证子集已有实际CLI验证；业务读取完整性及Booking/Library认证仍待补证，见docs/acceptance/session-reuse.md。未通过证据门槛的真实适配器不得启用。**
 
 **Files:** Create `docs/research/{portal,sis,catalog,canvas,booking-library}.md`、`docs/research/evidence-index.json`、`docs/acceptance/session-reuse.md`。
 
@@ -73,7 +73,7 @@
 
 ### Task 2：专用浏览器、认证状态与进程互斥
 
-**状态：实现完成，用户审查修复完成，60项测试全部通过（含10项真实Chrome本地集成测试），构建及类型检查通过；实际编译后CLI验证Portal/SIS/Canvas会话恢复成功。等待用户复审，不进入Task 3。见 docs/acceptance/session-auth.md。**
+**状态：实现完成，用户审查修复完成，60项测试全部通过（含10项真实Chrome本地集成测试），构建及类型检查通过；实际编译后CLI验证Portal/SIS/Canvas会话恢复成功。c3bafa6已获用户复审通过并验收。见 docs/acceptance/session-auth.md。**
 
 **Files:** Create `src/session/{paths,browser,lock,auth}.ts`、`tests/{paths,session,auth}.test.ts`。Modify `src/core/contracts.ts`（落实本节类型），`src/cli/main.ts`（注册控制命令）。
 
@@ -87,15 +87,17 @@
 
 ### Task 3：有界查询、分页、日期与脱敏
 
-**Files:** Create `src/core/{query,policy,sanitize}.ts`、`tests/{query,policy,sanitize}.test.ts`。Modify `src/core/contracts.ts`。
+**状态：实现完成，92项完整测试（含10项既有Chrome测试）、构建和类型检查通过；独立审阅两项Important已修复。等待用户审查，不进入Task 4。见docs/acceptance/query-core.md。**
 
-**Interfaces:** `PageBatch<T>={items:T[];next:string|null;exhausted:boolean;emptyConfirmed:boolean}`；`PageSource<T>={readPage:(cursor:string|null,signal:AbortSignal)=>Promise<PageBatch<T>>}`；`Collected<T>={items:T[];pagesRead:number;recordsRead:number;coverage:Coverage;truncationReason:QueryMeta['truncationReason']}`；`collectPages` 使用 Spec 签名；`resolveDateRange(input:{from?:string;to?:string},nowMs:number):DateRange`；`sanitizeSourceUrl(value:string):string`。部分结果由 query 层包装成 PARTIAL_RESULT，解析器不私自更改 coverage。
+**Files:** Create `src/core/{query,policy,sanitize}.ts`、`tests/{query,policy,sanitize}.test.ts`。Modify `src/core/contracts.ts`、`src/cli/{main,render}.ts`、`src/session/browser.ts`（传递结构化中断原因）；补 `tests/query-cli.test.ts`。
 
-- [ ] Step 1：写 `page_21_is_not_requested`、`record_2001_is_not_returned`、`limit_is_partial`、`unconfirmed_empty_is_not_success`、`page_failure_preserves_prior_rows`。例如 limit=1、来源有 2 条时断言 `coverage==='partial'` 且 `truncationReason==='limit'`。
-- [ ] Step 2：运行 `node --import tsx --test tests/query.test.ts tests/policy.test.ts tests/sanitize.test.ts` 确认失败。
-- [ ] Step 3：实现总预算、每次 30 秒上限、20页/2000条、最小500ms串行请求间隔、瞬时失败最多重试一次；401/403不重试，429的等待不能越过总预算。先取得的可信数据在后续失败时保留，无可信数据则返回原结构化错误。
-- [ ] Step 4：补日期测试：学校午夜与主机时区不同、2026-02-30 非法、31天允许/32天拒绝、from>=to拒绝。补脱敏测试：`code`/`ticket`/`tt`/`access_token` 等已识别临时参数移除，普通课程和日期参数保留；模拟 fixture 的凭据标记不能进入 stdout/stderr。
-- [ ] Step 5：运行同一测试及 build，通过后提交 `feat: bound queries and preserve coverage semantics`。不要为失败响应编造下一页游标。
+**Interfaces:** `PageBatch<T>={items:T[];next:string|null;exhausted:boolean;emptyConfirmed:boolean}`；`PageSource<T>={readPage:(cursor:string|null,signal:AbortSignal)=>Promise<PageBatch<T>>;origin?:string;readOnly?:boolean}`；`Collected<T>={items:T[];pagesRead:number;recordsRead:number;coverage:Coverage;truncationReason:QueryMeta['truncationReason'];failure?:CliError}`；`collectPages` 使用 Spec 签名；`resolveDateRange(input:{from?:string;to?:string},nowMs:number):DateRange`；`sanitizeSourceUrl(value:string):string`。`createQueryPolicy`负责预算及来源队列，`buildQueryResult`将收集结果及meta包装成QueryResult；可给collectPages传可选第三参共享策略/注入测试时钟。部分结果由 query 层包装成 PARTIAL_RESULT，解析器不私自更改 coverage。
+
+- [x] Step 1：写 `page_21_is_not_requested`、`record_2001_is_not_returned`、`limit_is_partial`、`unconfirmed_empty_is_not_success`、`page_failure_preserves_prior_rows`。例如 limit=1、来源有 2 条时断言 `coverage==='partial'` 且 `truncationReason==='limit'`。
+- [x] Step 2：运行 `node --import tsx --test tests/query.test.ts tests/policy.test.ts tests/sanitize.test.ts` 确认失败。
+- [x] Step 3：实现总预算、每次 30 秒上限、20页/2000条、最小500ms串行请求间隔、瞬时失败最多重试一次；401/403不重试，429的等待不能越过总预算。先取得的可信数据在后续失败时保留，无可信数据则返回原结构化错误。
+- [x] Step 4：补日期测试：学校午夜与主机时区不同、2026-02-30 非法、31天允许/32天拒绝、from>=to拒绝。补脱敏测试：`code`/`ticket`/`tt`/`access_token` 等已识别临时参数移除，普通课程和日期参数保留；模拟 fixture 的凭据标记不能进入 stdout/stderr。
+- [x] Step 5：运行同一测试及 build，通过后提交 `feat: bound queries and preserve coverage semantics`。不要为失败响应编造下一页游标。
 
 ### Task 4：Catalog 搜索与班次读取
 

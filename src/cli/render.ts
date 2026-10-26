@@ -1,18 +1,11 @@
 import type { ControlResult, Failure, QueryResult } from '../core/contracts.js';
+import {sanitizeValue} from '../core/sanitize.js';
 export type Output = ControlResult<unknown> | QueryResult<unknown> | Failure;
-const temporaryParameters = new Set(['code', 'ticket', 'tt', 'access_token', 'refresh_token', 'id_token', 'state', 'nonce', 'gid_', 't_s', 'amp_sec_version_']);
-function sanitizeOutput(value: Output) {
-  if (!('sourceUrl' in value.meta)) return value;
-  const url = new URL(value.meta.sourceUrl);
-  url.username = ''; url.password = '';
-  for (const key of [...url.searchParams.keys()]) if (temporaryParameters.has(key.toLowerCase())) url.searchParams.delete(key);
-  return {...value, meta: {...value.meta, sourceUrl: url.href}};
-}
 function cell(value: unknown): string {
   return (typeof value === 'string' ? value : JSON.stringify(value) ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ');
 }
 export function renderOutput(value: Output, format: 'json' | 'table'): string {
-  const safe = sanitizeOutput(value);
+  const safe = sanitizeValue(value) as Output;
   if (format === 'json') return `${JSON.stringify(safe)}\n`;
   const lines: string[] = [];
   if (!safe.ok) lines.push(`${safe.error.code}: ${safe.error.message}`, safe.error.remediation);
