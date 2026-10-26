@@ -57,7 +57,7 @@
 
 ### Task 1：可安装入口、统一结果与能力表
 
-**状态：实现完成，24项测试及类型检查通过；等待用户审查。**
+**状态：实现及首轮审查修复完成，27项测试及类型检查通过；等待用户复审。**
 
 **Files:** Create `package.json`、`package-lock.json`、`tsconfig.json`、`tsconfig.build.json`、`.gitignore`、`bin/hkustgz-cli.mjs`、`src/cli/{main,render}.ts`、`src/core/{contracts,errors,capabilities}.ts`、`tests/{contracts,cli,capabilities}.test.ts`。
 

@@ -19,6 +19,11 @@ export function renderOutput(value: Output, format: 'json' | 'table'): string {
   if ('data' in safe) {
     const data = safe.data;
     const items = data && typeof data === 'object' && 'items' in data ? data.items : null;
+    if (Array.isArray(items)) {
+      for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+        if (key !== 'items') lines.push(`${cell(key)}: ${cell(value)}`);
+      }
+    }
     if (Array.isArray(items) && items.length) {
       const rows: Record<string, unknown>[] = items.map((item: unknown) => item !== null && typeof item === 'object' && !Array.isArray(item) ? item as Record<string, unknown> : {value: item});
       const keys = [...new Set(rows.flatMap((row) => Object.keys(row)))];
@@ -26,7 +31,12 @@ export function renderOutput(value: Output, format: 'json' | 'table'): string {
     } else if (Array.isArray(items)) lines.push('(no items)');
     else lines.push(JSON.stringify(data, null, 2));
   }
-  if ('coverage' in safe.meta) lines.push(`Coverage: ${safe.meta.coverage}; source: ${safe.meta.sourceUrl}; fetched: ${safe.meta.fetchedAt}`,
-    ...safe.meta.warnings.map((warning) => `${warning.code}: ${warning.message}`));
+  if ('coverage' in safe.meta) {
+    lines.push(`Coverage: ${safe.meta.coverage}; source: ${safe.meta.sourceUrl}; fetched: ${safe.meta.fetchedAt}`);
+    for (const [key, value] of Object.entries(safe.meta)) {
+      if (!['coverage', 'sourceUrl', 'fetchedAt', 'warnings'].includes(key)) lines.push(`${key}: ${cell(value)}`);
+    }
+    lines.push(...safe.meta.warnings.map((warning) => `${warning.code}: ${warning.message}`));
+  }
   return `${lines.join('\n')}\n`;
 }

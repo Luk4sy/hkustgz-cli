@@ -37,7 +37,7 @@
 
 运行时为 Node.js 24 LTS，TypeScript strict，ESM；开发工具 `tsx` 仅用于测试，不是用户运行时依赖。CLI 解析选用 Commander，结构校验选用 Zod；实施时核对 Node 兼容性并锁定依赖及 lockfile，文档不指定未经核对的版本号。浏览器层为固定版本 Playwright，优先本机 Chrome/Edge，Chromium 通过明确安装命令准备。
 
-项目根目录为 `/Users/lukaspeng/project/有意思和有用的proj/hkustgz-cli/`。目录及文档已经归集，尚未初始化 Git 仓库；下列产品路径在执行阶段才创建：
+项目根目录为 `/Users/lukaspeng/project/有意思和有用的proj/hkustgz-cli/`。Git 仓库已初始化，当前工作分支为 `feat/cli-foundation`；基础 CLI、依赖和测试已建立，Task 1 等待用户审查。下列路径为目标结构，后续模块按阶段补齐：
 
 ```text
 bin/hkustgz-cli.mjs              shebang 入口，调用编译后的 main
