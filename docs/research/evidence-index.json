@@ -175,5 +175,7 @@
       "documentPath": "docs/research/booking-library.md",
       "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
     }
-  ]
+  ],
+  "updatedAt": "2026-10-27",
+  "authenticationAcceptance": "docs/acceptance/session-auth.md"
 }

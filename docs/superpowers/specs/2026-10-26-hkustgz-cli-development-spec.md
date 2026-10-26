@@ -1,7 +1,7 @@
 # hkustgz-cli 开发 Spec v0.1
 
 日期：2026-10-26（Asia/Shanghai）  
-状态：用户已授权按模块开发；Task 1 已验收，Task 0 取证与已获同意的专用会话实验进行中，发布未获授权。
+状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；其余业务取证仍进行中，发布未获授权。
 上位设计：[技术方案](2026-10-26-hkustgz-cli-design.md)  
 执行配套：[分阶段开发计划](../plans/2026-10-26-hkustgz-cli-development-plan.md)
 
@@ -166,6 +166,11 @@ interface AuthReport {
 | AUTH-06 | 退出仅清理本工具数据与自身进程；不删除个人 Chrome profile，也不宣称撤销全部学校会话 |
 | AUTH-07 | 正常结束、回调抛错、超时、中断都应关闭工具上下文并释放锁；清理失败保留错误与归属信息 |
 | AUTH-08 | 新 profile 登录→关闭→新进程重开→读取本人数据必须实测；不复制日常浏览器 Cookie 来替代验证 |
+| AUTH-09 | 2026-10-27 用户批准：有效学校 SSO 可沿已验证正常流程恢复短期业务会话；SIS 在精确 `/auth-sign` 页最多点击一次 Login，不输入或提交认证表单。查询一旦需要密码、验证码或人工确认，立即返回 LOGIN_REQUIRED；状态命令报告 unauthenticated，不等待交互登录 |
+
+Task 2 先实现 Portal/SIS/Canvas 的认证子集；Catalog 公开可见性不证明身份，Booking/Library 无充分正向与失效对照时返回 unknown，login 保持 pending。此处为用户对真实取证结果的明确确认，不将剩余 Task 0 业务完整性门槛视为通过。
+
+认证状态观察在导航完成后最多5秒，并预留总预算内的返回时间；unknown 不等同于登录成功或会话过期。正常学校 HTTP 重定向逐跳检查顶层来源，未建立保护的弹窗阻止导航。清理额外最多等待5秒；失败保留锁与归属元信息并报告原结果类别，不强杀未知进程。新增错误 INVALID_DATA_HOME（2）、BROWSER_UNAVAILABLE（8）、CLEANUP_FAILED（1）、INTERRUPTED（130）、TERMINATED（143）。
 
 不得启用 Chrome 默认 profile 的远程调试。重定向只在经研究记录的学校/身份提供方来源间进行，配置不得接受任意 service URL。与 browser 相关的控制命令至少有 `browser status`、`browser use chrome|edge|chromium`、`browser install chromium`；安装行为只在明确调用时执行。
 

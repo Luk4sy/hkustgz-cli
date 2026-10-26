@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；当前执行 Task 0。用户已同意并配合专用 profile 登录实验；Task 2–9 尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2 已实现待审查，Task 3–9 尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -73,15 +73,17 @@
 
 ### Task 2：专用浏览器、认证状态与进程互斥
 
+**状态：实现完成，58项测试全部通过（含10项真实Chrome本地集成测试），构建及类型检查通过；实际编译后CLI验证Portal/SIS/Canvas会话恢复成功。等待用户审查，不进入Task 3。见 docs/acceptance/session-auth.md。**
+
 **Files:** Create `src/session/{paths,browser,lock,auth}.ts`、`tests/{paths,session,auth}.test.ts`。Modify `src/core/contracts.ts`（落实本节类型），`src/cli/main.ts`（注册控制命令）。
 
-**Interfaces:** Produces：`DataPaths={root:string;profile:string;cache:string;logs:string}`；`Session={service:ServiceId;page:Page;context:BrowserContext}`；`SessionOptions={browser:'chrome'|'edge'|'chromium';headless:boolean;deadlineMs:number;purpose:'query'|'login'}`；`SessionRunner=<T>(service:ServiceId,options:SessionOptions,run:(session:Session)=>Promise<T>)=>Promise<T>`；paths/browser/auth 使用 Spec §4 签名。锁导出 `acquireProfileLock(profile:string):Promise<{release:()=>Promise<void>}>`。
+**Interfaces:** Produces：`DataPaths={root:string;profile:string;cache:string;logs:string}`；`Session={service:ServiceId;page:Page;context:BrowserContext;signal?:AbortSignal}`；`SessionOptions={browser:'chrome'|'edge'|'chromium';headless:boolean;deadlineMs:number;purpose:'query'|'login'}`；`SessionRunner=<T>(service:ServiceId,options:SessionOptions,run:(session:Session)=>Promise<T>)=>Promise<T>`；paths/browser/auth 使用 Spec §4 签名。锁导出 `acquireProfileLock(profile:string):Promise<{release:()=>Promise<void>}>`。
 
-- [ ] Step 1：写 `same_profile_rejected_as_busy`、`different_browser_profiles_are_separate`、`http_200_login_page_is_not_authenticated`、`callback_error_closes_owned_context`、`unknown_auth_remains_unknown`。断言第二个锁返回 PROFILE_BUSY/9、上下文 close 一次、auth.state 不因 title 匹配而成功。
-- [ ] Step 2：运行 `node --import tsx --test tests/paths.test.ts tests/session.test.ts tests/auth.test.ts`，确认缺失实现导致失败。
-- [ ] Step 3：实现专用路径、原子锁目录与归属元信息、浏览器选择和正常生命周期；不自动抢占已有锁。doctor 可报告疑似遗留锁，不删除未经核实归属的内容。登录/状态依据 Task 0，各服务单独判定；logout 只清理本工具归属的数据。
-- [ ] Step 4：补充超时、SIGINT/SIGTERM 清理测试和“清理失败仍报告”的用例；auth login 交互预算 600000ms、查询默认 90000ms。使用本地测试网页验证会话，不在自动测试中登录学校。
-- [ ] Step 5：运行上述测试及 build；按 Task 0 记录手工复验冷启动后提交 `feat: manage dedicated browser sessions and auth`。真实登录实验需已有同意，不将单元测试成功当作本校登录验证。
+- [x] Step 1：写 `same_profile_rejected_as_busy`、`different_browser_profiles_are_separate`、`http_200_login_page_is_not_authenticated`、`callback_error_closes_owned_context`、`unknown_auth_remains_unknown`。断言第二个锁返回 PROFILE_BUSY/9、上下文 close 一次、auth.state 不因 title 匹配而成功。
+- [x] Step 2：运行 `node --import tsx --test tests/paths.test.ts tests/session.test.ts tests/auth.test.ts`，确认缺失实现导致失败。
+- [x] Step 3：实现专用路径、原子锁目录与归属元信息、浏览器选择和正常生命周期；不自动抢占已有锁。doctor 可报告疑似遗留锁，不删除未经核实归属的内容。登录/状态依据 Task 0，各服务单独判定；logout 只清理本工具归属的数据。
+- [x] Step 4：补充超时、SIGINT/SIGTERM 清理测试和“清理失败仍报告”的用例；auth login 交互预算 600000ms、查询默认 90000ms。使用本地测试网页验证会话，不在自动测试中登录学校。
+- [x] Step 5：运行上述测试及 build；按 Task 0 记录手工复验冷启动后提交 `feat: manage dedicated browser sessions and auth`。真实登录实验需已有同意，不将单元测试成功当作本校登录验证。
 
 ### Task 3：有界查询、分页、日期与脱敏
 

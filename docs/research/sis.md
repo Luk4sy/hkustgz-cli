@@ -20,3 +20,7 @@ DOM 为候选读取路线，尚未实现或重放请求。不能据 HTTP 200、�
 专用 profile 的直接访问曾停在 `/auth-sign`；正常门户 SIS 应用跳转实验亦超时，失败具体阶段需补充定位。调研浏览器成功不能替代该结果。新 profile 的 SIS 本人课表冷启动尚未通过。
 
 学期 ID、成绩 published/unpublished/unknown 源语义、历史完整性、空结果/登录失效/无权限判据、课程例外和时区均待补证。history 与 grades 独立保留 pending；不以“有 Grade 列”宣称正式成绩能力已完成。
+
+## 2026-10-27 认证补证
+
+首轮超时已定位：`/auth-sign` 是显示 Student Information System、日期和 Login 按钮的正常入口，原脚本没有点击 Login。正常点击后观察到学校 SSO `/connect/authorize` → SIS `/auth-sign` → `/home` → `/system/my-calendar`，出现学期及带日期课程块。关闭浏览器后直接课表地址仍回入口；在新进程点击一次 Login 可借助有效SSO恢复，无需输入密码。实际编译后 `auth status sis` 及 `auth status --all` 均取得 authenticated。用户已批准仅此无人工输入恢复边界；精确路径以外不自动点击同名按钮。上述补证支持认证模块，不改变业务能力 pending 状态。

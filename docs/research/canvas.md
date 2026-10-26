@@ -24,3 +24,11 @@ Planner 与列表响应可含 Link，实际观察到 page 翻页请求。作业�
 ## 后续门槛
 
 候选为响应监听/DOM；Cookie 会话下的独立 HTTP 读取尚未验证。学生覆盖截止时间、submitted/graded/markedComplete 的源字段和差异样本、日期区间/时区、认证失效与权限判据、另一名学生账号及可分发认证路线均未验收。不改变公告已读或提交状态，不使用个人 Token 作为分发要求。
+
+## 2026-10-27 认证补证
+
+实际专用 profile 验证：本校正常 `/login/saml` 入口可通过既有学校SSO恢复，再进入 Courses 读取个人课程表。编译后 CLI 已报告 authenticated。直接 `/courses` 深链接可能进入另一条原生登录链，因此不作为新会话的认证入口。
+
+逐跳检查观察到 `https://sso.canvaslms.com/delegated_auth_pass_through`；[Canvas 官方文档](https://developerdocs.instructure.com/services/canvas/external-tools/lti/file.lti_launch_overview)证明该来源是其认证服务。记录实际路径与官方域名归属是两类证据，不将文档中其他端点冒充本校实测。未知租户身份来源仍被阻止，没有放宽通配域名。
+
+正常跳转中 DOM 上下文会替换，document.body 也可能短暂不存在；此时保持 unknown 并在同一观察预算内重读页面，不重新发起登录。上述结果仅证明当前账号、专用 profile 与 macOS 的认证子集；业务字段及可分发性门槛仍未通过。

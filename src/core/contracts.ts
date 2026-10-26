@@ -23,11 +23,11 @@ export interface ControlResult<T> { ok: true; data: T; meta: { schemaVersion: '1
 export interface Failure { ok: false; error: CliError; meta: { schemaVersion: '1'; command: string; service?: ServiceId } }
 export interface AuthReport { service: ServiceId; state: 'authenticated' | 'unauthenticated' | 'unknown'; checkedAt: string; checkedUrl: string; reason: string }
 export interface DataPaths { root: string; profile: string; cache: string; logs: string }
-export interface Session { service: ServiceId; page: Page; context: BrowserContext }
+export interface Session { service: ServiceId; page: Page; context: BrowserContext; signal?: AbortSignal }
 export interface SessionOptions { browser: 'chrome' | 'edge' | 'chromium'; headless: boolean; deadlineMs: number; purpose: 'query' | 'login' }
 export type SessionRunner = <T>(service: ServiceId, options: SessionOptions, run: (session: Session) => Promise<T>) => Promise<T>;
 export type CommandHandler = (args: Readonly<Record<string, unknown>>, deps: CliDependencies) => Promise<QueryResult<unknown> | ControlResult<unknown>>;
-export interface CliDependencies { now: () => number; capabilities: Capability[]; sessionRunner: SessionRunner; handlers: Record<string, CommandHandler> }
+export interface CliDependencies { now: () => number; capabilities: Capability[]; sessionRunner: SessionRunner; handlers: Record<string, CommandHandler>; env?: NodeJS.ProcessEnv }
 
 export const ServiceSchema = z.enum(['portal', 'sis', 'catalog', 'canvas', 'booking', 'booking-library']);
 export const CapabilitySchema = z.strictObject({

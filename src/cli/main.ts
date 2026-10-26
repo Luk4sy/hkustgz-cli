@@ -32,7 +32,11 @@ function validateArguments(definition: CommandDefinition, args: Record<string, u
 }
 export async function executeCommand(argv: string[], overrides: Partial<CliDependencies> = {}): Promise<{exitCode: number; stdout: string; stderr: string}> {
   const deps: CliDependencies = {now: Date.now, capabilities: DEFAULT_CAPABILITIES.map((item) => ({...item})), handlers: {},
-    sessionRunner: async () => {throw new CliFailure('CAPABILITY_PENDING');}, ...overrides};
+    env: process.env,
+    sessionRunner: async (...args) => {
+      const [{createSessionRunner},{resolveDataPaths}]=await Promise.all([import('../session/browser.js'),import('../session/paths.js')]);
+      return createSessionRunner(resolveDataPaths(deps.env??process.env))(...args);
+    }, ...overrides};
   let stdout = ''; const stderr = ''; let commandName = 'hkustgz-cli'; let exitCode = 0;
   let outputFormat: 'json' | 'table' = 'json';
   const program = new Command('hkustgz-cli').description('Read-only HKUST(GZ) campus CLI — foundation alpha; school adapters are pending.')
@@ -95,7 +99,8 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         }
         if (definition.capabilityId && requireCapability(deps.capabilities, definition.capabilityId).service !== definition.service) throw new CliFailure('ADAPTER_CHANGED');
         const id = definition.capabilityId ?? definition.path.replace(' ', '.');
-        const handler = Object.hasOwn(deps.handlers, id) ? deps.handlers[id] : undefined;
+        let handler = Object.hasOwn(deps.handlers, id) ? deps.handlers[id] : undefined;
+        if(!handler&&!definition.capabilityId&&definition.path!=='doctor')handler=(await import('../session/auth.js')).createControlHandlers()[id];
         if (!handler) throw new CliFailure(definition.capabilityId ? 'ADAPTER_CHANGED' : 'CAPABILITY_PENDING');
         const parsed = (definition.capabilityId ? QueryResultSchema : ControlResultSchema).safeParse(await handler(args, deps));
         if (!parsed.success || parsed.data.meta.command !== commandName) throw new CliFailure('ADAPTER_CHANGED');

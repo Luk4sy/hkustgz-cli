@@ -3,8 +3,13 @@ export class CliFailure extends Error {
   constructor(public readonly code: string, public readonly remediation?: string) { super(code); }
 }
 const errors: Record<string, {exitCode: number; message: string; remediation: string; retryable?: boolean}> = {
+  INVALID_DATA_HOME: {exitCode: 2, message: 'The data directory is not a safe CLI-owned directory.', remediation: 'Set HKUSTGZ_CLI_HOME to a new empty absolute directory; do not use a personal browser profile.'},
+  BROWSER_UNAVAILABLE: {exitCode: 8, message: 'The selected browser could not be started or installed.', remediation: 'Run browser status; select an installed Chrome/Edge or explicitly run browser install chromium.'},
+  CLEANUP_FAILED: {exitCode: 1, message: 'Owned session resources could not be cleaned up safely.', remediation: 'Inspect the dedicated browser and lock; no unknown process was terminated.'},
+  INTERRUPTED: {exitCode: 130, message: 'The command was interrupted.', remediation: 'Retry when ready.'},
+  TERMINATED: {exitCode: 143, message: 'The command was terminated.', remediation: 'Retry when ready.'},
   INVALID_ARGUMENT: {exitCode: 2, message: 'Invalid command or arguments.', remediation: 'Run hkustgz-cli <command> --help.'},
-  LOGIN_REQUIRED: {exitCode: 3, message: 'School login is required.', remediation: 'Run hkustgz-cli auth login <service> when the auth module is available.'},
+  LOGIN_REQUIRED: {exitCode: 3, message: 'School login is required.', remediation: 'Run hkustgz-cli auth login <service> and complete normal school authentication.'},
   PERMISSION_DENIED: {exitCode: 4, message: 'The current account cannot access this resource.', remediation: 'Check the account permissions on the official website.'},
   NETWORK_REQUIRED: {exitCode: 5, message: 'The service could not be reached.', remediation: 'Check campus network access and retry.', retryable: true},
   QUERY_TIMEOUT: {exitCode: 5, message: 'The query exceeded its time budget.', remediation: 'Narrow the query or retry later.', retryable: true},
