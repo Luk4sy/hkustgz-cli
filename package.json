@@ -1,0 +1,36 @@
+{
+  "name": "hkustgz-cli",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "Read-only campus service CLI for HKUST(GZ) students.",
+  "type": "module",
+  "bin": {
+    "hkustgz-cli": "bin/hkustgz-cli.mjs"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "pretest": "npm run build",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "start": "node bin/hkustgz-cli.mjs"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "commander": "15.0.0",
+    "playwright": "1.64.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  }
+}
