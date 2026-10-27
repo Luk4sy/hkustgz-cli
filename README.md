@@ -1,68 +1,110 @@
 # hkustgz-cli
 
-面向香港科技大学（广州）学生的本地校园服务 CLI，非学校官方产品。
+## 简单介绍
 
-## 当前进度：前四模块已验收，Catalog可用
+面向香港科技大学（广州）学生的校园服务命令行工具。希望把分散在不同系统里的课程、课表、通知和作业，变成终端里可以直接查询的命令，也方便 Agent 调用。
 
-版本 `0.1.0-alpha.1`。已实现基础 CLI、专用 profile、互斥锁、会话清理及 Portal/SIS/Canvas 认证控制。Catalog 搜索与详情已接通公开学校页面，另外17项业务查询仍为 `pending`。doctor、browser install 仍返回 `CAPABILITY_PENDING`。
+工具在用户电脑上运行，使用本人的学校账号和专用浏览器会话，查询结果直接来自学校使用的服务。支持 JSON 和表格输出，首期只做查询。
 
-查询基础层已实现预算、分页与部分结果、学校日期窗口及统一脱敏。默认7天、最大31天的日期范围已接入相关命令；非法日期先返回参数错误。Catalog 已消费查询基础层；SIS、Portal、Canvas、Booking业务读取仍待后续适配器。
+这是非官方项目，目前为 `0.1.0-alpha.1`：前四个开发模块已验收，**课程目录（Catalog）的搜索与详情已可用**，课表、作业等业务查询尚在开发中。项目尚未发布到 npm。
 
-认证数据默认在 `~/.hkustgz-cli`，也可设置 `HKUSTGZ_CLI_HOME` 为新的空绝对目录。Chrome/Edge/Chromium 的 profile 分开保存；不读取日常浏览器登录态。优先使用已安装的 Chrome；本模块不自动下载浏览器。Windows/Linux 真实浏览器验收尚未完成。
+## 快速开始
 
-## 本地运行
+### 环境准备
 
-要求 Node.js 24.x。依赖版本已锁定；安装不会下载浏览器或发起学校登录。
+- Node.js **24.x** 和 npm。
+- 本机已安装 Google Chrome。当前已在 macOS 验证，Windows/Linux 尚未完成实机验收。
+- 进入本地 `hkustgz-cli` 项目目录。
+
+安装依赖并构建：
 
 ```bash
 npm ci
-npm test
-npm run typecheck
+npm run build
 node bin/hkustgz-cli.mjs --help
-node bin/hkustgz-cli.mjs capabilities
-node bin/hkustgz-cli.mjs capabilities --format table
-node bin/hkustgz-cli.mjs sis timetable --help
 ```
 
-`npm test` 会先编译。单独构建可运行 `npm run build`。
+安装依赖不会下载浏览器或发起学校登录。当前请使用本地入口运行。
+
+### 查询一门课
+
+Catalog 使用公开课程目录，可以先不登录试用：
 
 ```bash
-node bin/hkustgz-cli.mjs catalog search IPEN5100
-node bin/hkustgz-cli.mjs catalog course '2026-27 Fall:IPEN5100'
-```
-
-Catalog搜索按学科扫描，最多20页/2000源课程；未扫完整时返回部分结果、退出码 **7**。`--term`使用来源学期标签（例如 `2025-26 Winter`）。课程详情id从搜索结果取得。名额通常15–20分钟更新，当前禁用缓存；其他未启用查询返回 `CAPABILITY_PENDING`/8。
-
-本项目尚未发布 npm；请使用以上本地命令，不要使用可能属于其他人的同名远程包。
-
-## 认证与浏览器
-
-```bash
+# 检查浏览器和当前能力
 node bin/hkustgz-cli.mjs browser status
+node bin/hkustgz-cli.mjs capabilities --format table
+
+# 搜索课程，默认输出 JSON
+node bin/hkustgz-cli.mjs catalog search AIAA5032
+
+# 按指定学期搜索，输出表格
+node bin/hkustgz-cli.mjs catalog search AIAA5032 --term '2026-27 Fall' --format table
+
+# 使用搜索结果中的 id 查看完整详情
+node bin/hkustgz-cli.mjs catalog course '2026-27 Fall:AIAA5032' --format table
+```
+
+学期名称使用来源标签，课程是否开设以当次查询为准。搜索最多扫描 **20 个学科批次 / 2000 门源课程**；未扫描完整时会标记 `partial`、说明截断原因，并以 **7** 退出。课程名额通常每 15–20 分钟更新。
+
+### 登录与会话检查
+
+```bash
 node bin/hkustgz-cli.mjs browser use chrome
 node bin/hkustgz-cli.mjs auth login portal
-node bin/hkustgz-cli.mjs auth status --all
+node bin/hkustgz-cli.mjs auth status --all --format table
+
+# 清理本工具保存的本地登录会话
 node bin/hkustgz-cli.mjs auth logout
 ```
 
-`auth login` 打开可见专用浏览器，正常登录最多等待10分钟。`auth status` 总预算90秒，允许复用有效SSO；SIS可能自动点一次已验证的 Login。需要密码、验证码或人工确认时不等待用户，状态为 unauthenticated；无法确认时为 unknown。Catalog、Booking、Library 当前报告 unknown，后两者登录能力仍 pending。logout 仅清理本工具已归属的 profile，不撤销学校服务器上的其他会话。
+登录会打开专用浏览器窗口，由本人完成认证。会话默认保存在 `~/.hkustgz-cli`，也可以通过 `HKUSTGZ_CLI_HOME` 指定新的空绝对目录。工具不读取日常浏览器的 Cookie；同一 profile 同时只允许一个 CLI 进程使用。
 
-默认 `npm test` 不启动浏览器。已有 Chrome 时，可显式运行 `HKUSTGZ_TEST_BROWSER=1 npm test`；浏览器用例仅加载本地合成页面，不登录学校。
+Portal、SIS、Canvas 的认证状态已支持检查和复用。Catalog 是公开目录，其认证状态为 `unknown` 不影响公开查询；Booking 和图书馆预约系统的认证仍待验证。**登录成功不代表对应业务查询已经接通**，以 `capabilities` 为准。
 
-## 文档
+## 功能
 
-- [Git 阶段记录与验收标签](docs/git-history.md)
+### 当前可用
+
+| 功能 | 说明 |
+|---|---|
+| 课程搜索 | 按代码、标题、教师或助教匹配，支持指定学期和返回条数 |
+| 课程详情 | 查询学分、班次、上课日期与时间、地点、教师及来源名额 |
+| 浏览器与认证 | 浏览器检测和选择、专用会话、Portal/SIS/Canvas 登录与状态检查、本地退出登录 |
+| 结构化输出 | JSON / table，明确返回读取数量、覆盖范围及截断原因 |
+| 查询基础层 | 超时预算、有限重试、分页上限、部分结果保留和凭据脱敏 |
+| 能力清单 | 逐项显示业务能力是否已验证，未接通的命令返回 `CAPABILITY_PENDING`（退出码 8） |
+
+Catalog 的课程与班次来自同一份完整、绑定目标学期的响应批次，学科全集也按目标学期校验。当前未启用运行时缓存。
+
+### 后续计划
+
+| 模块 | 计划能力 | 当前状态 |
+|---|---|---|
+| SIS | 学期、课表、今日课程；课程历史与成绩需单独验证 | 待开发 |
+| Portal | 应用入口、通知列表与详情、日程 | 待开发 |
+| Canvas | 课程、公告、作业、日程 | 待开发 |
+| Booking | 分类发现、图书馆房间、可用时段、本人预约记录 | 待开发 |
+| 发行支持 | doctor、浏览器安装、跨平台及安装验收 | 待开发 |
+
+目前 **2/19 项业务能力已验证**。不提供选退课、提交作业、预约或取消等写入操作。每个模块完成后先审查验收，再进入下一个模块。
+
+### 开发与文档
+
+```bash
+npm test                         # 包含构建；默认不启动浏览器
+npm run typecheck
+HKUSTGZ_TEST_BROWSER=1 npm test   # 本机 Chrome 合成页面测试，不登录学校
+```
+
 - [技术方案](docs/superpowers/specs/2026-10-26-hkustgz-cli-design.md)
-- [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md)
-- [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md)
-- [本模块审查与验收](docs/acceptance/cli-foundation.md)
-- [读取证据索引](docs/research/evidence-index.json)
-- [分服务会话验证](docs/acceptance/session-reuse.md)
-- [认证模块审查与验收](docs/acceptance/session-auth.md)
-- [查询基础层审查与验收](docs/acceptance/query-core.md)
+- [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md) · [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md)
+- 验收记录：[CLI 基础](docs/acceptance/cli-foundation.md) · [认证](docs/acceptance/session-auth.md) · [查询基础层](docs/acceptance/query-core.md) · [Catalog](docs/acceptance/catalog.md)
+- [读取证据索引](docs/research/evidence-index.json) · [会话复用验证](docs/acceptance/session-reuse.md)
+- [Git 阶段记录与验收标签](docs/git-history.md)
 
-后续开发继续在本目录进行；每完成一个模块，等待用户审查后再推进。
+## 灵感来源
 
-第四模块审查记录：[Catalog](docs/acceptance/catalog.md)。
+本项目的直接灵感来自 [AwesomeHou/szu-cli](https://github.com/AwesomeHou/szu-cli)：将校园系统中的常用查询整理成独立 CLI，让终端用户和 Agent 都能使用。
 
-Catalog 当前从页面现有客户端的完整响应批次读取（`readMethod=response`），课程和班次不再从分步渲染的DOM拼接；来源学期及批次校验失败时返回错误。
+`hkustgz-cli` 借鉴其命令行产品形式和分层适配思路，围绕港科广的实际系统独立开发，逐项核实登录、数据来源和查询完整性。相关设计取舍记录在[技术方案](docs/superpowers/specs/2026-10-26-hkustgz-cli-design.md)中。
