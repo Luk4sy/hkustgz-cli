@@ -51,6 +51,7 @@ node bin/hkustgz-cli.mjs auth logout
 
 ## 文档
 
+- [Git 阶段记录与验收标签](docs/git-history.md)
 - [技术方案](docs/superpowers/specs/2026-10-26-hkustgz-cli-design.md)
 - [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md)
 - [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md)
