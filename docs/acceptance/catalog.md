@@ -1,6 +1,6 @@
 # 第四模块：Catalog 审查与验收
 
-状态：复审问题已修复，等待用户审查；第三模块32f0bab已验收，不进入第五模块。
+状态：7b5c559已获用户验收；第三模块32f0bab已验收，不进入第五模块。
 
 ## 当前读取路线
 
@@ -47,4 +47,4 @@ node bin/hkustgz-cli.mjs catalog search a --term '2025-26 Winter' --format table
 
 现在通过已核实的公开客户端 `listPublicMarketCourseSubjectAreas({termId:sourceTerm})` 读取完整目录，复制为带请求termId的JSON快照；校验成功码、请求学期、非空字符串列表、学科格式及唯一性。目录不再来自DOM；DOM仅用于点击该全集中的学科入口。额外读取保留500ms间隔并受单次/总预算约束。新入口晚出现时等待；始终未出现时保留已核实子集并返回partial/timeout，不输出complete。重复目录或权限失败直接失败。
 
-五项新增Chrome回归先失败、后通过。最终124项全部通过，含26项本机合成Chrome测试；构建、类型检查和差异检查通过。真实编译CLI再次读取Winter两学科、两门课程并返回complete。等待第四模块复审，未进入第五模块。
+五项新增Chrome回归先失败、后通过。最终124项全部通过，含26项本机合成Chrome测试；构建、类型检查和差异检查通过。真实编译CLI再次读取Winter两学科、两门课程并返回complete。第四模块已获用户验收，未进入第五模块。

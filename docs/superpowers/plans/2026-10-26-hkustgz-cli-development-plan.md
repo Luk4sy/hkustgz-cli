@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4实现完成待用户审查，Task 5–9 尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5–9 尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -101,7 +101,7 @@
 
 ### Task 4：Catalog 搜索与班次读取
 
-**状态：实现完成待用户审查；124项测试全部通过（含26项Chrome本机合成测试）、构建、类型检查及差异检查通过。真实编译CLI对照Fall搜索/详情及Winter两学科完整搜索。独立审阅及用户复审的分步渲染竞态已修复，现使用完整来源响应批次及目标学期学科目录，等待复审，未进入Task 5。见docs/acceptance/catalog.md。**
+**状态：7b5c559已获用户验收；124项测试全部通过（含26项Chrome本机合成测试）、构建、类型检查及差异检查通过。真实编译CLI对照Fall搜索/详情及Winter两学科完整搜索。独立审阅及用户复审的分步渲染竞态已修复，现使用完整来源响应批次及目标学期学科目录，用户已验收，未进入Task 5。见docs/acceptance/catalog.md。**
 
 **Files:** Create `src/adapters/catalog/{index,parser,model,manifest,cache}.ts`、`tests/{catalog,catalog-cli}.test.ts`、`tests/fixtures/catalog/`。Modify handler 注册和能力表。
 

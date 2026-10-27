@@ -2,7 +2,7 @@
 
 面向香港科技大学（广州）学生的本地校园服务 CLI，非学校官方产品。
 
-## 当前进度：前三模块已验收，Catalog待审查
+## 当前进度：前四模块已验收，Catalog可用
 
 版本 `0.1.0-alpha.1`。已实现基础 CLI、专用 profile、互斥锁、会话清理及 Portal/SIS/Canvas 认证控制。Catalog 搜索与详情已接通公开学校页面，另外17项业务查询仍为 `pending`。doctor、browser install 仍返回 `CAPABILITY_PENDING`。
 
