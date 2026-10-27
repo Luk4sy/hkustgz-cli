@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';import test from 'node:test';import {chromium} from 'playwright';import {createSisPageReader} from '../src/adapters/sis/reader.js';import {querySisTimetable} from '../src/adapters/sis/index.js';import {term,termPage,batch} from './fixtures/sis/data.js';
+const skip=process.env.HKUSTGZ_TEST_BROWSER!=='1';
+async function fixture(mode:string,run:(page:import('playwright').Page,counts:Record<string,number>)=>Promise<void>){
+ const browser=await chromium.launch({channel:'chrome',headless:true});try{const page=await browser.newPage();const counts:Record<string,number>={};
+ const html=`<input placeholder="Select" value="2026-27 Fall"><label><input type="checkbox" aria-label="Include Waitlisted Class">Include Waitlisted Class</label><button onclick="mode='weekly'">Weekly Calendar</button><button onclick="slots()">Time Slots Overview</button><div>2026-09-01 - 2026-12-25</div><main>Old DOM</main><script>
+ let mode='weekly';const userId='private-marker';const store={userInfo:{userId,userType:1}};const api={Xb:{queryCurrentTerm:async input=>rpc('current',input),queryTermValueByPage:async input=>rpc('terms',input)},i$:{queryStagingStudentCurriculumTimeSlot:async input=>rpc('slots',input)}};
+ async function rpc(kind,input){const r=await fetch('https://sisn-service.hkust-gz.edu.cn/api/'+kind,{method:'POST',body:JSON.stringify(input)});const data=await r.json();if(kind==='terms'&&'${mode}'==='metadata-account-change')store.userInfo.userId='new-account';if(kind==='slots'&&['account-change','account-and-argument-change'].includes('${mode}')){store.userInfo.userId='new-account';if('${mode}'==='account-and-argument-change')input.currentUserId='new-account';}return {data};}
+ window.webpackChunkapp=[];window.webpackChunkapp.push=chunk=>chunk[2](id=>id===74604?api:{P:()=>store});
+ async function slots(){const result=await api.i$.queryStagingStudentCurriculumTimeSlot({startDate:'2026-09-01',endDate:'2026-12-25',includeWaitlistedClass:'N',currentUserId:${mode==='foreign'?"'foreign-student'":'store.userInfo.userId'}});document.querySelector('main').textContent='New title and old rows';setTimeout(()=>document.querySelector('main').textContent='Finished',700);}
+ </script>`;
+ await page.route('**/*',r=>{const kind=r.request().url().split('/').pop()!;if(['current','terms','slots'].includes(kind)){counts[kind]=(counts[kind]??0)+1;const body=kind==='current'?{code:'0',data:{termId:'2610'}}:kind==='terms'?termPage:{...batch.body,data:mode==='empty'?[]:batch.body.data.map(c=>({...c,studentId:'private-marker'}))};return r.fulfill({contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify(body)});}return r.fulfill({contentType:'text/html',body:html});});await page.goto('https://sisn.hkust-gz.edu.cn/system/my-calendar');await run(page,counts);
+ }finally{await browser.close();}
+}
+for(const mode of ['normal','empty'])test('SIS whole self batch is independent of DOM state: '+mode,{skip},async()=>fixture(mode,async(page)=>{
+ const reader=await createSisPageReader(page);const result=await querySisTimetable({}, {refresh:false,deadlineMs:Date.now()+10000},reader);assert.equal(result.ok,true);assert.equal(result.data.items.length,mode==='empty'?0:1);assert.equal(result.data.termId,term.id);assert.doesNotMatch(await page.evaluate(()=>JSON.stringify((window as any).__hkustgzSis)),/private-marker|studentId/);
+}));
+test('SIS cannot query a different student through the UI callback',{skip},async()=>fixture('foreign',async(page,counts)=>{const reader=await createSisPageReader(page);await assert.rejects(querySisTimetable({}, {refresh:false,deadlineMs:Date.now()+10000},reader),{code:'PERMISSION_DENIED'});assert.equal(counts.slots??0,0);}));
+
+test('account changing during the source read cannot return the old account batch',{skip},async()=>fixture('account-change',async page=>{const reader=await createSisPageReader(page);await assert.rejects(querySisTimetable({}, {refresh:false,deadlineMs:Date.now()+10000},reader),{code:'PERMISSION_DENIED'});}));
+
+test('mutating the request object cannot bypass the account snapshot',{skip},async()=>fixture('account-and-argument-change',async page=>{const reader=await createSisPageReader(page);await assert.rejects(querySisTimetable({}, {refresh:false,deadlineMs:Date.now()+10000},reader),{code:'PERMISSION_DENIED'});}));
+
+test('identity is pinned before metadata lookup, not just before course response',{skip},async()=>fixture('metadata-account-change',async page=>{const reader=await createSisPageReader(page);await assert.rejects(querySisTimetable({}, {refresh:false,deadlineMs:Date.now()+10000},reader),{code:'PERMISSION_DENIED'});}));

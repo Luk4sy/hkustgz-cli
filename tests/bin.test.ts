@@ -11,7 +11,7 @@ test('compiled executable works outside the repository without writing a browser
   const temp = mkdtempSync(join(tmpdir(), 'hkustgz-cli-test-'));
   const dataRoot = join(temp, 'private-data');
   try {
-    for (const [args, exitCode] of [[['--version'], 0], [['--help'], 0], [['capabilities'], 0], [['sis', 'today'], 8]] as const) {
+    for (const [args, exitCode] of [[['--version'], 0], [['--help'], 0], [['capabilities'], 0], [['sis', 'grades'], 8]] as const) {
       const result = spawnSync(process.execPath, [bin, ...args], { cwd: temp, env: { ...process.env, HKUSTGZ_CLI_HOME: dataRoot }, encoding: 'utf8' });
       assert.equal(result.status, exitCode, result.stderr);
       assert.equal(result.stderr, '');

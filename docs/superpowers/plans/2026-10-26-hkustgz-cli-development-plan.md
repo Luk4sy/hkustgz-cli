@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5–9 尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5 已实现待用户审查；Task 6–9 尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -45,7 +45,7 @@
 
 ### Task 0：五模块读取证据与专用会话实验
 
-**状态：进行中。已建立五系统研究记录；Catalog两项已验证，其余17项业务pending；专用profile的Portal/SIS/Canvas认证子集已有实际CLI验证；业务读取完整性及Booking/Library认证仍待补证，见docs/acceptance/session-reuse.md。未通过证据门槛的真实适配器不得启用。**
+**状态：进行中。已建立五系统研究记录；Catalog两项与SIS三项已验证（第五模块待审），其余14项业务pending；专用profile的Portal/SIS/Canvas认证子集已有实际CLI验证；业务读取完整性及Booking/Library认证仍待补证，见docs/acceptance/session-reuse.md。未通过证据门槛的真实适配器不得启用。**
 
 **Files:** Create `docs/research/{portal,sis,catalog,canvas,booking-library}.md`、`docs/research/evidence-index.json`、`docs/acceptance/session-reuse.md`。
 
@@ -115,15 +115,17 @@
 
 ### Task 5：SIS 学期、课表与条件学业记录
 
+**状态：已实现待用户审查；history/grades 按条件证据门槛继续 pending。真实调课/取消样本未取得，exceptionsCoverage=unknown。见 docs/acceptance/sis.md。不得进入 Task 6。**
+
 **Files:** Create `src/adapters/sis/{index,parser,model,manifest}.ts`、`tests/{sis,sis-cli}.test.ts`、`tests/fixtures/sis/`。Modify handler 注册和能力表。
 
 **Interfaces:** Produces `listTerms(options:QueryOptions):Promise<QueryResult<{items:Term[]}>>`、`readTimetable(input:{termId?:string},options:QueryOptions):Promise<QueryResult<Timetable>>`、`readToday(input:{date?:string;termId?:string},options:QueryOptions):Promise<QueryResult<TodayCourses>>`；条件能力 `readHistory`、`readGrades` 的输入均为 `{termId?:string}`，输出分别 `{items:HistoryCourse[]}` 与 `{items:Grade[]}` 的 QueryResult。类型按 Spec §7.2 定义，不能共享同一个“历史=成绩”模型。
 
-- [ ] Step 1：写 `multiple_meetings_remain_distinct`、`today_uses_school_timezone`、`unknown_exceptions_warn`、`unpublished_grade_is_not_empty_history`；断言历史课程保留无成绩记录、未知成绩不变成0、未知例外附 warnings。
-- [ ] Step 2：运行 `node --import tsx --test tests/sis.test.ts tests/sis-cli.test.ts` 确认失败。
-- [ ] Step 3：实现已核实的学期与本人课表读取、日期过滤；无当前学期证据则要求 --term。历史与成绩仅在其 Task 0 证据通过时实现，否则注册明确 pending 能力，不借 Canvas 替代。
-- [ ] Step 4：测试并逐项对照一完整周、跨日期、多教室/多教师、已知调课/取消样本；未观察到的例外覆盖保持 unknown。条件能力如纳入发布，独立手工验收。
-- [ ] Step 5：build与验收通过后提交 `feat: query personal sis timetable and academic records`，能力表逐命令标识，不以课表成功宣布所有学业功能支持。
+- [x] Step 1：写 `multiple_meetings_remain_distinct`、`today_uses_school_timezone`、`unknown_exceptions_warn`、`unpublished_grade_is_not_empty_history`；未知例外附 warnings；历史/成绩证据不足，改测 pending 拦截，不构造虚假成绩模型（见ledger Ruling）。
+- [x] Step 2：运行 `node --import tsx --test tests/sis.test.ts tests/sis-cli.test.ts` 确认失败。
+- [x] Step 3：实现已核实的学期与本人课表读取、日期过滤；无当前学期证据则要求 --term。历史与成绩仅在其 Task 0 证据通过时实现，否则注册明确 pending 能力，不借 Canvas 替代。
+- [x] Step 4：测试并逐项对照一完整周、跨日期、多教室/多教师、已知调课/取消样本如可取得；本轮未取得，未观察到的例外覆盖保持 unknown。条件能力如纳入发布，独立手工验收。
+- [x] Step 5：build与验收通过后提交 `feat: query SIS terms and personal planned timetable`，能力表逐命令标识，不以课表成功宣布所有学业功能支持。
 
 ### Task 6：Portal 应用、公告与日程
 

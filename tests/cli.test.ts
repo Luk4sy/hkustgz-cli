@@ -44,14 +44,14 @@ test('pending capability cannot invoke even an injected read handler', async () 
   assert.equal(result.stderr, '');
 });
 
-test('capabilities reports verified Catalog and leaves other modules pending', async () => {
+test('capabilities reports verified Catalog and SIS calendar and leaves other modules pending', async () => {
   const result = await executeCommand(['capabilities'], { sessionRunner: noSession });
   const payload = JSON.parse(result.stdout);
   assert.equal(result.exitCode, 0);
   assert.equal(payload.ok, true);
   const services = new Set(payload.data.items.map((item: { service: string }) => item.service));
   for (const service of ['portal', 'sis', 'catalog', 'canvas', 'booking-library']) assert.equal(services.has(service), true);
-  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['catalog.search','catalog.course']);
+  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['sis.terms','sis.timetable','sis.today','catalog.search','catalog.course']);
 });
 
 test('one JSON document on stdout preserves a verified read and strips temporary source tokens', async () => {
@@ -101,7 +101,7 @@ test('control features not implemented yet return pending, not false success', a
 });
 
 test('table format applies to semantic errors after valid command parsing', async () => {
-  const result = await executeCommand(['sis', 'today', '--format', 'table']);
+  const result = await executeCommand(['sis', 'grades', '--format', 'table'],{sessionRunner:noSession});
   assert.equal(result.exitCode, 8);
   assert.match(result.stdout, /^CAPABILITY_PENDING:/);
 });

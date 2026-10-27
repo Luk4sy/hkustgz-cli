@@ -2,7 +2,7 @@
   "schemaVersion": "1",
   "observedAt": "2026-10-26",
   "status": "in_progress",
-  "note": "Per-capability research and real CLI acceptance; Catalog verified with explicit bounded coverage. Other business adapters remain pending.",
+  "note": "Catalog and SIS calendar capabilities verified with bounded coverage; Task5 awaiting user review. Other business adapters remain pending.",
   "entries": [
     {
       "capabilityId": "portal.apps",
@@ -43,29 +43,29 @@
     {
       "capabilityId": "sis.terms",
       "service": "sis",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R5-SIS-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/sis.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "sis.timetable",
       "service": "sis",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R5-SIS-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/sis.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "sis.today",
       "service": "sis",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R5-SIS-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/sis.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "sis.history",
@@ -74,7 +74,7 @@
       "evidenceId": null,
       "readMethod": null,
       "documentPath": "docs/research/sis.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": "Independent academic-record entry, schema, publication state and completeness have not been verified."
     },
     {
       "capabilityId": "sis.grades",
@@ -83,7 +83,7 @@
       "evidenceId": null,
       "readMethod": null,
       "documentPath": "docs/research/sis.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": "Independent academic-record entry, schema, publication state and completeness have not been verified."
     },
     {
       "capabilityId": "catalog.search",

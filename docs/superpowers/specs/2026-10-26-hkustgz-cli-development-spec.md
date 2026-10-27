@@ -1,7 +1,7 @@
 # hkustgz-cli 开发 Spec v0.1
 
 日期：2026-10-26（Asia/Shanghai）  
-状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；其余业务取证仍进行中，发布未获授权。
+状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；Task 5 SIS 学期、本人计划课表、今日课程已实现待用户审查，Task 6 未开始；其余业务取证仍进行中，发布未获授权。
 上位设计：[技术方案](2026-10-26-hkustgz-cli-design.md)  
 执行配套：[分阶段开发计划](../plans/2026-10-26-hkustgz-cli-development-plan.md)
 
@@ -212,6 +212,8 @@ Task 2 先实现 Portal/SIS/Canvas 的认证子集；Catalog 公开可见性不�
 - today 是按学校时区查询的计划课程；例外未知时输出 warnings，不能保证当日实际授课。已知取消/改期按来源处理。
 - history 与 grades 独立，不要求历史课程都有分数；gradeValue 用 string|null 保存字母、数字或特殊状态，gradeStatus 区分 published/unpublished/unknown。
 - 验收 SIS-01：多 meeting 和跨日期范围正确过滤；SIS-02：新生无历史、未发布成绩、接口异常三个结果不能混同。
+
+Task 5 实证细化（待审）：课表 termId 表示已核实的单学期日期窗口，源响应不提供逐课程登记学期ID；请求前后学期标签、本人身份及完整来源批次必须一致。学分缺失为 null，例外覆盖 unknown，today 为计划课程；历史/成绩仍 pending。详见 docs/acceptance/sis.md。
 
 ### 7.3 Catalog
 
