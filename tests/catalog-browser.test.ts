@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';import test from 'node:test';import {chromium} from 'playwright';import {createReader} from '../src/adapters/catalog/reader.js';import {queryCatalog} from '../src/adapters/catalog/index.js';import {HEADERS} from '../src/adapters/catalog/parser.js';
+test('Catalog DOM reader changes real subject tabs and checks response count', {skip:process.env.HKUSTGZ_TEST_BROWSER!=='1'},async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});try{
+ const page=await browser.newPage();let reads=0;
+ const html=`<input placeholder="Select" value="2026-27 Fall"><div class="course-code-list"><div class="code-item active">IPEN</div><div class="code-item">AIAA</div></div><main></main><script>
+ const items=document.querySelectorAll('.code-item');
+ async function show(subject){await fetch('https://sisn-service.hkust-gz.edu.cn/api/course/pageCourseSupermarkeView',{method:'POST'});document.querySelector('main').innerHTML='<div class="course-card"><div class="course-header">'+subject+'5100 - Synthetic Policy [3 Credits]</div><table class="el-table__header"><tr>'+${JSON.stringify(HEADERS)}.map(x=>'<th><div class="cell">'+x+'</div></th>').join('')+'</tr></table><table class="el-table__body"><tbody><tr>'+['L01 (1234)','TBA','Room A','Synthetic','','80','79','0','0',''].map(x=>'<td>'+x+'</td>').join('')+'</tr></tbody></table></div>';}
+ items.forEach(x=>x.onclick=()=>{items.forEach(y=>y.classList.remove('active'));x.classList.add('active');show(x.textContent)});show('IPEN');</script>`;
+ await page.route('**/*',route=>{if(route.request().url().includes('/api/course/')){reads++;return route.fulfill({contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify({code:'0',totalSize:1,totalPage:1,nextPage:false,pageIndex:1})});}return route.fulfill({contentType:'text/html',body:html});});
+ const options={refresh:true,deadlineMs:Date.now()+15000};const reader=await createReader(page,undefined,options);const result=await queryCatalog({text:'Policy'},options,reader);assert.equal(result.ok,true);assert.equal(result.data.items.length,2);assert.equal(result.meta.pagesRead,2);assert.equal(reads,2);assert.equal(result.data.items[1]?.code,'AIAA5100');
+ }finally{await browser.close();}
+});
+test('term switching waits for new course DOM even when subject and count are unchanged',{skip:process.env.HKUSTGZ_TEST_BROWSER!=='1'},async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});try{
+ const page=await browser.newPage();
+ const html=`<input placeholder="Select" value="2026-27 Fall" onclick="setTimeout(()=>document.querySelector('.el-select-dropdown').style.display='block',100)"><div class="el-select-dropdown" style="display:none"><div onclick="change()">2025-26 Winter</div></div><div class="course-code-list"><div class="code-item active">IPEN</div></div><main></main><script>
+ function render(title){document.querySelector('main').innerHTML='<div class="course-card"><div class="course-header">IPEN5100 - '+title+' [3 Credits]</div><table class="el-table__header"><tr>'+${JSON.stringify(HEADERS)}.map(x=>'<th><div class="cell">'+x+'</div></th>').join('')+'</tr></table><table class="el-table__body"><tbody><tr>'+['L01 (1234)','TBA','Room A','Synthetic','','80','79','0','0',''].map(x=>'<td>'+x+'</td>').join('')+'</tr></tbody></table></div>';}
+ async function change(){document.querySelector('input').value='2025-26 Winter';await fetch('https://sisn-service.hkust-gz.edu.cn/api/course/pageCourseSupermarkeView',{method:'POST'});setTimeout(()=>render('Winter Course'),300);}
+ fetch('https://sisn-service.hkust-gz.edu.cn/api/course/pageCourseSupermarkeView',{method:'POST'}).then(()=>render('Old Fall Course'));</script>`;
+ await page.route('**/*',r=>r.request().url().includes('/api/course/')?r.fulfill({contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify({code:'0',totalSize:1,totalPage:1,nextPage:false,pageIndex:1})}):r.fulfill({contentType:'text/html',body:html}));
+ const options={refresh:true,deadlineMs:Date.now()+10000};const reader=await createReader(page,'2025-26 Winter',options);const result=await queryCatalog({text:'Course'},options,reader);assert.equal(result.data.items[0]?.title,'Winter Course');assert.equal(result.data.items[0]?.termId,'2025-26 Winter');
+ }finally{await browser.close();}
+});

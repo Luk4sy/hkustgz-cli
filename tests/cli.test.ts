@@ -36,6 +36,7 @@ test('unknown options and missing or invalid parameters exit 2', async () => {
 
 test('pending capability cannot invoke even an injected read handler', async () => {
   const result = await executeCommand(['catalog', 'search', 'AI'], { sessionRunner: noSession,
+    capabilities:[{id:'catalog.search',service:'catalog',state:'pending',reason:'Synthetic pending gate.',evidenceId:null}],
     handlers: { 'catalog.search': async () => { throw new Error('Handler must not run'); } },
   });
   assert.equal(result.exitCode, 8);
@@ -43,14 +44,14 @@ test('pending capability cannot invoke even an injected read handler', async () 
   assert.equal(result.stderr, '');
 });
 
-test('capabilities reports five modules as pending, never as ready', async () => {
+test('capabilities reports verified Catalog and leaves other modules pending', async () => {
   const result = await executeCommand(['capabilities'], { sessionRunner: noSession });
   const payload = JSON.parse(result.stdout);
   assert.equal(result.exitCode, 0);
   assert.equal(payload.ok, true);
   const services = new Set(payload.data.items.map((item: { service: string }) => item.service));
   for (const service of ['portal', 'sis', 'catalog', 'canvas', 'booking-library']) assert.equal(services.has(service), true);
-  assert.equal(payload.data.items.some((item: { state: string }) => item.state === 'verified'), false);
+  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['catalog.search','catalog.course']);
 });
 
 test('one JSON document on stdout preserves a verified read and strips temporary source tokens', async () => {

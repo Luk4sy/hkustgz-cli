@@ -2,7 +2,7 @@
   "schemaVersion": "1",
   "observedAt": "2026-10-26",
   "status": "in_progress",
-  "note": "Research observations only; no adapter or per-service cold-start acceptance. Runtime capabilities remain pending.",
+  "note": "Per-capability research and real CLI acceptance; Catalog verified with explicit bounded coverage. Other business adapters remain pending.",
   "entries": [
     {
       "capabilityId": "portal.apps",
@@ -88,20 +88,20 @@
     {
       "capabilityId": "catalog.search",
       "service": "catalog",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R4-CATALOG-20261027",
+      "readMethod": "dom",
       "documentPath": "docs/research/catalog.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "catalog.course",
       "service": "catalog",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R4-CATALOG-20261027",
+      "readMethod": "dom",
       "documentPath": "docs/research/catalog.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "canvas.courses",

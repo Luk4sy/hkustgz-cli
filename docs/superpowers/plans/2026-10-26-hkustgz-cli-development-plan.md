@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3 已实现待审查，Task 4–9 尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4实现完成待用户审查，Task 5–9 尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -45,7 +45,7 @@
 
 ### Task 0：五模块读取证据与专用会话实验
 
-**状态：进行中。已建立五系统研究记录与19项 pending 证据索引；专用profile的Portal/SIS/Canvas认证子集已有实际CLI验证；业务读取完整性及Booking/Library认证仍待补证，见docs/acceptance/session-reuse.md。未通过证据门槛的真实适配器不得启用。**
+**状态：进行中。已建立五系统研究记录；Catalog两项已验证，其余17项业务pending；专用profile的Portal/SIS/Canvas认证子集已有实际CLI验证；业务读取完整性及Booking/Library认证仍待补证，见docs/acceptance/session-reuse.md。未通过证据门槛的真实适配器不得启用。**
 
 **Files:** Create `docs/research/{portal,sis,catalog,canvas,booking-library}.md`、`docs/research/evidence-index.json`、`docs/acceptance/session-reuse.md`。
 
@@ -87,7 +87,7 @@
 
 ### Task 3：有界查询、分页、日期与脱敏
 
-**状态：用户复审修复完成，96项完整测试（含10项既有Chrome测试）、构建和类型检查通过；独立审阅两项Important及用户复审三项中等问题及后续带引号赋值回归均已修复。等待用户复审，不进入Task 4。见docs/acceptance/query-core.md。**
+**状态：用户复审修复完成，96项完整测试（含10项既有Chrome测试）、构建和类型检查通过；独立审阅两项Important及用户复审三项中等问题及后续带引号赋值回归均已修复。32f0bab已获用户验收。见docs/acceptance/query-core.md。**
 
 **Files:** Create `src/core/{query,policy,sanitize}.ts`、`tests/{query,policy,sanitize}.test.ts`。Modify `src/core/contracts.ts`、`src/cli/{main,render}.ts`、`src/session/browser.ts`（传递结构化中断原因）；补 `tests/query-cli.test.ts`。
 
@@ -101,15 +101,17 @@
 
 ### Task 4：Catalog 搜索与班次读取
 
+**状态：实现完成待用户审查；108项测试全部通过（含12项Chrome本机合成测试）、构建、类型检查及差异检查通过。真实编译CLI对照Fall搜索/详情及Winter两学科完整搜索。独立审阅问题已修复，未进入Task 5。见docs/acceptance/catalog.md。**
+
 **Files:** Create `src/adapters/catalog/{index,parser,model,manifest,cache}.ts`、`tests/{catalog,catalog-cli}.test.ts`、`tests/fixtures/catalog/`。Modify handler 注册和能力表。
 
 **Interfaces:** Consumes SessionRunner、collectPages、QueryOptions；Produces `searchCatalog(input:{text:string;termId?:string},options:QueryOptions):Promise<QueryResult<{items:CatalogCourse[]}>>` 和 `getCatalogCourse(input:{id:string;termId?:string},options:QueryOptions):Promise<QueryResult<CatalogCourse>>`。CatalogCourse/section 字段严格使用 Spec §7.3，源字段映射引用本模块 evidenceId。
 
-- [ ] Step 1：从 Task 0 的已核实结构创建合成 fixture，写 `search_is_applied`、`meetings_preserve_merged_rows`、`available_is_not_recalculated`、`virtual_list_is_not_full_catalog`。例如 quota=80、enrolled=79、来源 available=0 时断言输出仍是0。
-- [ ] Step 2：运行 `node --import tsx --test tests/catalog.test.ts tests/catalog-cli.test.ts` 确认失败。
-- [ ] Step 3：实现证据记录规定的读取路线、源 schema 校验、稳定 ID、学期回显和分页；缓存只允许已证实公开数据，TTL=300000ms，--refresh跳过本地缓存。
-- [ ] Step 4：复跑测试并在真实页面对照关键词、学期及至少两页记录；标记页面15–20分钟更新语义，不声称实时。没有公开性证据时测试确认不写缓存。
-- [ ] Step 5：通过契约、build及真实验收后更新 verified 和 evidenceId，提交 `feat: query catalog courses and class quotas`；只通过 fixture 时保持 pending。
+- [x] Step 1：从 Task 0 的已核实结构创建合成 fixture，写 `search_is_applied`、`meetings_preserve_merged_rows`、`available_is_not_recalculated`、`virtual_list_is_not_full_catalog`。例如 quota=80、enrolled=79、来源 available=0 时断言输出仍是0。
+- [x] Step 2：运行 `node --import tsx --test tests/catalog.test.ts tests/catalog-cli.test.ts` 确认失败。
+- [x] Step 3：实现证据记录规定的读取路线、源 schema 校验、稳定 ID、学期回显和分页；缓存只允许已证实公开数据，TTL=300000ms，--refresh跳过本地缓存。
+- [x] Step 4：复跑测试并在真实页面对照关键词、学期及至少两页记录；标记页面15–20分钟更新语义，不声称实时。没有公开性证据时测试确认不写缓存。
+- [x] Step 5：通过契约、build及真实验收后更新 verified 和 evidenceId，提交 `feat: query catalog courses and class quotas`；只通过 fixture 时保持 pending。
 
 ### Task 5：SIS 学期、课表与条件学业记录
 

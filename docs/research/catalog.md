@@ -31,3 +31,17 @@
 ## 仍缺的门槛
 
 稳定课程 ID 与 termId 的源映射、跨学科关键词覆盖、无匹配结果判据、课程详情展开、虚拟列表/异常返回、完整性与时区验证尚未完成。尚无 fixture、适配器或真实 CLI 验收。公开缓存暂不启用。
+
+## 第四模块补证（2026-10-27）
+
+证据编号：**R4-CATALOG-20261027**。读取路线为已知公开 `/cq` 页面正常学期/学科点击及 DOM 读取，不重放签名 POST、不解码响应 data。
+
+- 无 Cookie 的独立临时 Chrome 再次读到 Fall 课程；产品仍不将公开可读性当作账号认证。暂不启用运行时缓存，不保存页面、凭据或网络正文。
+- 学期标识使用来源下拉的原样标签（例如 `2026-27 Fall`、`2025-26 Winter`）；不声称它是编码 API 的内部 termId。课程 CLI id 为 `termLabel:courseCode`，班次 id 再附来源括号内班次编号。命名空间防止跨学期混淆；源标签或代码改变时 CLI id 随之改变。相同 Fall 课程在两个独立进程中标识一致。
+- `.course-code-list .code-item` 为完整可见学科入口；`.active` 表示当前学科。Fall 本次30个入口，Winter本次2个。响应 `code=0,totalPage=1,nextPage=false,pageIndex=1` 且 `totalSize` 与完整 DOM card 数相等，才接受单个学科。无法证明耗尽、虚拟列表少行、表头变化或异常响应均失败，不把可见子集视为全量。
+- 搜索采用各已核验学科完整课程集合上的本地大小写无关子串匹配：课程代码、标题、meeting教师及助教。没有采用无完整性计数的联想项作为全集；匹配范围随结果 warnings 返回。最多读取20个学科页/2000条源课程，之后过滤并应用用户返回 limit；未扫完的搜索为 partial/退出7。页数是通过校验的学科数据页数，页面启动的学期/学科目录请求不算结果页。
+- header 来源：`.course-header` 的代码、标题、`[N Credits]`；班次列按表头 Section / Date & Time / Location / Instructor / TA/IA/GTA / Quota / Enrol / Avail / Wait / Remarks 映射。按 rowspan 展开全部10列，meeting保留原始日期时间文本、地点、教师和助教；TBA保留为来源文本，数字缺失标记为null。班次重复行必须保持相同名额/限制字段，否则拒绝结构变化。available直接来自Avail。
+- 切换学期或学科后，须观察课程 DOM 的实际更新，再核对响应计数、学科前缀及当前学期；只收到响应或输入框变更不足以接受新学期数据。
+- 编译后真实CLI：Fall搜索IPEN5100得到1个匹配，读取20学科/248源课程后返回partial/page_cap；同课程详情核验IPEN完整19门后返回complete，保留班次6405、Mo 06:00PM–08:50PM、Rm202 E3以及来源名额。Winter搜索`a`读取2学科/2课程并返回complete，证明学期影响查询；不是固定假定Winter只有1门。课程名额仅是抓取时快照，来源通常15–20分钟更新。
+
+启用 `catalog.search`、`catalog.course`，其他17项业务能力保持pending。完整性仅限结果披露的范围；多页上游学科响应若将来出现，当前拒绝并返回结构变化，未猜测翻页接口。

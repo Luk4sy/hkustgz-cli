@@ -40,7 +40,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
     }, ...overrides};
   let stdout = ''; const stderr = ''; let commandName = 'hkustgz-cli'; let exitCode = 0;
   let outputFormat: 'json' | 'table' = 'json';
-  const program = new Command('hkustgz-cli').description('Read-only HKUST(GZ) campus CLI — foundation alpha; school adapters are pending.')
+  const program = new Command('hkustgz-cli').description('Read-only HKUST(GZ) campus CLI — Catalog available; other school queries pending.')
     .version(version).exitOverride().showHelpAfterError(false)
     .addOption(new Option('--format <format>', 'Output format').choices(['json', 'table']).default('json'))
     .configureOutput({writeOut: (text) => {stdout += text;}, writeErr: () => {}});
@@ -109,6 +109,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         if (definition.capabilityId && requireCapability(deps.capabilities, definition.capabilityId).service !== definition.service) throw new CliFailure('ADAPTER_CHANGED');
         const id = definition.capabilityId ?? definition.path.replace(' ', '.');
         let handler = Object.hasOwn(deps.handlers, id) ? deps.handlers[id] : undefined;
+        if(!handler&&definition.service==='catalog')handler=(await import('../adapters/catalog/index.js')).createCatalogHandlers()[id];
         if(!handler&&!definition.capabilityId&&definition.path!=='doctor')handler=(await import('../session/auth.js')).createControlHandlers()[id];
         if (!handler) throw new CliFailure(definition.capabilityId ? 'ADAPTER_CHANGED' : 'CAPABILITY_PENDING');
         const parsed = (definition.capabilityId ? QueryResultSchema : ControlResultSchema).safeParse(await handler(args, deps));
