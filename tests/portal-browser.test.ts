@@ -1,8 +1,9 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {chromium,type Page} from 'playwright';import {createPortalPageReader} from '../src/adapters/portal/reader.js';import {PORTAL_PATHS,PORTAL_ORIGIN} from '../src/adapters/portal/manifest.js';import {apps,columns,notices,categories,calendar,range} from './fixtures/portal/data.js';import {parseApps,parseColumns,parseNoticePage,parseCategories,parseAgenda,parseDetail} from '../src/adapters/portal/parser.js';
+import test from 'node:test';import assert from 'node:assert/strict';import {chromium,type Page} from 'playwright';import {createPortalPageReader} from '../src/adapters/portal/reader.js';import {PORTAL_PATHS,PORTAL_ORIGIN} from '../src/adapters/portal/manifest.js';import {apps,columns,notices,categories,calendar,range} from './fixtures/portal/data.js';import {queryPortalApps,queryPortalNotice} from '../src/adapters/portal/index.js';import {parseApps,parseColumns,parseNoticePage,parseCategories,parseAgenda,parseDetail} from '../src/adapters/portal/parser.js';
 const skip=process.env.HKUSTGZ_TEST_BROWSER!=='1';
 async function fixture(run:(page:Page,templates:Map<string,string>)=>Promise<void>,mode='normal'){
  const browser=await chromium.launch({channel:'chrome',headless:true});try{const page=await browser.newPage();await page.route('**/*',r=>{const u=new URL(r.request().url());const body=u.pathname===PORTAL_PATHS.apps?{...apps,data:{...apps.data,appList:apps.data.appList.map(x=>({...x,studentId:'private-marker'}))}}:u.pathname===PORTAL_PATHS.columns?columns:[PORTAL_PATHS.notices,PORTAL_PATHS.mnews].includes(u.pathname as any)?notices:u.pathname===PORTAL_PATHS.categories?categories:calendar(Number(u.searchParams.get('categoryIds'))).body;
  if(u.pathname==='/')return r.fulfill({contentType:'text/html',body:'我的应用 退出'});
+ if(mode==='rate-limited')return r.fulfill({status:429,headers:{'Retry-After':'60'},contentType:'application/json',body:'{}'});
  if(mode==='malformed')return r.fulfill({contentType:'application/json',body:JSON.stringify({result:'1',data:{total:0,appList:{}}})});
  if(mode==='login')return r.fulfill({contentType:'text/html',body:'<html><input type=password></html>'});if(mode==='script')return r.fulfill({contentType:'text/javascript',body:'window.privateMarkerExecuted=true;'});
  return r.fulfill({status:mode==='forbidden'?403:200,contentType:'application/json',body:JSON.stringify(body)});});await page.goto(PORTAL_ORIGIN);await run(page,new Map(Object.values(PORTAL_PATHS).map(p=>[p,PORTAL_ORIGIN+p+'?_p=synthetic&callback=old'])));}finally{await browser.close();}
@@ -18,4 +19,16 @@ test('Portal detail redirect hops wait 500ms after the previous response complet
  Object.defineProperty(page,'request',{value:{get:async()=>{starts.push(Date.now());const first=starts.length===1;return{status:()=>first?302:200,headers:()=>first?{location:'/mnews/_s2/01/62/c16a354/page.psp'}:{},text:async()=>'<div class="wp_articlecontent">Complete body</div>',dispose:async()=>{if(first)disposedAt=Date.now();}};}}});
  const reader=createPortalPageReader(page,templates),n=parseNoticePage(notices,parseColumns(columns)[1]!,1).items[0]!;
  assert.equal(parseDetail(await reader.detail(n,new AbortController().signal),n).bodyText,'Complete body');assert.equal(starts.length,2);assert.ok(starts[1]!-disposedAt>=500,'redirect request started before the source pacing interval elapsed');
+}));
+
+
+test('Portal list Retry-After beyond the query budget prevents a second request',{skip},async()=>fixture(async(page,templates)=>{
+ let calls=0;page.on('request',r=>{if(new URL(r.url()).pathname===PORTAL_PATHS.apps)calls++;});
+ await assert.rejects(queryPortalApps({refresh:false,deadlineMs:Date.now()+5000},createPortalPageReader(page,templates)),{code:'RATE_LIMITED'});
+ assert.equal(calls,1,'the server waiting period exceeds the budget, so no retry may be sent');
+},'rate-limited'));
+test('Portal detail Retry-After beyond the query budget prevents a second request',{skip},async()=>fixture(async(page,templates)=>{
+ let calls=0,disposed=0;Object.defineProperty(page,'request',{value:{get:async()=>{calls++;return{status:()=>429,headers:()=>({'retry-after':'60'}),dispose:async()=>{disposed++;}};}}});
+ await assert.rejects(queryPortalNotice({id:'mnews_16:354'},{refresh:false,deadlineMs:Date.now()+5000},createPortalPageReader(page,templates)),{code:'RATE_LIMITED'});
+ assert.equal(calls,1,'the detail reader must pass Retry-After to the shared policy');assert.equal(disposed,1);
 }));
