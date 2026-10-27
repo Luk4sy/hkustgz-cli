@@ -63,3 +63,11 @@ test('prefixed diagnostics recursively sanitize multiply serialized payloads',as
  }
  const plain='response: { "courseCode": "IPEN1000", "state": "open" }; complete';assert.equal(sanitizeValue(plain),plain);
 });
+test('quoted credential assignments retain their key context in both CLI formats',async()=>{
+ const message='token="private-marker" password="private-marker" access_token = "private-marker with spaces"; courseCode="IPEN1000"; state="open"';
+ assert.doesNotMatch(JSON.stringify(sanitizeValue(message)),/private-marker/);
+ for(const format of ['json','table']){
+  const result=await executeCommand(['catalog','search','Synthetic','--format',format],{capabilities:[{id:'catalog.search',service:'catalog',state:'verified',reason:null,evidenceId:'synthetic-only'}],handlers:{'catalog.search':async()=>({ok:true,data:{items:[{message}]},meta:queryMeta()})}});
+  assert.equal(result.exitCode,0);assert.doesNotMatch(result.stdout+result.stderr,/private-marker/);assert.match(result.stdout,/IPEN1000/);assert.match(result.stdout,/open/);
+ }
+});

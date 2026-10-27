@@ -73,6 +73,11 @@ export function sanitizeValue(value:unknown):unknown {
     const end=jsonEnd(item,i);let parsed:unknown;let valid=false;
     if(end>i){try{parsed=JSON.parse(item.slice(i,end));valid=true;}catch{}}
     if(!valid){if(++failures>64)return '[Truncated diagnostic]';continue;}
+    // A quoted assignment value must be sanitized together with its credential key.
+    const assignment=item.slice(cursor,i).match(/\b([a-z0-9_-]+)["']?\s*[:=]\s*$/i);
+    if(item[i]==='"'&&assignment&&credentials.has(normalize(assignment[1]!))){
+     output+=text(item.slice(cursor,end));cursor=end;i=end-1;continue;
+    }
     const cleaned=JSON.stringify(visit(parsed,depth+1));
     output+=text(item.slice(cursor,i))+(cleaned===JSON.stringify(parsed)?item.slice(i,end):cleaned);
     cursor=end;i=end-1;
