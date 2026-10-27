@@ -1,7 +1,7 @@
 import type {Page,Response} from 'playwright';import type {CliDependencies,QueryOptions} from '../../core/contracts.js';
 import {CliFailure} from '../../core/errors.js';import {withSession,selectedBrowser} from '../../session/browser.js';import {resolveDataPaths} from '../../session/paths.js';
 import {CATALOG_URL} from './manifest.js';import type {CatalogReader} from './model.js';import {snapshotFromBatch} from './batch.js';
-interface Capture {sequence:number;terms:Record<string,string>;completed?:{sequence:number;label:string;termId:string;subject:string;body:string}}
+interface Capture {sequence:number;terms:Record<string,string>;readSubjects?:(termId:string)=>Promise<string>;completed?:{sequence:number;label:string;termId:string;subject:string;body:string}}
 /** Verified public page client: observe UI course reads; read its public term list for label/id binding. */
 async function installCapture(page:Page,timeout:number):Promise<void>{
  const installed=await page.evaluate(async timeout=>{
@@ -10,7 +10,7 @@ async function installCapture(page:Page,timeout:number):Promise<void>{
 
   let installed=false;let terms:Promise<unknown>|undefined;
   root.webpackChunkapp.push([['hkustgz-cli-catalog-capture'],{},(require:(id:number)=>{ue?:Record<string,unknown>})=>{
-   const api=require(74604).ue;if(!api||typeof api.pageCourseSupermarkeView!=='function'||typeof api.listPublicMarketTermInfo!=='function')return;
+   const api=require(74604).ue;if(!api||typeof api.pageCourseSupermarkeView!=='function'||typeof api.listPublicMarketTermInfo!=='function'||typeof api.listPublicMarketCourseSubjectAreas!=='function')return;
    const original=api.pageCourseSupermarkeView as (...args:unknown[])=>Promise<{data:Record<string,unknown>}>;
    const state:Capture={sequence:0,terms:Object.create(null) as Record<string,string>};root.__hkustgzCatalogCapture=state;
    api.pageCourseSupermarkeView=async function(...args:unknown[]){
@@ -26,6 +26,15 @@ async function installCapture(page:Page,timeout:number):Promise<void>{
      state.completed={sequence,label:(document.querySelector('input[placeholder="Select"]') as HTMLInputElement)?.value??'',termId:request.termId,subject:request.subjectArea,body:JSON.stringify(projected)};
     }catch{state.completed={sequence,label:(document.querySelector('input[placeholder="Select"]') as HTMLInputElement)?.value??'',termId:request.termId,subject:request.subjectArea,body:'null'};}
     return result;
+   };
+   state.readSubjects=async function(termId:string){
+    await new Promise<void>(resolve=>setTimeout(resolve,500));
+    try{
+     const result=await (api.listPublicMarketCourseSubjectAreas as (input:{termId:string})=>Promise<{data:{code:unknown;data:unknown}}> )({termId});
+     const body=result.data;
+     if(body.code!=='0'||!Array.isArray(body.data)||body.data.some(value=>typeof value!=='string'))return JSON.stringify({readError:'ADAPTER_CHANGED'});
+     return JSON.stringify({termId,code:body.code,subjects:[...body.data]});
+    }catch(error){const e=error as {response?:{status?:number};code?:string};const status=e?.response?.status;const readError=status===401?'LOGIN_REQUIRED':status===403?'PERMISSION_DENIED':status===429?'RATE_LIMITED':status===408||e?.code==='ECONNABORTED'||e?.code==='ETIMEDOUT'?'QUERY_TIMEOUT':[500,502,503,504].includes(status??0)||e?.code==='ERR_NETWORK'?'NETWORK_REQUIRED':'ADAPTER_CHANGED';return JSON.stringify({readError});}
    };
    terms=new Promise<void>(resolve=>setTimeout(resolve,500)).then(()=>(api.listPublicMarketTermInfo as (input:object)=>Promise<unknown>)({})).catch(error=>{const e=error as {response?:{status?:number};code?:string};const status=e?.response?.status;const readError=status===401?'LOGIN_REQUIRED':status===403?'PERMISSION_DENIED':status===429?'RATE_LIMITED':status===408||e?.code==='ECONNABORTED'||e?.code==='ETIMEDOUT'?'QUERY_TIMEOUT':[500,502,503,504].includes(status??0)||e?.code==='ERR_NETWORK'?'NETWORK_REQUIRED':'ADAPTER_CHANGED';return{readError};});installed=true;
   }]);
@@ -51,6 +60,20 @@ async function captured(page:Page,after:number,label:string,termId:string,subjec
  },{after,label,termId,subject:subject??null},{timeout});
  try{const value=await handle.jsonValue();if(value===false)throw new CliFailure('ADAPTER_CHANGED');return value;}finally{await handle.dispose();}
 }
+async function subjectDirectory(page:Page,termId:string,timeout:number):Promise<string[]>{
+ const text=await page.evaluate(async({termId,timeout})=>{
+  const state=(window as unknown as {__hkustgzCatalogCapture:Capture}).__hkustgzCatalogCapture;
+  if(!state.readSubjects)return JSON.stringify({readError:'ADAPTER_CHANGED'});
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  try{return await Promise.race([state.readSubjects(termId),new Promise<string>(resolve=>{timer=setTimeout(()=>resolve(JSON.stringify({readError:'QUERY_TIMEOUT'})),timeout);})]);}
+  finally{if(timer)clearTimeout(timer);}
+ },{termId,timeout});
+ const result=JSON.parse(text) as {readError?:string;termId?:string;code?:string;subjects?:unknown};
+ if(result.readError&&['ADAPTER_CHANGED','LOGIN_REQUIRED','PERMISSION_DENIED','RATE_LIMITED','QUERY_TIMEOUT','NETWORK_REQUIRED'].includes(result.readError))throw new CliFailure(result.readError);
+ const subjects=result.subjects;
+ if(result.termId!==termId||result.code!=='0'||!Array.isArray(subjects)||!subjects.length||subjects.some(value=>typeof value!=='string'||! /^[A-Z]+$/.test(value))||new Set(subjects).size!==subjects.length)throw new CliFailure('ADAPTER_CHANGED','The target term subject directory could not be verified.');
+ return subjects;
+}
 const isList=(response:Response)=>new URL(response.url()).origin==='https://sisn-service.hkust-gz.edu.cn'&&new URL(response.url()).pathname==='/api/course/pageCourseSupermarkeView';
 export async function createReader(page:Page,term:string|undefined,options:QueryOptions):Promise<CatalogReader>{
  const timeout=()=>Math.max(1,Math.min(30000,options.deadlineMs-Date.now()));page.setDefaultTimeout(timeout());
@@ -65,8 +88,7 @@ export async function createReader(page:Page,term:string|undefined,options:Query
   const before=await sequence(page);await option.click();await captured(page,before,term,sourceTerm,undefined,timeout());
  }
  const termId=await input.inputValue();if(!termId||term!==undefined&&termId!==term)throw new CliFailure('ADAPTER_CHANGED');
- const subjects=(await page.locator('.course-code-list .code-item').allTextContents()).map(s=>s.trim());
- if(!subjects.length||subjects.some(x=>! /^[A-Z]+$/.test(x)))throw new CliFailure('ADAPTER_CHANGED');
+ const subjects=await subjectDirectory(page,sourceTerm,timeout());
  return{readMethod:'response',subjects,read:async(subject,signal)=>{
   if(signal.aborted)throw signal.reason;page.setDefaultTimeout(timeout());
   const before=await sequence(page);

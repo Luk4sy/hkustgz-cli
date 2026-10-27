@@ -31,7 +31,7 @@
 
 ## 验证与试用
 
-`HKUSTGZ_TEST_BROWSER=1 npm test` **119项全部通过、0跳过**，含21项Chrome本机合成测试；构建、类型检查通过。真实编译CLI已验证：Fall搜索20页/248源课程，IPEN5100返回1条并标记partial/page_cap；课程详情complete；Winter搜索2页/2门complete。
+`HKUSTGZ_TEST_BROWSER=1 npm test` **124项全部通过、0跳过**，含26项Chrome本机合成测试；构建、类型检查通过。真实编译CLI已验证：Fall搜索20页/248源课程，IPEN5100返回1条并标记partial/page_cap；课程详情complete；Winter搜索2页/2门complete。
 
 ```bash
 node bin/hkustgz-cli.mjs catalog search IPEN5100 --format table
@@ -40,3 +40,11 @@ node bin/hkustgz-cli.mjs catalog search a --term '2025-26 Winter' --format table
 ```
 
 公开页面客户端模块变化或无法取得完整批次时返回失败，不能用固定等待时间或局部DOM变化代替证据。跨平台发行仍未验收。
+
+## 目标学期学科全集修复
+
+65e9033仍从学科DOM读取全集，课程批次就绪不证明目录已更新。已用合成Chrome复现目标目录增加（旧IPEN、新IPEN/AIAA）、减少及新入口永不出现。
+
+现在通过已核实的公开客户端 `listPublicMarketCourseSubjectAreas({termId:sourceTerm})` 读取完整目录，复制为带请求termId的JSON快照；校验成功码、请求学期、非空字符串列表、学科格式及唯一性。目录不再来自DOM；DOM仅用于点击该全集中的学科入口。额外读取保留500ms间隔并受单次/总预算约束。新入口晚出现时等待；始终未出现时保留已核实子集并返回partial/timeout，不输出complete。重复目录或权限失败直接失败。
+
+五项新增Chrome回归先失败、后通过。最终124项全部通过，含26项本机合成Chrome测试；构建、类型检查和差异检查通过。真实编译CLI再次读取Winter两学科、两门课程并返回complete。等待第四模块复审，未进入第五模块。

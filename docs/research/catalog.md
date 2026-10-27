@@ -63,3 +63,5 @@
 批次必须属于本次操作：序号更新，标签通过来源termList映射到请求termId，学科相符；所有班次termId等于请求termId；成功code及totalSize/totalPage/nextPage/pageIndex通过原完整性校验。无法获取客户端、批次或字段时失败，不回退到DOM就绪猜测。字段相同不再造成误拒，因为有独立请求/完整响应证据。
 
 真实CLI：Fall搜索仍为20页/248源课程、1个IPEN5100匹配、partial/page_cap；IPEN5100详情complete；Winter两学科complete，readMethod均为response。来源模块和字段结构均是当前构建证据，变化后需要重新核验。
+
+当前学科全集也来自完整响应：通过已核实的 `74604.ue.listPublicMarketCourseSubjectAreas({termId})` 获取目标学期字符串数组，绑定请求termId后复制、校验并作为扫描全集。原来源ps函数已使用该读取路线；API完整目录与DOM呈现解耦，不能以课程响应完成推断DOM目录完成。学科数量增加/减少、目录晚呈现及入口不出现均有合成回归，真实Winter全集再次对照为两学科。

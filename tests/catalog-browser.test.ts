@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';import test from 'node:test';import {chr
 const skip=process.env.HKUSTGZ_TEST_BROWSER!=='1';
 import {sourceBatch} from './fixtures/catalog/batch.js';
 
-function pageHtml(mode:string){return `<input placeholder="Select" value="2026-27 Fall" onclick="setTimeout(()=>document.querySelector('.el-select-dropdown').style.display='block',30)"><div class="el-select-dropdown" style="display:none"><div onclick="change()">2025-26 Winter</div></div><div class="course-code-list"><div class="code-item active" onclick="show('IPEN')">IPEN</div><div class="code-item" onclick="show('AIAA')">AIAA</div></div><main></main><script>
- let term='fall';const api={listPublicMarketTermInfo:async()=>({data:{code:'0',data:{termList:[{termId:'fall',description:'2026-27 Fall'},{termId:'winter',description:'2025-26 Winter'}]}}}),pageCourseSupermarkeView:async input=>({data:await fetch('https://sisn-service.hkust-gz.edu.cn/api/course/pageCourseSupermarkeView',{method:'POST',body:JSON.stringify(input)}).then(r=>{if(!r.ok)throw {response:{status:r.status},message:'private-marker'};return r.json();})})};
+function pageHtml(mode:string){return `<input placeholder="Select" value="2026-27 Fall" onclick="setTimeout(()=>document.querySelector('.el-select-dropdown').style.display='block',30)"><div class="el-select-dropdown" style="display:none"><div onclick="change()">2025-26 Winter</div></div><div class="course-code-list"><div class="code-item active" onclick="show('IPEN')">IPEN</div>${['directory-late','directory-never'].includes(mode)?'':'<div class="code-item" onclick="show(\'AIAA\')">AIAA</div>'}</div><main></main><script>
+ let term='fall';const api={listPublicMarketCourseSubjectAreas:async input=>{if('${mode}'==='directory-denied')throw {response:{status:403},message:'private-marker'};return {data:{code:'0',data:'${mode}'==='directory-invalid'?['IPEN','IPEN']:input.termId==='winter'&&'${mode}'==='directory-shrink'?['IPEN']:['IPEN','AIAA']}}},listPublicMarketTermInfo:async()=>({data:{code:'0',data:{termList:[{termId:'fall',description:'2026-27 Fall'},{termId:'winter',description:'2025-26 Winter'}]}}}),pageCourseSupermarkeView:async input=>({data:await fetch('https://sisn-service.hkust-gz.edu.cn/api/course/pageCourseSupermarkeView',{method:'POST',body:JSON.stringify(input)}).then(r=>{if(!r.ok)throw {response:{status:r.status},message:'private-marker'};return r.json();})})};
  window.webpackChunkapp=[];window.webpackChunkapp.push=chunk=>{chunk[2](id=>({ue:api}));};
  function render(subject,title,room){document.querySelector('main').innerHTML='<div class="course-card"><div class="course-header">'+subject+'5100 - '+title+' [3 Credits]</div><div class="hint">Ready</div><table class="el-table__header"><tr>'+${JSON.stringify(HEADERS)}.map(x=>'<th><div class="cell">'+x+'</div></th>').join('')+'</tr></table><table class="el-table__body"><tbody><tr>'+['L01 (1234)','TBA',room,'Synthetic','','80','79','0','1','Consent'].map(x=>'<td>'+x+'</td>').join('')+'</tr></tbody></table></div>';}
  async function show(subject){document.querySelectorAll('.code-item').forEach(x=>x.classList.toggle('active',x.textContent===subject));const result=await api.pageCourseSupermarkeView({termId:term,subjectArea:subject,pageIndex:1,pageSize:999});const c=result.data.data[0];const title=c.courseInfo.crseShortDesc;const room=c.classSections[0].meetingInfoList[0].facilityName;
@@ -14,7 +14,7 @@ function pageHtml(mode:string){return `<input placeholder="Select" value="2026-2
   if('${mode}'!=='unchanged-dom')setTimeout(()=>render(subject,title,room),700);
  }else render(subject,title,room);
  }
- async function change(){term='winter';document.querySelector('input').value='2025-26 Winter';await show('IPEN');}
+ async function change(){term='winter';document.querySelector('input').value='2025-26 Winter';await show('IPEN');if('${mode}'==='directory-late')setTimeout(()=>{const item=document.createElement('div');item.className='code-item';item.textContent='AIAA';item.onclick=()=>show('AIAA');document.querySelector('.course-code-list').append(item);},1500);}
  show('IPEN');</script>`;}
 async function harness(mode:string,run:(page:import('playwright').Page,reads:()=>number)=>Promise<void>,wrongTerm=false){
  const browser=await chromium.launch({channel:'chrome',headless:true});try{const page=await browser.newPage();let reads=0;
@@ -38,3 +38,10 @@ test('missing verified batch reader fails closed without a DOM fallback',{skip},
 for(const [mode,code] of [['401','LOGIN_REQUIRED'],['403','PERMISSION_DENIED']] as const)test('complete response reader preserves HTTP '+mode,{skip},async()=>harness(mode,async page=>{
  const options={refresh:true,deadlineMs:Date.now()+10000};const reader=await createReader(page,undefined,options);await assert.rejects(queryCatalog({text:'Course'},options,reader),{code});assert.doesNotMatch(await page.evaluate(()=>JSON.stringify((window as any).__hkustgzCatalogCapture)),/private-marker/);
 }));
+
+for(const mode of ['directory-late','directory-shrink','directory-never'])test('subject universe is bound to the target term: '+mode,{skip},async()=>harness(mode,async page=>{
+ const options={refresh:true,deadlineMs:Date.now()+(mode==='directory-never'?3500:12000)};const reader=await createReader(page,'2025-26 Winter',options);assert.deepEqual(reader.subjects,mode==='directory-shrink'?['IPEN']:['IPEN','AIAA']);const result=await queryCatalog({text:'Course'},options,reader);
+ if(mode==='directory-never'){assert.equal(result.ok,false);assert.equal(result.meta.coverage,'partial');assert.equal(result.meta.truncationReason,'timeout');}else{assert.equal(result.ok,true);assert.equal(result.meta.coverage,'complete');assert.equal(result.data.items.length,mode==='directory-shrink'?1:2);}
+}));
+
+for(const [mode,code] of [['directory-invalid','ADAPTER_CHANGED'],['directory-denied','PERMISSION_DENIED']] as const)test('unverified target directory cannot produce complete: '+mode,{skip},async()=>harness(mode,async page=>{await assert.rejects(createReader(page,'2025-26 Winter',{refresh:true,deadlineMs:Date.now()+10000}),{code});}));
