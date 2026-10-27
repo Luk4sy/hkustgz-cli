@@ -1,7 +1,7 @@
 # hkustgz-cli 开发 Spec v0.1
 
 日期：2026-10-26（Asia/Shanghai）  
-状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；Task 5 SIS 学期、本人计划课表、今日课程已实现待用户审查，Task 6 未开始；其余业务取证仍进行中，发布未获授权。
+状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；Task 5 SIS（d708ac5）已验收；Task 6 Portal 已实现待用户审查，Task 7 未开始；其余业务取证仍进行中，发布未获授权。
 上位设计：[技术方案](2026-10-26-hkustgz-cli-design.md)  
 执行配套：[分阶段开发计划](../plans/2026-10-26-hkustgz-cli-development-plan.md)
 
@@ -201,6 +201,8 @@ Task 2 先实现 Portal/SIS/Canvas 的认证子集；Catalog 公开可见性不�
 - 公告：id、title、publishedAt、category、url；详情补 bodyText，保留无权限和分页中断。
 - 日程：id、source、title、startsAt、endsAt、location、courseCode、sectionId、duplicateCandidate；未提供字段为 null。
 - 验收 PORTAL-01：同一时段两个来源的相似条目仍保留为两个；PORTAL-02：公告加载未完成不能返回成功空结果。
+
+Task 6 实证细化（待审）：公告ID为来源限定的source:id，查询匹配已读取标题/分类；无法确认的分类返回结构保留可信子集并partial，当前真实全分类仅8条，不能声称全量。详情仅支持同站mnews已核实正文，站外链接明确unsupported；不返回空正文成功。日程保留来源与原始ID，未提供ID为null并warning；不能从标题猜课程或班次。详情GET各跳也必须遵守500ms来源间隔，不执行文章脚本。见docs/acceptance/portal.md。
 
 ### 7.2 SIS
 

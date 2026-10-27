@@ -2,43 +2,43 @@
   "schemaVersion": "1",
   "observedAt": "2026-10-26",
   "status": "in_progress",
-  "note": "Catalog and SIS calendar capabilities verified with bounded coverage; Task5 awaiting user review. Other business adapters remain pending.",
+  "note": "Catalog, SIS calendar and bounded Portal reads verified. Task6 awaits user review; Portal all-category notices currently partial after8 records, external notice details unsupported.",
   "entries": [
     {
       "capabilityId": "portal.apps",
       "service": "portal",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R6-PORTAL-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/portal.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "portal.notices",
       "service": "portal",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R6-PORTAL-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/portal.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "portal.notice",
       "service": "portal",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R6-PORTAL-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/portal.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "portal.agenda",
       "service": "portal",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R6-PORTAL-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/portal.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "sis.terms",

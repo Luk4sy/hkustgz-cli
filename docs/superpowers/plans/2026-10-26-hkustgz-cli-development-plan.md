@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5 已实现待用户审查；Task 6–9 尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task 6已实现待审，Task 7–9尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -45,7 +45,7 @@
 
 ### Task 0：五模块读取证据与专用会话实验
 
-**状态：进行中。已建立五系统研究记录；Catalog两项与SIS三项已验证（第五模块待审），其余14项业务pending；专用profile的Portal/SIS/Canvas认证子集已有实际CLI验证；业务读取完整性及Booking/Library认证仍待补证，见docs/acceptance/session-reuse.md。未通过证据门槛的真实适配器不得启用。**
+**状态：进行中。已建立五系统研究记录；Catalog两项、SIS三项及Portal四项已验证（第六模块待审），其余10项业务pending；专用profile的Portal/SIS/Canvas认证子集已有实际CLI验证；业务读取完整性及Booking/Library认证仍待补证，见docs/acceptance/session-reuse.md。未通过证据门槛的真实适配器不得启用。**
 
 **Files:** Create `docs/research/{portal,sis,catalog,canvas,booking-library}.md`、`docs/research/evidence-index.json`、`docs/acceptance/session-reuse.md`。
 
@@ -115,7 +115,7 @@
 
 ### Task 5：SIS 学期、课表与条件学业记录
 
-**状态：已实现待用户审查；history/grades 按条件证据门槛继续 pending。真实调课/取消样本未取得，exceptionsCoverage=unknown。见 docs/acceptance/sis.md。不得进入 Task 6。**
+**状态：d708ac5已获用户复审通过并验收，149项测试通过（含35项Chrome）；history/grades继续pending。用户已授权Task6。见docs/acceptance/sis.md。**
 
 **Files:** Create `src/adapters/sis/{index,parser,model,manifest}.ts`、`tests/{sis,sis-cli}.test.ts`、`tests/fixtures/sis/`。Modify handler 注册和能力表。
 
@@ -129,15 +129,17 @@
 
 ### Task 6：Portal 应用、公告与日程
 
+**状态：已实现待审。公告全分类当前partial8条，校内详情及分来源日程已实测；外部公告正文不支持。见docs/acceptance/portal.md。不得进入Task7。**
+
 **Files:** Create `src/adapters/portal/{index,parser,model,manifest}.ts`、`tests/{portal,portal-cli}.test.ts`、`tests/fixtures/portal/`。
 
 **Interfaces:** Produces `listPortalApps(options:QueryOptions)`、`listPortalNotices(input:{query?:string},options:QueryOptions)`、`readPortalNotice(input:{id:string},options:QueryOptions)`、`readPortalAgenda(input:DateRange,options:QueryOptions)`；均返回 QueryResult，数据依次为 `{items:PortalApp[]}`、`{items:PortalNotice[]}`、`PortalNoticeDetail`、`{items:PortalEvent[]}`。类型字段按 Spec §7.1。
 
-- [ ] Step 1：写 `similar_events_from_two_sources_survive`、`notice_load_failure_is_not_empty_list`、`temporary_app_ticket_is_not_stable_id`，断言疑似重复不删行，失败不产生成功空数组。
-- [ ] Step 2：运行 `node --import tsx --test tests/portal.test.ts tests/portal-cli.test.ts` 确认失败。
-- [ ] Step 3：实现应用目录、公告分页/详情、限定日期日程，遵循源事件ID和来源；不扩展邮件、校园卡财务或跨系统自动聚合功能。
-- [ ] Step 4：运行测试、build和真实页面对照，明确公告分类/查询覆盖及疑似重复来源；列表不完整返回 partial。
-- [ ] Step 5：按验收更新能力表后提交 `feat: query portal apps notices and agenda`。
+- [x] Step 1：写 `similar_events_from_two_sources_survive`、`notice_load_failure_is_not_empty_list`、`temporary_app_ticket_is_not_stable_id`，断言疑似重复不删行，失败不产生成功空数组。
+- [x] Step 2：运行 `node --import tsx --test tests/portal.test.ts tests/portal-cli.test.ts` 确认失败。
+- [x] Step 3：实现应用目录、公告分页/详情、限定日期日程，遵循源事件ID和来源；不扩展邮件、校园卡财务或跨系统自动聚合功能。
+- [x] Step 4：运行测试、build和真实页面对照，明确公告分类/查询覆盖及疑似重复来源；列表不完整返回 partial。
+- [x] Step 5：按验收更新能力表后提交 `feat: query portal apps notices and agenda`。
 
 ### Task 7：Canvas 学习信息读取
 

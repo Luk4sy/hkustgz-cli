@@ -23,6 +23,7 @@ const limit = (value: string): number => {
   return Number(value);
 };
 function validateArguments(definition: CommandDefinition, args: Record<string, unknown>): void {
+  if (definition.path === 'portal notice' && !/^[\w-]+:[\w-]+$/.test(String(args.id))) throw new CliFailure('INVALID_ARGUMENT','Use a source-qualified notice id returned by portal notices.');
   if (definition.path === 'auth status' && Boolean(args.service) === Boolean(args.all)) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser use' && !['chrome', 'edge', 'chromium'].includes(String(args.browser))) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser install' && args.browser !== 'chromium') throw new CliFailure('INVALID_ARGUMENT');
@@ -40,7 +41,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
     }, ...overrides};
   let stdout = ''; const stderr = ''; let commandName = 'hkustgz-cli'; let exitCode = 0;
   let outputFormat: 'json' | 'table' = 'json';
-  const program = new Command('hkustgz-cli').description('Read-only HKUST(GZ) campus CLI — Catalog and SIS calendar available; other school queries pending.')
+  const program = new Command('hkustgz-cli').description('Read-only HKUST(GZ) campus CLI — Catalog, SIS calendar and Portal available; other school queries pending.')
     .version(version).exitOverride().showHelpAfterError(false)
     .addOption(new Option('--format <format>', 'Output format').choices(['json', 'table']).default('json'))
     .configureOutput({writeOut: (text) => {stdout += text;}, writeErr: () => {}});
@@ -109,6 +110,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         if (definition.capabilityId && requireCapability(deps.capabilities, definition.capabilityId).service !== definition.service) throw new CliFailure('ADAPTER_CHANGED');
         const id = definition.capabilityId ?? definition.path.replace(' ', '.');
         let handler = Object.hasOwn(deps.handlers, id) ? deps.handlers[id] : undefined;
+        if(!handler&&definition.service==='portal')handler=(await import('../adapters/portal/index.js')).createPortalHandlers()[id];
         if(!handler&&definition.service==='sis')handler=(await import('../adapters/sis/index.js')).createSisHandlers()[id];
         if(!handler&&definition.service==='catalog')handler=(await import('../adapters/catalog/index.js')).createCatalogHandlers()[id];
         if(!handler&&!definition.capabilityId&&definition.path!=='doctor')handler=(await import('../session/auth.js')).createControlHandlers()[id];

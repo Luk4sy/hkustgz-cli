@@ -12,10 +12,11 @@
 | `milestone/module-2-accepted` | `c3bafa6` | 专用浏览器会话、认证、锁与中断清理 |
 | `milestone/module-3-accepted` | `32f0bab` | 查询预算、分页、部分结果、日期与脱敏 |
 | `milestone/module-4-accepted` | `7b5c559` | Catalog 搜索、详情与目标学期数据完整性 |
+| `milestone/module-5-accepted` | `d708ac5` | SIS 学期、本人计划课表、今日课程和延迟选项修复 |
 
 `e4c8753` 记录第四模块的用户验收。验收细节及当时的测试结果以 `docs/acceptance/` 中各模块记录为准；这些历史记录不代表后来重新运行过测试。
 
-目前 4/9 个开发模块已验收，Task 5 SIS 已实现待审。Catalog 两项与 SIS 三项业务能力可用，其他 14 项仍为 pending。第五模块未获验收，不创建其验收标签；Task 6 未开始。Task 0 取证随模块推进。包仍为本地 alpha，尚未发布。
+目前 5/9 个开发模块已验收，Task 6 Portal 已实现待审。Catalog 两项、SIS 三项和 Portal 四项共9项能力可调用，其他10项 pending。Portal公告全分类当前partial8条、外部正文不支持；第六模块未验收，不创建其验收标签；Task 7 未开始。Task 0取证随模块推进。包仍为本地alpha，尚未发布。
 
 ## 后续提交约定
 
