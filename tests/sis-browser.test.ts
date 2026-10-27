@@ -21,3 +21,28 @@ test('account changing during the source read cannot return the old account batc
 test('mutating the request object cannot bypass the account snapshot',{skip},async()=>fixture('account-and-argument-change',async page=>{const reader=await createSisPageReader(page);await assert.rejects(querySisTimetable({}, {refresh:false,deadlineMs:Date.now()+10000},reader),{code:'PERMISSION_DENIED'});}));
 
 test('identity is pinned before metadata lookup, not just before course response',{skip},async()=>fixture('metadata-account-change',async page=>{const reader=await createSisPageReader(page);await assert.rejects(querySisTimetable({}, {refresh:false,deadlineMs:Date.now()+10000},reader),{code:'PERMISSION_DENIED'});}));
+
+async function delayedTermOptions(page:import('playwright').Page,delay:number,copies=1){
+ await page.evaluate(({delay,copies})=>{
+  const input=document.querySelector('input[placeholder="Select"]') as HTMLInputElement;input.value='Previously selected term';
+  (document.querySelector('input[type="checkbox"]') as HTMLInputElement).checked=true;
+  input.addEventListener('click',()=>{
+   const dropdown=document.createElement('div');dropdown.className='el-select-dropdown';dropdown.textContent='Loading';document.body.append(dropdown);
+   setTimeout(()=>{dropdown.textContent='';for(let i=0;i<copies;i++){const option=document.createElement('div');option.textContent='2026-27 Fall';option.onclick=()=>{input.value='2026-27 Fall';dropdown.remove();};dropdown.append(option);}},delay);
+  },{once:true});
+ },{delay,copies});
+}
+test('explicit SIS term waits for options loaded three seconds after the dropdown',{skip},async()=>fixture('normal',async(page)=>{
+ await delayedTermOptions(page,3000);const reader=await createSisPageReader(page);
+ const result=await querySisTimetable({termId:'2610'},{refresh:false,deadlineMs:Date.now()+10000},reader);
+ assert.equal(result.ok,true);assert.equal(result.data.termId,'2610');assert.equal(result.data.items[0]?.courseCode,'TEST5000');assert.equal(await page.getByRole('checkbox',{name:'Include Waitlisted Class',exact:true}).isChecked(),false);
+}));
+test('SIS term option loading stays within the query budget instead of declaring an invalid term',{skip},async()=>fixture('normal',async(page,counts)=>{
+ await delayedTermOptions(page,3000);const reader=await createSisPageReader(page);
+ await assert.rejects(querySisTimetable({termId:'2610'},{refresh:false,deadlineMs:Date.now()+2000},reader),{code:'QUERY_TIMEOUT'});assert.equal(counts.slots??0,0);
+}));
+test('delayed duplicate SIS term labels remain invalid and cannot trigger a timetable read',{skip},async()=>fixture('normal',async(page,counts)=>{
+ await delayedTermOptions(page,100,2);const reader=await createSisPageReader(page);
+ await assert.rejects(querySisTimetable({termId:'2610'},{refresh:false,deadlineMs:Date.now()+10000},reader),{code:'INVALID_ARGUMENT'});
+ assert.equal(await page.locator('.el-select-dropdown').getByText('2026-27 Fall',{exact:true}).count(),2);assert.equal(counts.slots??0,0);
+}));

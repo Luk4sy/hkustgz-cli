@@ -46,6 +46,9 @@ export async function createSisPageReader(page:Page):Promise<SisReader>{
   if(signal.aborted)throw signal.reason;
   const input=page.getByPlaceholder('Select',{exact:true});if(await input.inputValue()!==term.name){
    await input.click();await page.locator('.el-select-dropdown:visible').waitFor();const option=page.locator('.el-select-dropdown:visible').getByText(term.name,{exact:true});
+   // The dropdown can render its loading state before its options arrive.
+   // QueryPolicy keeps this wait inside the read and command budgets.
+   await option.first().waitFor({state:'visible'});
    if(await option.count()!==1)throw new CliFailure('INVALID_ARGUMENT','The verified term is not uniquely selectable in the SIS calendar.');await option.click();
    await page.waitForFunction(name=>(document.querySelector('input[placeholder="Select"]') as HTMLInputElement)?.value===name,term.name);
   }
