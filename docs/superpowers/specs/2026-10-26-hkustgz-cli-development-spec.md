@@ -223,6 +223,8 @@ Task 2 先实现 Portal/SIS/Canvas 的认证子集；Catalog 公开可见性不�
 - CATALOG-02：处理虚拟列表/分页并披露截断；多教室、多时段不能丢行。
 - CATALOG-03：回显 fetchedAt 和来源“通常 15–20 分钟更新”的说明，不称实时名额。
 
+Task 4复审落实：Catalog改为读取页面现有客户端返回的完整响应批次，标签通过来源termList绑定到请求termId，各班次必须属于该termId；同步白名单复制后解析，不使用DOM局部更新判据。证据R4-CATALOG-BATCH-20261027，readMethod=response。见docs/acceptance/catalog.md。
+
 ### 7.4 Canvas
 
 命令：`canvas courses`、`canvas announcements --course`、`canvas assignments --course`、`canvas agenda [--from --to]`。

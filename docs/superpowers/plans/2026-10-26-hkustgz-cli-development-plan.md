@@ -101,7 +101,7 @@
 
 ### Task 4：Catalog 搜索与班次读取
 
-**状态：实现完成待用户审查；110项测试全部通过（含14项Chrome本机合成测试）、构建、类型检查及差异检查通过。真实编译CLI对照Fall搜索/详情及Winter两学科完整搜索。独立审阅及用户复审的中间状态竞态已修复，等待复审，未进入Task 5。见docs/acceptance/catalog.md。**
+**状态：实现完成待用户审查；119项测试全部通过（含21项Chrome本机合成测试）、构建、类型检查及差异检查通过。真实编译CLI对照Fall搜索/详情及Winter两学科完整搜索。独立审阅及用户复审的分步渲染竞态已修复，现使用完整来源响应批次，等待复审，未进入Task 5。见docs/acceptance/catalog.md。**
 
 **Files:** Create `src/adapters/catalog/{index,parser,model,manifest,cache}.ts`、`tests/{catalog,catalog-cli}.test.ts`、`tests/fixtures/catalog/`。Modify handler 注册和能力表。
 

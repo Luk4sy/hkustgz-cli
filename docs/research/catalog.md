@@ -1,4 +1,6 @@
-# Catalog 读取证据（研究中）
+# Catalog 读取证据
+
+当前启用证据为R4-CATALOG-BATCH-20261027，readMethod=response，见末节；下方较早观察按原日期保留供追溯。
 
 证据编号：R0-CATALOG-20261026。观察日期：2026-10-26，Asia/Shanghai。范围：`catalog.search`、`catalog.course`；产品能力仍为 pending。
 
@@ -47,3 +49,17 @@
 启用 `catalog.search`、`catalog.course`，其他17项业务能力保持pending。完整性仅限结果披露的范围；多页上游学科响应若将来出现，当前拒绝并返回结构变化，未猜测翻页接口。
 
 第四模块用户复审补证：任意卡片文本变化不能证明课程数据更新。运行时现比较课程字段及班次单元格投影，忽略卡片额外提示；存在任一与旧数据完全相同的课程时不能建立刷新证据，超时失败。修复后的编译CLI再次读取Winter两学科并返回complete。详见验收记录。
+
+## 当前路线：整批响应读取（替代前述DOM就绪判据）
+
+**R4-CATALOG-BATCH-20261027，readMethod=response。** 前述R4-CATALOG-20261027的课程DOM签名判据已停用：整体签名变化无法排除标题与班次分步更新。
+
+补证公开构建 `/static/js/28997.8bfbaeda.js`：页面课程加载函数等待 `74604.ue.pageCourseSupermarkeView({termId,...条件,pageIndex:1,pageSize:999})` 返回后，将整个data数组交给渲染。课程与班次由 `courseInfo`、`classSections` 提供；每个班次含来源termId。已有 `listPublicMarketTermInfo({})` 返回termList的description/termId映射。
+
+当前实现临时观察页面自己的课程读取函数，保留this/参数/返回结果。请求仍由正常学期/学科点击发出；函数收到完整已解码响应后，同步复制字段白名单至不可变JSON字符串，再交还页面。未自行解码加密网络正文，未复制签名、密钥、Cookie或Authorization。额外通过既有公开学期列表客户端读取标签映射，留出500ms间隔并受预算限制。不调用或重放课程读取API。
+
+映射：courseInfo.crseCode/crseShortDesc/totalCredits；classSections.termId/classNbr/classSection及四项名额、notes与add/dropConsentInd；meetingInfoList的日期、时间、weekDay、facilityName和instructorList的姓名/角色。PI作为教师，TA/IA/GTA作为助教。仅保留这些字段，不复制人员ID、邮箱、账号、原响应config或其他元信息。缺失数值为null，日期时间保留源格式及unknown，不从DOM重建。
+
+批次必须属于本次操作：序号更新，标签通过来源termList映射到请求termId，学科相符；所有班次termId等于请求termId；成功code及totalSize/totalPage/nextPage/pageIndex通过原完整性校验。无法获取客户端、批次或字段时失败，不回退到DOM就绪猜测。字段相同不再造成误拒，因为有独立请求/完整响应证据。
+
+真实CLI：Fall搜索仍为20页/248源课程、1个IPEN5100匹配、partial/page_cap；IPEN5100详情complete；Winter两学科complete，readMethod均为response。来源模块和字段结构均是当前构建证据，变化后需要重新核验。

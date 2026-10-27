@@ -22,14 +22,14 @@ export async function queryCatalog(input:{text:string;termId?:string},options:Qu
  const matches=collected.items.filter(c=>[c.code,c.title,...c.sections.flatMap(s=>s.meetings.flatMap(m=>[...m.instructors,...m.assistants]))].some(x=>x.toLowerCase().includes(text)));
  const limited=matches.length>(requestedLimit??2000);
  const filtered={...collected,items:matches.slice(0,requestedLimit??2000),...(limited?{coverage:'partial' as const,truncationReason:'limit' as const}:{})};
- return buildQueryResult(filtered,{schemaVersion:'1',command:'catalog search',service:'catalog',sourceUrl:CATALOG_URL,fetchedAt:new Date().toISOString(),timezone:'Asia/Shanghai',readMethod:'dom',cache:{hit:false,storedAt:null},warnings:[CATALOG_WARNING,{code:'CATALOG_TERM',message:observedTerm??'Unknown term'},{code:'SEARCH_SCOPE',message:'Case-insensitive local matching of course code/title and meeting instructors/assistants across verified subject pages. Incomplete scans are partial.'}]});
+ return buildQueryResult(filtered,{schemaVersion:'1',command:'catalog search',service:'catalog',sourceUrl:CATALOG_URL,fetchedAt:new Date().toISOString(),timezone:'Asia/Shanghai',readMethod:reader.readMethod??'dom',cache:{hit:false,storedAt:null},warnings:[CATALOG_WARNING,{code:'CATALOG_TERM',message:observedTerm??'Unknown term'},{code:'SEARCH_SCOPE',message:'Case-insensitive local matching of course code/title and meeting instructors/assistants across verified subject pages. Incomplete scans are partial.'}]});
 }
 export async function searchCatalog(input:{text:string;termId?:string},options:QueryOptions):Promise<QueryResult<{items:CatalogCourse[]}>>{
  const {withCatalogReader}=await import('./reader.js');return withCatalogReader(input.termId,options,reader=>queryCatalog(input,options,reader));
 }
 export async function queryCourse(input:{id:string;termId?:string},options:QueryOptions,reader:CatalogReader):Promise<QueryResult<CatalogCourse>>{
  const {termId,code,subject}=courseIdentity(input.id,input.termId);if(!reader.subjects.includes(subject))throw new CliFailure('INVALID_ARGUMENT');
- const found=await queryCatalog({text:code,termId},{...options,limit:2000},{subjects:[subject],read:reader.read});
+ const found=await queryCatalog({text:code,termId},{...options,limit:2000},{subjects:[subject],read:reader.read,...(reader.readMethod?{readMethod:reader.readMethod}:{})});
  const course=found.data.items.find(c=>c.id===input.id);if(!course||!found.ok)throw new CliFailure('ADAPTER_CHANGED','The course is absent or its subject could not be fully verified.');
  return{ok:true,data:course,meta:{...found.meta,command:'catalog course',returnedCount:1}};
 }

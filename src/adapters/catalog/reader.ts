@@ -1,76 +1,83 @@
 import type {Page,Response} from 'playwright';import type {CliDependencies,QueryOptions} from '../../core/contracts.js';
 import {CliFailure} from '../../core/errors.js';import {withSession,selectedBrowser} from '../../session/browser.js';import {resolveDataPaths} from '../../session/paths.js';
-import {CATALOG_URL} from './manifest.js';import type {CatalogReader,CatalogSnapshot} from './model.js';
+import {CATALOG_URL} from './manifest.js';import type {CatalogReader} from './model.js';import {snapshotFromBatch} from './batch.js';
+interface Capture {sequence:number;terms:Record<string,string>;completed?:{sequence:number;label:string;termId:string;subject:string;body:string}}
+/** Verified public page client: observe UI course reads; read its public term list for label/id binding. */
+async function installCapture(page:Page,timeout:number):Promise<void>{
+ const installed=await page.evaluate(async timeout=>{
+  const root=window as unknown as {webpackChunkapp?:{push:(value:unknown)=>void};__hkustgzCatalogCapture?:Capture};
+  if(!root.webpackChunkapp)return false;
+
+  let installed=false;let terms:Promise<unknown>|undefined;
+  root.webpackChunkapp.push([['hkustgz-cli-catalog-capture'],{},(require:(id:number)=>{ue?:Record<string,unknown>})=>{
+   const api=require(74604).ue;if(!api||typeof api.pageCourseSupermarkeView!=='function'||typeof api.listPublicMarketTermInfo!=='function')return;
+   const original=api.pageCourseSupermarkeView as (...args:unknown[])=>Promise<{data:Record<string,unknown>}>;
+   const state:Capture={sequence:0,terms:Object.create(null) as Record<string,string>};root.__hkustgzCatalogCapture=state;
+   api.pageCourseSupermarkeView=async function(...args:unknown[]){
+    const sequence=++state.sequence;const request={...(args[0] as {termId:string;subjectArea:string})};
+    let result:{data:Record<string,unknown>};
+    try{result=await original.apply(this,args);}catch(error){const e=error as {response?:{status?:number};code?:string};const status=e?.response?.status;const readError=status===401?'LOGIN_REQUIRED':status===403?'PERMISSION_DENIED':status===429?'RATE_LIMITED':status===408||e?.code==='ECONNABORTED'||e?.code==='ETIMEDOUT'?'QUERY_TIMEOUT':[500,502,503,504].includes(status??0)||e?.code==='ERR_NETWORK'?'NETWORK_REQUIRED':'ADAPTER_CHANGED';state.completed={sequence,label:(document.querySelector('input[placeholder="Select"]') as HTMLInputElement)?.value??'',termId:request.termId,subject:request.subjectArea,body:JSON.stringify({readError})};throw error;}
+    const body=result.data;
+    // Copy a strict public-course whitelist before Vue can render or mutate any part of it.
+    // Credentials, response config, staff ids, emails and accounts never enter the capture.
+    try{
+     const courses=body.data as Array<{courseInfo:Record<string,unknown>;classSections:Array<Record<string,unknown>>}>;
+     const projected={code:body.code,totalSize:body.totalSize,totalPage:body.totalPage,nextPage:body.nextPage,pageIndex:body.pageIndex,data:courses.map(c=>({courseInfo:{crseCode:c.courseInfo.crseCode,crseShortDesc:c.courseInfo.crseShortDesc,totalCredits:c.courseInfo.totalCredits},classSections:c.classSections.map(s=>({termId:s.termId,classNbr:s.classNbr,classSection:s.classSection,notes:s.notes,addConsentInd:s.addConsentInd,dropConsentInd:s.dropConsentInd,enrollmentCapacity:s.enrollmentCapacity,enrollmentNbr:s.enrollmentNbr,availableNbr:s.availableNbr,waitListNbr:s.waitListNbr,meetingInfoList:(s.meetingInfoList as Array<Record<string,unknown>>).map(m=>({startDate:m.startDate,endDate:m.endDate,meetingStartTime:m.meetingStartTime,meetingEndTime:m.meetingEndTime,weekDay:m.weekDay,facilityName:m.facilityName,instructorList:(m.instructorList as Array<Record<string,unknown>>).map(p=>({instructorRoleInd:p.instructorRoleInd,instructorName:p.instructorName}))}))}))}))};
+     state.completed={sequence,label:(document.querySelector('input[placeholder="Select"]') as HTMLInputElement)?.value??'',termId:request.termId,subject:request.subjectArea,body:JSON.stringify(projected)};
+    }catch{state.completed={sequence,label:(document.querySelector('input[placeholder="Select"]') as HTMLInputElement)?.value??'',termId:request.termId,subject:request.subjectArea,body:'null'};}
+    return result;
+   };
+   terms=new Promise<void>(resolve=>setTimeout(resolve,500)).then(()=>(api.listPublicMarketTermInfo as (input:object)=>Promise<unknown>)({})).catch(error=>{const e=error as {response?:{status?:number};code?:string};const status=e?.response?.status;const readError=status===401?'LOGIN_REQUIRED':status===403?'PERMISSION_DENIED':status===429?'RATE_LIMITED':status===408||e?.code==='ECONNABORTED'||e?.code==='ETIMEDOUT'?'QUERY_TIMEOUT':[500,502,503,504].includes(status??0)||e?.code==='ERR_NETWORK'?'NETWORK_REQUIRED':'ADAPTER_CHANGED';return{readError};});installed=true;
+  }]);
+  if(!installed||!terms)return false;
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  try{
+   const value=await Promise.race([terms,new Promise<null>(resolve=>{timer=setTimeout(()=>resolve(null),timeout);})]) as {readError?:string;data?:{code?:string;data?:{termList?:Array<{termId?:unknown;description?:unknown}>}}}|null;
+   if(value===null)return 'timeout';if(value.readError)return value.readError;
+   const list=value?.data?.data?.termList;if(value?.data?.code!=='0'||!Array.isArray(list)||!list.length)return false;
+   for(const term of list){if(typeof term.termId!=='string'||typeof term.description!=='string'||Object.hasOwn(root.__hkustgzCatalogCapture!.terms,term.description))return false;root.__hkustgzCatalogCapture!.terms[term.description]=term.termId;}
+   return true;
+  }finally{if(timer)clearTimeout(timer);}
+ },timeout).catch(()=>false);
+ if(installed==='timeout')throw new CliFailure('QUERY_TIMEOUT');
+ if(typeof installed==='string')throw new CliFailure(installed);
+ if(!installed)throw new CliFailure('ADAPTER_CHANGED','The verified public Catalog response reader is unavailable.');
+}
+async function sequence(page:Page):Promise<number>{return page.evaluate(()=>(window as unknown as {__hkustgzCatalogCapture:Capture}).__hkustgzCatalogCapture.sequence);}
+async function captured(page:Page,after:number,label:string,termId:string,subject:string|undefined,timeout:number):Promise<NonNullable<Capture['completed']>>{
+ const handle=await page.waitForFunction(({after,label,termId,subject})=>{
+  const state=(window as unknown as {__hkustgzCatalogCapture:Capture}).__hkustgzCatalogCapture;const c=state.completed;
+  return c&&c.sequence>after&&(c.label===label&&c.termId===termId)&&(subject===null||c.subject===subject)?c:false;
+ },{after,label,termId,subject:subject??null},{timeout});
+ try{const value=await handle.jsonValue();if(value===false)throw new CliFailure('ADAPTER_CHANGED');return value;}finally{await handle.dispose();}
+}
 const isList=(response:Response)=>new URL(response.url()).origin==='https://sisn-service.hkust-gz.edu.cn'&&new URL(response.url()).pathname==='/api/course/pageCourseSupermarkeView';
-/** Compare only source course fields, never card-local loading hints or other UI text. */
-function courseDataState({previous,total}:{previous:string[]|null;total:number}):string[]|false{
- const cards=[...document.querySelectorAll('.course-card')];const signatures:string[]=[];
- for(const card of cards){
-  const header=(card.querySelector('.course-header') as HTMLElement)?.innerText??'';
-  const identity=header.match(/^([A-Z]+\d+[A-Z]*)\s*-\s*(.*?)\s*\[(\d+(?:\.\d+)?) Credits?\]/s);
-  const rows=[...card.querySelectorAll('table.el-table__body tbody tr')].map(row=>[...row.querySelectorAll('td')].map(cell=>({text:cell.innerText.trim(),rowspan:cell.rowSpan})));
-  if(!identity||!rows.length)return false;
-  signatures.push(JSON.stringify({header:identity.slice(1),rows}));
- }
- if(previous===null)return signatures;
- const loading=[...document.querySelectorAll('.el-loading-mask')].some(x=>getComputedStyle(x).display!=='none');
- // Identical fields do not establish freshness. Fail closed rather than relabel old rows.
- return !loading&&cards.length===total&&signatures.every(value=>!previous.includes(value))?signatures:false;
-}
-async function watchRender(page:Page):Promise<string[]>{
- const state=await page.evaluate(courseDataState,{previous:null,total:0});
- if(state===false)throw new CliFailure('ADAPTER_CHANGED');return state;
-}
-async function waitForData(page:Page,previous:string[],total:number,timeout:number):Promise<void>{
- const handle=await page.waitForFunction(courseDataState,{previous,total},{timeout});await handle.dispose();
-}
-async function count(response:Response):Promise<number>{
- if(response.status()===401)throw new CliFailure('LOGIN_REQUIRED');if(response.status()===403)throw new CliFailure('PERMISSION_DENIED');
- if(!response.ok())throw new CliFailure('NETWORK_REQUIRED');
- const v:unknown=await response.json();if(!v||typeof v!=='object')throw new CliFailure('ADAPTER_CHANGED');
- const x=v as Record<string,unknown>;
- if(x.code!=='0'||!Number.isInteger(x.totalSize)||Number(x.totalSize)<0||x.totalPage!==1||x.nextPage!==false||x.pageIndex!==1)throw new CliFailure('ADAPTER_CHANGED','Catalog subject paging changed; completeness cannot be established.');
- return Number(x.totalSize);
-}
 export async function createReader(page:Page,term:string|undefined,options:QueryOptions):Promise<CatalogReader>{
  const timeout=()=>Math.max(1,Math.min(30000,options.deadlineMs-Date.now()));page.setDefaultTimeout(timeout());
- const first=page.waitForResponse(isList,{timeout:timeout()});void first.catch(()=>{});await page.goto(CATALOG_URL,{timeout:timeout()});let total=await count(await first);
- await page.locator('.course-code-list .code-item').first().waitFor();
- if(total>0)await page.locator('.course-card').first().waitFor();
+ const initial=page.waitForResponse(isList,{timeout:timeout()});void initial.catch(()=>{});await page.goto(CATALOG_URL,{timeout:timeout()});await initial;
+ await page.locator('.course-code-list .code-item').first().waitFor();await installCapture(page,timeout());
  const input=page.getByPlaceholder('Select',{exact:true});await input.waitFor();
+ const label=term??await input.inputValue();const sourceTerm=await page.evaluate(label=>(window as unknown as {__hkustgzCatalogCapture:Capture}).__hkustgzCatalogCapture.terms[label],label);
+ if(!sourceTerm)throw new CliFailure('INVALID_ARGUMENT','The requested Catalog term is not in the source term list.');
  if(term!==undefined&&await input.inputValue()!==term){
   await input.click();await page.locator('.el-select-dropdown:visible').waitFor();const option=page.locator('.el-select-dropdown:visible').getByText(term,{exact:true});
   if(await option.count()!==1)throw new CliFailure('INVALID_ARGUMENT','Use an exact visible Catalog term label, for example 2026-27 Fall.');
-  const previous=await watchRender(page);const changed=page.waitForResponse(isList,{timeout:timeout()});void changed.catch(()=>{});await option.click();total=await count(await changed);
-  await waitForData(page,previous,total,timeout());
+  const before=await sequence(page);await option.click();await captured(page,before,term,sourceTerm,undefined,timeout());
  }
  const termId=await input.inputValue();if(!termId||term!==undefined&&termId!==term)throw new CliFailure('ADAPTER_CHANGED');
  const subjects=(await page.locator('.course-code-list .code-item').allTextContents()).map(s=>s.trim());
  if(!subjects.length||subjects.some(x=>! /^[A-Z]+$/.test(x)))throw new CliFailure('ADAPTER_CHANGED');
- return{subjects,read:async(subject,signal)=>{
+ return{readMethod:'response',subjects,read:async(subject,signal)=>{
   if(signal.aborted)throw signal.reason;page.setDefaultTimeout(timeout());
-  const active=await page.locator('.course-code-list .code-item.active').textContent();
-  if(active?.trim()!==subject){
-   const previous=await watchRender(page);
-   const response=page.waitForResponse(isList,{timeout:timeout()});void response.catch(()=>{});
-   await page.locator('.course-code-list .code-item').getByText(subject,{exact:true}).click();total=await count(await response);
-   await waitForData(page,previous,total,timeout());
-  }
-  await page.waitForFunction(({subject,total})=>{
-   const cards=[...document.querySelectorAll('.course-card')];return cards.length===total&&cards.every(c=>c.querySelector('.course-header')?.textContent?.trim().startsWith(subject))&&![...document.querySelectorAll('.el-loading-mask')].some(x=>getComputedStyle(x).display!=='none');
-  },{subject,total},{timeout:timeout()});
-  const snapshot=await page.evaluate(({termId,subject,total})=>{
-   const cards=[...document.querySelectorAll('.course-card')];
-   const headers=cards.map(c=>[...c.querySelectorAll('table.el-table__header th .cell')].map(x=>(x.textContent??'').trim()));
-   if(headers.some(x=>x.join('|')!==headers[0]?.join('|')))throw Error('Catalog headers differ');
-   return{termId,subject,total,headers:headers[0]??['Section','Date & Time','Location','Instructor','TA/IA/GTA','Quota','Enrol','Avail','Wait','Remarks'],cards:cards.map(c=>({header:(c.querySelector('.course-header') as HTMLElement)?.innerText??'',rows:[...c.querySelectorAll('table.el-table__body tbody tr')].map(r=>[...r.querySelectorAll('td')].map(cell=>({text:cell.innerText,rowspan:cell.rowSpan})))}))};
-  },{termId,subject,total});
-  if(await input.inputValue()!==termId)throw new CliFailure('ADAPTER_CHANGED');return snapshot satisfies CatalogSnapshot;
+  const before=await sequence(page);
+  // Even the active subject is read anew: no startup batch or old DOM is reused.
+  await page.locator('.course-code-list .code-item').getByText(subject,{exact:true}).click();
+  const batch=await captured(page,before,termId,sourceTerm,subject,timeout());
+  if(await input.inputValue()!==termId)throw new CliFailure('ADAPTER_CHANGED');
+  return snapshotFromBatch(JSON.parse(batch.body),termId,batch.termId,subject);
  }};
 }
 export async function withCatalogReader<T>(term:string|undefined,options:QueryOptions,run:(reader:CatalogReader)=>Promise<T>,deps?:CliDependencies,headed=false):Promise<T>{
  const paths=resolveDataPaths(deps?.env??process.env);const browser=await selectedBrowser(paths);
- return (deps?.sessionRunner??withSession)('catalog',{browser,headless:!headed,deadlineMs:options.deadlineMs,purpose:'query'},async session=>{
-  const reader=await createReader(session.page,term,options);return run(reader);
- });
+ return (deps?.sessionRunner??withSession)('catalog',{browser,headless:!headed,deadlineMs:options.deadlineMs,purpose:'query'},async session=>run(await createReader(session.page,term,options)));
 }

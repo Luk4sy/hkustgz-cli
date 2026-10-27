@@ -9,7 +9,7 @@ export function parseCatalogPage(input:CatalogSnapshot):CatalogCourse[]{
  if(raw.headers.join('|')!==HEADERS.join('|')||raw.total!==raw.cards.length)return fail();
  const ids=new Set<string>();
  return raw.cards.map(card=>{
-  const match=card.header.match(/^([A-Z]+\d+[A-Z]*)\s*-\s*(.*?)\s*\[(\d+(?:\.\d+)?) Credits?\]/s);if(!match||!match[1]!.startsWith(raw.subject)||!card.rows.length)return fail();
+  const match=card.header.match(/^([A-Z]+\d+[A-Z]*)\s*-\s*(.*?)\s*\[(\d+(?:\.\d+)?|unknown) Credits?\]/s);if(!match||!match[1]!.startsWith(raw.subject)||!card.rows.length)return fail();
   const code=match[1]!;if(ids.has(code))return fail();ids.add(code);const id=raw.termId+':'+code;
   const sections:CatalogSection[]=[];const carries:Array<{text:string;left:number}|undefined>=[];
   for(const cells of card.rows){
@@ -27,6 +27,6 @@ export function parseCatalogPage(input:CatalogSnapshot):CatalogCourse[]{
    current.meetings.push({dateAndTime:row[1]!,location:row[2]||null,instructors:lines(row[3]!),assistants:lines(row[4]!)});
   }
   if(carries.some(x=>x&&x.left>0))return fail();
-  return{id,code,title:match[2]!.trim(),credits:Number(match[3]),termId:raw.termId,sections};
+  return{id,code,title:match[2]!.trim(),credits:match[3]==='unknown'?null:Number(match[3]),termId:raw.termId,sections};
  });
 }

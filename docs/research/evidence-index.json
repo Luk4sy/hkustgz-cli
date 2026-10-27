@@ -89,8 +89,8 @@
       "capabilityId": "catalog.search",
       "service": "catalog",
       "state": "verified",
-      "evidenceId": "R4-CATALOG-20261027",
-      "readMethod": "dom",
+      "evidenceId": "R4-CATALOG-BATCH-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/catalog.md",
       "reason": null
     },
@@ -98,8 +98,8 @@
       "capabilityId": "catalog.course",
       "service": "catalog",
       "state": "verified",
-      "evidenceId": "R4-CATALOG-20261027",
-      "readMethod": "dom",
+      "evidenceId": "R4-CATALOG-BATCH-20261027",
+      "readMethod": "response",
       "documentPath": "docs/research/catalog.md",
       "reason": null
     },

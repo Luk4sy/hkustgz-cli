@@ -63,3 +63,5 @@ node bin/hkustgz-cli.mjs auth logout
 后续开发继续在本目录进行；每完成一个模块，等待用户审查后再推进。
 
 第四模块审查记录：[Catalog](docs/acceptance/catalog.md)。
+
+Catalog 当前从页面现有客户端的完整响应批次读取（`readMethod=response`），课程和班次不再从分步渲染的DOM拼接；来源学期及批次校验失败时返回错误。

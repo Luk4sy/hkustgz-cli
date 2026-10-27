@@ -1,25 +1,37 @@
 # 第四模块：Catalog 审查与验收
 
-状态：实现完成，等待用户审查；第三模块32f0bab已获用户验收。不进入第五模块。
+状态：复审问题已修复，等待用户审查；第三模块32f0bab已验收，不进入第五模块。
 
-## 实现范围
+## 当前读取路线
 
-`catalog search <text> [--term <source-label>] [--limit N]` 和 `catalog course <id> [--term <source-label>]` 已连接真实公开目录，支持JSON/table及专用浏览器。证据为 [Catalog研究记录](../research/catalog.md) 的R4-CATALOG-20261027。
+`catalog search <text> [--term <source-label>] [--limit N]` 和 `catalog course <id> [--term <source-label>]` 使用公开页面的现有课程读取客户端，结果 `readMethod=response`。当前证据为 [Catalog研究记录](../research/catalog.md) 的 **R4-CATALOG-BATCH-20261027**。
 
-课程id为来源学期标签与课程代码的组合，例如 `2026-27 Fall:IPEN5100`；班次包含来源班次编号。班次meeting保留完整rowspan多行以及原始日期时间文本；数字使用来源值或null，Avail不由Quota−Enrol推导。名额附15–20分钟更新说明。
+页面照常选择学期/学科。课程请求仍由页面的正常点击触发；CLI在其现有客户端返回完整、已解码响应后，立即同步复制课程字段白名单为JSON字符串，再向页面返回原结果。标题、班次、全部meeting和名额均来自同一不可变批次，不读取分步渲染中的课程DOM。不会自行解码响应、提取签名或重放课程API。
 
-搜索逐学科读取，按代码、标题、教师、助教本地匹配。Fall有30学科，20页上限会返回partial及退出7；Winter本次2学科可完整扫描。用户limit在源记录边界之后应用，实际读取数量与返回数量分开。详情只核验课程对应学科，缺失或不完整时失败，不捏造课程。
+使用同一公开客户端读取学期列表，将界面标签绑定到来源termId；读取前留出500ms间隔，并受单次/总预算约束。批次同时核对序号、学期标签、请求termId、学科；每个班次termId必须等于请求termId。结构、计数或学期不符时失败，客户端不可用时不退回DOM猜测。
 
-公开缓存为可选项，当前运行时禁用，因此每次读取新页面，`--refresh`同样读取新数据。辅助进程内缓存要求公开性证据且TTL300000ms，不保存私有页面或跨命令数据。
+仅复制代码、标题、学分、班次、日期时间、地点、公开教师/助教姓名、名额与备注/Consent；不复制响应config、认证头、员工ID、账号或邮箱。无原始响应落盘，无运行时缓存。
 
-## 验证
+## 结果语义
 
-- 合成解析/CLI：搜索真正筛选、合并单元格、多教室、来源available=0保留、未完整列表失败、后页失败保留可信子集、源读取计数、limit、跨学期混淆拒绝、数字与重复班次元信息漂移拒绝、非法详情ID在启动浏览器前拒绝。
-- 本机合成Chrome：切换两学科核验计数；延迟显示学期选项、同学科同数量且延迟渲染新学期课程时，不能返回旧学期数据。
-- 真实编译CLI：Fall关键词搜索20页返回partial/page_cap；IPEN5100详情complete；Winter搜索2页complete。公开目录无个人数据，真实名额未写入fixture。
-- 独立代码审阅发现学期DOM时序问题及重复班次字段校验缺口，已补回归修复；未进入其他业务模块。
+- CLI id仍为 `termLabel:courseCode`，例如 `2026-27 Fall:IPEN5100`，班次再附来源班次编号。
+- 所有meeting保留；日期时间文本使用源YYYY-MM-DD、HH:mm及weekDay字段，缺失部分为unknown；不从DOM格式化文本反推日期。
+- 数字缺失为null，Avail使用来源值，不由Quota−Enrol覆盖；名额附通常15–20分钟更新说明。
+- 搜索按代码、标题、教师、助教本地匹配；源数据最多20页/2000条，再应用用户limit。实际读取量与返回量分别披露。
+- Fall本次30学科，达到20页上限返回partial/退出7；Winter本次2学科可complete。详情只读取对应学科。
+- 相同课程字段也能正常返回：目标学期由来源请求及完整响应证明，不再以“字段必须发生变化”作为证据。
 
-## 试用
+## 复审回归
+
+已在旧版本复现：标题先更新返回Winter标题/Old Fall Room，班次先更新返回旧标题/Winter教室。原先整体字段签名的判据已删除。
+
+完全拦截网络的Chrome合成页面覆盖：正常切换、标题先更新、班次先更新、加载提示先更新、DOM始终不更新、字段完全相同；所有成功结果来自完整目标响应，均不混用DOM字段。另覆盖来源班次学期错误、读取客户端缺失、字段白名单不含邮箱标记。纯解析回归覆盖完整批次计数、学期归属、多meeting、缺失学分/名额、Consent及来源Avail=0。
+
+原DOM合并单元格解析、搜索筛选、后页失败保留可信子集、limit和源计数等已有测试继续通过。
+
+## 验证与试用
+
+`HKUSTGZ_TEST_BROWSER=1 npm test` **119项全部通过、0跳过**，含21项Chrome本机合成测试；构建、类型检查通过。真实编译CLI已验证：Fall搜索20页/248源课程，IPEN5100返回1条并标记partial/page_cap；课程详情complete；Winter搜索2页/2门complete。
 
 ```bash
 node bin/hkustgz-cli.mjs catalog search IPEN5100 --format table
@@ -27,14 +39,4 @@ node bin/hkustgz-cli.mjs catalog course '2026-27 Fall:IPEN5100' --format table
 node bin/hkustgz-cli.mjs catalog search a --term '2025-26 Winter' --format table
 ```
 
-搜索partial表示受读取上限或来源失败影响，不等于全校只有返回的课程；名额不是实时可选保证。跨平台发行仍未验收。
-
-最终验证：`HKUSTGZ_TEST_BROWSER=1 npm test` **110项全部通过、0跳过**（含14项Chrome本机合成测试）；构建、`npm run typecheck`、`git diff --check`通过。
-
-## 用户复审修复：中间状态不能证明目标学期数据就绪
-
-已复现0b6609c在课程卡片内先更新loading-hint、700ms后才更新课程字段时，返回新学期标签及Old Fall Course的问题。原先任意卡片MutationObserver就绪标记已删除。现在切换前采集每个课程的代码/标题/学分及班次单元格（含rowspan）投影，切换后要求响应计数一致、无加载遮罩，且每个课程投影都不同于旧数据，再继续既有学科/学期校验；卡片额外提示文本不参与比较。不会以固定延时或提示文本变化宣布完成。
-
-新增两项完全拦截网络的Chrome回归：提示先变、课程晚更新时等待Winter Course；提示变化且课程数据保持完全相同时，在预算内超时失败。前一项在修复前复现Old Fall Course，修复后通过。相同数据无法证明新学期刷新，因此保守失败可能拒绝本来合法但字段完全相同的跨学期课程，这是当前DOM证据边界。
-
-完整110项测试通过（含14项Chrome本机合成测试）、构建、类型检查、差异检查通过。编译后真实Winter搜索仍返回complete、2页、2门，termId均为2025-26 Winter。等待第四模块复审，不进入第五模块。
+公开页面客户端模块变化或无法取得完整批次时返回失败，不能用固定等待时间或局部DOM变化代替证据。跨平台发行仍未验收。

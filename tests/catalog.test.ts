@@ -35,3 +35,15 @@ test('repeated section ids cannot silently discard conflicting source quotas or 
  const second=structuredClone(first);second[7]!.text='unknown-new-format';changed.cards[0]!.rows=[first,second];assert.throws(()=>parseCatalogPage(changed));
  second[7]!.text='0';second[9]!.text='New restriction';assert.throws(()=>parseCatalogPage(changed));
 });
+test('one decoded batch supplies all course and meeting fields with term ownership',async()=>{
+ const {sourceBatch}=await import('./fixtures/catalog/batch.js');const {snapshotFromBatch}=await import('../src/adapters/catalog/batch.js');
+ const data=sourceBatch('IPEN','winter');const snapshot=snapshotFromBatch(data,'2025-26 Winter','winter','IPEN');const course=parseCatalogPage(snapshot)[0]!;
+ assert.equal(course.title,'Winter Course');assert.equal(course.sections[0]?.meetings[0]?.location,'Winter Room');assert.equal(course.sections[0]?.available,0);
+ assert.throws(()=>snapshotFromBatch(data,'2025-26 Winter','fall','IPEN'),{code:'ADAPTER_CHANGED'});assert.throws(()=>snapshotFromBatch({...data,totalSize:2},'2025-26 Winter','winter','IPEN'),{code:'ADAPTER_CHANGED'});
+});
+test('batch projection preserves multiple meetings, missing numbers and consent',async()=>{
+ const {sourceBatch}=await import('./fixtures/catalog/batch.js');const {snapshotFromBatch}=await import('../src/adapters/catalog/batch.js');
+ const data: any=sourceBatch('IPEN','winter');data.data[0].courseInfo.totalCredits=null;const section=data.data[0].classSections[0];section.availableNbr=null;section.notes='';section.addConsentInd='Instructor Consent';section.meetingInfoList.push({...section.meetingInfoList[0],facilityName:'Second Room'});
+ const result=parseCatalogPage(snapshotFromBatch(data,'2025-26 Winter','winter','IPEN'))[0]!;
+ assert.equal(result.credits,null);assert.equal(result.sections[0]?.available,null);assert.equal(result.sections[0]?.meetings.length,2);assert.deepEqual(result.sections[0]?.restrictions,['Consent']);
+});
