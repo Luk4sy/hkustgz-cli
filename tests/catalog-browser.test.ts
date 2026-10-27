@@ -21,3 +21,14 @@ test('term switching waits for new course DOM even when subject and count are un
  const options={refresh:true,deadlineMs:Date.now()+10000};const reader=await createReader(page,'2025-26 Winter',options);const result=await queryCatalog({text:'Course'},options,reader);assert.equal(result.data.items[0]?.title,'Winter Course');assert.equal(result.data.items[0]?.termId,'2025-26 Winter');
  }finally{await browser.close();}
 });
+for(const mode of ['updated','unchanged'] as const)test('intermediate card text does not establish term freshness: '+mode,{skip:process.env.HKUSTGZ_TEST_BROWSER!=='1'},async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});try{
+ const page=await browser.newPage();
+ const html=`<input placeholder="Select" value="2026-27 Fall" onclick="document.querySelector('.el-select-dropdown').style.display='block'"><div class="el-select-dropdown" style="display:none"><div onclick="change()">2025-26 Winter</div></div><div class="course-code-list"><div class="code-item active">IPEN</div></div><main></main><script>
+ function render(title){document.querySelector('main').innerHTML='<div class="course-card"><div class="course-header">IPEN5100 - '+title+' [3 Credits]</div><div class="loading-hint">Ready</div><table class="el-table__header"><tr>'+${JSON.stringify(HEADERS)}.map(x=>'<th><div class="cell">'+x+'</div></th>').join('')+'</tr></table><table class="el-table__body"><tbody><tr>'+['L01 (1234)','TBA','Room A','Synthetic','','80','79','0','0',''].map(x=>'<td>'+x+'</td>').join('')+'</tr></tbody></table></div>';}
+ async function change(){document.querySelector('input').value='2025-26 Winter';await fetch('https://sisn-service.hkust-gz.edu.cn/api/course/pageCourseSupermarkeView',{method:'POST'});document.querySelector('.loading-hint').textContent='Loading Winter...';setTimeout(()=>render('${mode==='updated'?'Winter Course':'Old Fall Course'}'),700);}
+ fetch('https://sisn-service.hkust-gz.edu.cn/api/course/pageCourseSupermarkeView',{method:'POST'}).then(()=>render('Old Fall Course'));</script>`;
+ await page.route('**/*',r=>r.request().url().includes('/api/course/')?r.fulfill({contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:JSON.stringify({code:'0',totalSize:1,totalPage:1,nextPage:false,pageIndex:1})}):r.fulfill({contentType:'text/html',body:html}));
+ const options={refresh:true,deadlineMs:Date.now()+(mode==='updated'?10000:2500)};if(mode==='unchanged'){await assert.rejects(createReader(page,'2025-26 Winter',options),{name:'TimeoutError'});return;}const reader=await createReader(page,'2025-26 Winter',options);const result=await queryCatalog({text:'Course'},options,reader);assert.equal(result.data.items[0]?.title,'Winter Course');assert.equal(result.data.items[0]?.termId,'2025-26 Winter');assert.doesNotMatch(JSON.stringify(result),/Old Fall Course/);
+ }finally{await browser.close();}
+});

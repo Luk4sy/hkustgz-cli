@@ -29,4 +29,12 @@ node bin/hkustgz-cli.mjs catalog search a --term '2025-26 Winter' --format table
 
 搜索partial表示受读取上限或来源失败影响，不等于全校只有返回的课程；名额不是实时可选保证。跨平台发行仍未验收。
 
-最终验证：`HKUSTGZ_TEST_BROWSER=1 npm test` **108项全部通过、0跳过**（含12项Chrome本机合成测试）；构建、`npm run typecheck`、`git diff --check`通过。
+最终验证：`HKUSTGZ_TEST_BROWSER=1 npm test` **110项全部通过、0跳过**（含14项Chrome本机合成测试）；构建、`npm run typecheck`、`git diff --check`通过。
+
+## 用户复审修复：中间状态不能证明目标学期数据就绪
+
+已复现0b6609c在课程卡片内先更新loading-hint、700ms后才更新课程字段时，返回新学期标签及Old Fall Course的问题。原先任意卡片MutationObserver就绪标记已删除。现在切换前采集每个课程的代码/标题/学分及班次单元格（含rowspan）投影，切换后要求响应计数一致、无加载遮罩，且每个课程投影都不同于旧数据，再继续既有学科/学期校验；卡片额外提示文本不参与比较。不会以固定延时或提示文本变化宣布完成。
+
+新增两项完全拦截网络的Chrome回归：提示先变、课程晚更新时等待Winter Course；提示变化且课程数据保持完全相同时，在预算内超时失败。前一项在修复前复现Old Fall Course，修复后通过。相同数据无法证明新学期刷新，因此保守失败可能拒绝本来合法但字段完全相同的跨学期课程，这是当前DOM证据边界。
+
+完整110项测试通过（含14项Chrome本机合成测试）、构建、类型检查、差异检查通过。编译后真实Winter搜索仍返回complete、2页、2门，termId均为2025-26 Winter。等待第四模块复审，不进入第五模块。

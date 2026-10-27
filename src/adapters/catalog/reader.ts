@@ -2,18 +2,27 @@ import type {Page,Response} from 'playwright';import type {CliDependencies,Query
 import {CliFailure} from '../../core/errors.js';import {withSession,selectedBrowser} from '../../session/browser.js';import {resolveDataPaths} from '../../session/paths.js';
 import {CATALOG_URL} from './manifest.js';import type {CatalogReader,CatalogSnapshot} from './model.js';
 const isList=(response:Response)=>new URL(response.url()).origin==='https://sisn-service.hkust-gz.edu.cn'&&new URL(response.url()).pathname==='/api/course/pageCourseSupermarkeView';
-async function watchRender(page:Page):Promise<void>{
- await page.evaluate(()=>{
-  delete document.documentElement.dataset.hkustgzCatalogRendered;
-  const observer=new MutationObserver(records=>{
-   const updated=records.some(record=>{
-    const target=record.target instanceof Element?record.target:record.target.parentElement;
-    return Boolean(target?.closest('.course-card'))||[...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element&&(node.matches('.course-card')||node.querySelector('.course-card')));
-   });
-   if(updated){observer.disconnect();document.documentElement.dataset.hkustgzCatalogRendered='yes';}
-  });
-  observer.observe(document.documentElement,{childList:true,characterData:true,subtree:true});
- });
+/** Compare only source course fields, never card-local loading hints or other UI text. */
+function courseDataState({previous,total}:{previous:string[]|null;total:number}):string[]|false{
+ const cards=[...document.querySelectorAll('.course-card')];const signatures:string[]=[];
+ for(const card of cards){
+  const header=(card.querySelector('.course-header') as HTMLElement)?.innerText??'';
+  const identity=header.match(/^([A-Z]+\d+[A-Z]*)\s*-\s*(.*?)\s*\[(\d+(?:\.\d+)?) Credits?\]/s);
+  const rows=[...card.querySelectorAll('table.el-table__body tbody tr')].map(row=>[...row.querySelectorAll('td')].map(cell=>({text:cell.innerText.trim(),rowspan:cell.rowSpan})));
+  if(!identity||!rows.length)return false;
+  signatures.push(JSON.stringify({header:identity.slice(1),rows}));
+ }
+ if(previous===null)return signatures;
+ const loading=[...document.querySelectorAll('.el-loading-mask')].some(x=>getComputedStyle(x).display!=='none');
+ // Identical fields do not establish freshness. Fail closed rather than relabel old rows.
+ return !loading&&cards.length===total&&signatures.every(value=>!previous.includes(value))?signatures:false;
+}
+async function watchRender(page:Page):Promise<string[]>{
+ const state=await page.evaluate(courseDataState,{previous:null,total:0});
+ if(state===false)throw new CliFailure('ADAPTER_CHANGED');return state;
+}
+async function waitForData(page:Page,previous:string[],total:number,timeout:number):Promise<void>{
+ const handle=await page.waitForFunction(courseDataState,{previous,total},{timeout});await handle.dispose();
 }
 async function count(response:Response):Promise<number>{
  if(response.status()===401)throw new CliFailure('LOGIN_REQUIRED');if(response.status()===403)throw new CliFailure('PERMISSION_DENIED');
@@ -32,8 +41,8 @@ export async function createReader(page:Page,term:string|undefined,options:Query
  if(term!==undefined&&await input.inputValue()!==term){
   await input.click();await page.locator('.el-select-dropdown:visible').waitFor();const option=page.locator('.el-select-dropdown:visible').getByText(term,{exact:true});
   if(await option.count()!==1)throw new CliFailure('INVALID_ARGUMENT','Use an exact visible Catalog term label, for example 2026-27 Fall.');
-  await watchRender(page);const changed=page.waitForResponse(isList,{timeout:timeout()});void changed.catch(()=>{});await option.click();total=await count(await changed);
-  await page.waitForFunction(()=>document.documentElement.dataset.hkustgzCatalogRendered==='yes',null,{timeout:timeout()});
+  const previous=await watchRender(page);const changed=page.waitForResponse(isList,{timeout:timeout()});void changed.catch(()=>{});await option.click();total=await count(await changed);
+  await waitForData(page,previous,total,timeout());
  }
  const termId=await input.inputValue();if(!termId||term!==undefined&&termId!==term)throw new CliFailure('ADAPTER_CHANGED');
  const subjects=(await page.locator('.course-code-list .code-item').allTextContents()).map(s=>s.trim());
@@ -42,10 +51,10 @@ export async function createReader(page:Page,term:string|undefined,options:Query
   if(signal.aborted)throw signal.reason;page.setDefaultTimeout(timeout());
   const active=await page.locator('.course-code-list .code-item.active').textContent();
   if(active?.trim()!==subject){
-   await watchRender(page);
+   const previous=await watchRender(page);
    const response=page.waitForResponse(isList,{timeout:timeout()});void response.catch(()=>{});
    await page.locator('.course-code-list .code-item').getByText(subject,{exact:true}).click();total=await count(await response);
-   await page.waitForFunction(()=>document.documentElement.dataset.hkustgzCatalogRendered==='yes',null,{timeout:timeout()});
+   await waitForData(page,previous,total,timeout());
   }
   await page.waitForFunction(({subject,total})=>{
    const cards=[...document.querySelectorAll('.course-card')];return cards.length===total&&cards.every(c=>c.querySelector('.course-header')?.textContent?.trim().startsWith(subject))&&![...document.querySelectorAll('.el-loading-mask')].some(x=>getComputedStyle(x).display!=='none');
