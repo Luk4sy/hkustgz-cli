@@ -59,3 +59,12 @@ test('Canvas enters the observed school SAML flow before opening course deep lin
   });return visitService('canvas',s,deadlineMs,false);
  });assert.equal(report.state,'authenticated');
 });
+test('observed exact Canvas identity tenant can return to course data without permitting sibling tenants',{skip:!enabled,timeout:10000},async t=>{
+ const root=await mkdtemp(join(tmpdir(),'hkust-canvas-identity-'));t.after(()=>rm(root,{recursive:true,force:true}));const runner=createSessionRunner(resolveDataPaths({HKUSTGZ_CLI_HOME:root}));const deadlineMs=Date.now()+8000;
+ const report=await runner('canvas',{browser:'chrome',headless:true,purpose:'query',deadlineMs},async s=>{
+  await s.context.route('https://hkust-gz.instructure.com/**',r=>r.fulfill({contentType:'text/html',body:new URL(r.request().url()).pathname==='/courses'?'<table id="my_courses_table"><tbody><tr><td><a href="/courses/123">Synthetic course</a></td></tr></tbody></table>':'<script>location.replace("https://47277e8d-a0fd-490e-b982-ee46ab1fd96f.sin.login.instructure.com/am/oauth2/alpha/authorize")</script>'}));
+  await s.context.route('https://47277e8d-a0fd-490e-b982-ee46ab1fd96f.sin.login.instructure.com/**',r=>r.fulfill({contentType:'text/html',body:'<script>location.replace("https://hkust-gz.instructure.com/courses")</script>'}));
+  return visitService('canvas',s,deadlineMs,false);
+ });assert.equal(report.state,'authenticated');
+ await assert.rejects(runner('canvas',{browser:'chrome',headless:true,purpose:'query',deadlineMs:Date.now()+5000},s=>s.page.goto('https://other.sin.login.instructure.com/')),{code:'ADAPTER_CHANGED'});
+});

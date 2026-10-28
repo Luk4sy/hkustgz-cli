@@ -5,6 +5,7 @@ import {randomUUID} from 'node:crypto';
 import {EventEmitter} from 'node:events';
 import type {BrowserContext,Page} from 'playwright';
 import type {DataPaths,SessionOptions,SessionRunner} from '../core/contracts.js';
+import {CANVAS_IDENTITY_ORIGIN} from './origins.js';
 import {CliFailure,classifyError} from '../core/errors.js';
 import {assertOwned,claimDirectory,ensureDataPaths,resolveDataPaths} from './paths.js';
 import {acquireProfileLock} from './lock.js';
@@ -29,7 +30,7 @@ export async function browserAvailability():Promise<Array<{browser:BrowserName;a
  const paths:Record<BrowserName,string|null>={chrome:process.platform==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':null,edge:process.platform==='darwin'?'/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge':null,chromium:chromium.executablePath()};
  return Promise.all(BROWSERS.map(async browser=>({browser,available:paths[browser]!==null&&await access(paths[browser]!,constants.X_OK).then(()=>true,()=>false)})));
 }
-const origins=new Set(['https://myportal.hkust-gz.edu.cn','https://sisn.hkust-gz.edu.cn','https://sso.hkust-gz.edu.cn','https://2fa.hkust-gz.edu.cn','https://hkust-gz.instructure.com','https://sso.canvaslms.com','https://booking.hkust-gz.edu.cn','https://libroombooking.hkust-gz.edu.cn']);
+const origins=new Set([CANVAS_IDENTITY_ORIGIN,'https://myportal.hkust-gz.edu.cn','https://sisn.hkust-gz.edu.cn','https://sso.hkust-gz.edu.cn','https://2fa.hkust-gz.edu.cn','https://hkust-gz.instructure.com','https://sso.canvaslms.com','https://booking.hkust-gz.edu.cn','https://libroombooking.hkust-gz.edu.cn']);
 // Playwright routes see only the first request in an HTTP redirect chain.
 // Chromium Fetch pauses every document hop before the destination receives it.
 async function guardRedirects(context:BrowserContext,page:Page,allowed:ReadonlySet<string>,blocked:(url:string)=>void):Promise<void>{

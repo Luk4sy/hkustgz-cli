@@ -1,4 +1,5 @@
 import type {AuthReport,CommandHandler,DataPaths,ServiceId,Session} from '../core/contracts.js';
+import {CANVAS_IDENTITY_ORIGIN} from './origins.js';
 import {CliFailure} from '../core/errors.js';
 import {resolveDataPaths} from './paths.js';
 import {browserAvailability,logoutProfiles,selectBrowser,selectedBrowser} from './browser.js';
@@ -11,7 +12,7 @@ export function classifyAuthObservation(service:ServiceId,value:AuthObservation,
  const url=new URL(value.url);const checkedUrl=url.origin+url.pathname;
  if(value.documentReady===false)return{service,state:'unknown',checkedAt:new Date(nowMs).toISOString(),checkedUrl,reason:'The document is changing during authentication.'};
  let state:AuthReport['state']='unknown';let reason='No verified authenticated-data or login-page evidence.';
- const authOrigin=url.origin==='https://sso.hkust-gz.edu.cn'||url.origin==='https://2fa.hkust-gz.edu.cn';
+ const authOrigin=url.origin==='https://sso.hkust-gz.edu.cn'||url.origin==='https://2fa.hkust-gz.edu.cn'||service==='canvas'&&url.origin===CANVAS_IDENTITY_ORIGIN;
  const serviceOrigin=url.origin===new URL(entries[service]).origin;
  if((authOrigin||serviceOrigin)&&(value.loginForm||value.challenge||url.pathname==='/Account/Login'||url.origin==='https://2fa.hkust-gz.edu.cn')){
   state='unauthenticated';reason='Normal school authentication requires user interaction.';
@@ -60,7 +61,10 @@ export async function visitService(service:ServiceId,session:Session,deadlineMs:
    const timer=setTimeout(done,Math.min(200,Math.max(1,observeUntil-Date.now())));session.signal?.addEventListener('abort',aborted,{once:true});
   });
  }
- return checkAuth(service,session);
+ try{return await checkAuth(service,session);}catch(error){
+  if(!(error instanceof Error)||!/Execution context was destroyed|Cannot find context with specified id/.test(error.message))throw error;
+  return classifyAuthObservation(service,{url:page.url(),documentReady:false,loginForm:false,challenge:false,portalApps:false,sisTerm:false,sisMeetings:false,canvasCourses:false},Date.now());
+ }
 }
 export function createControlHandlers():Record<string,CommandHandler>{
  const result=(command:string,data:unknown)=>({ok:true as const,data,meta:{schemaVersion:'1' as const,command}});

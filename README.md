@@ -6,7 +6,7 @@
 
 工具在用户电脑上运行，使用本人的学校账号和专用浏览器会话，查询结果直接来自学校使用的服务。支持 JSON 和表格输出，首期只做查询。
 
-这是非官方项目，目前为 `0.1.0-alpha.1`：前五个开发模块已验收，**课程目录（Catalog）的搜索与详情已可用**；SIS 学期、本人计划课表与今日课程已验收；第六模块 Portal 查询已实现，等待审查。作业查询仍待开发。项目尚未发布到 npm。
+这是非官方项目，目前为 `0.1.0-alpha.1`：前五个开发模块已验收，**课程目录（Catalog）的搜索与详情已可用**；SIS 学期、本人计划课表与今日课程已验收；第六模块 Portal 查询已交付并实测；当前按用户指令推进第七模块 Canvas 认证前置。作业查询仍待开发。项目尚未发布到 npm。
 
 ## 快速开始
 
@@ -107,7 +107,7 @@ Catalog 的课程与班次来自同一份完整、绑定目标学期的响应批
 |---|---|---|
 | SIS | 学期、课表、今日课程已验收；课程历史与成绩仍 pending | 第五模块已验收 |
 | Portal | 应用、公告列表/详情、日程已实现；来源覆盖限制见下文 | 第六模块待审 |
-| Canvas | 课程、公告、作业、日程 | 待开发 |
+| Canvas | 课程、公告、作业、日程；先验证正常登录及读取路线 | 第七模块认证前置进行中，业务仍 pending |
 | Booking | 分类发现、图书馆房间、可用时段、本人预约记录 | 待开发 |
 | 发行支持 | doctor、浏览器安装、跨平台及安装验收 | 待开发 |
 
@@ -125,6 +125,7 @@ HKUSTGZ_TEST_BROWSER=1 npm test   # 本机 Chrome 合成页面测试，不登录
 - [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md) · [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md)
 - 验收记录：[CLI 基础](docs/acceptance/cli-foundation.md) · [认证](docs/acceptance/session-auth.md) · [查询基础层](docs/acceptance/query-core.md) · [Catalog](docs/acceptance/catalog.md) · [SIS](docs/acceptance/sis.md) · [Portal](docs/acceptance/portal.md)
 - [读取证据索引](docs/research/evidence-index.json) · [会话复用验证](docs/acceptance/session-reuse.md)
+- [Canvas 认证前置进展](docs/acceptance/canvas-auth.md)
 - [Git 阶段记录与验收标签](docs/git-history.md)
 
 ## 灵感来源

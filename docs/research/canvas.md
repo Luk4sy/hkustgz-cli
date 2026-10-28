@@ -32,3 +32,9 @@ Planner 与列表响应可含 Link，实际观察到 page 翻页请求。作业�
 逐跳检查观察到 `https://sso.canvaslms.com/delegated_auth_pass_through`；[Canvas 官方文档](https://developerdocs.instructure.com/services/canvas/external-tools/lti/file.lti_launch_overview)证明该来源是其认证服务。记录实际路径与官方域名归属是两类证据，不将文档中其他端点冒充本校实测。未知租户身份来源仍被阻止，没有放宽通配域名。
 
 正常跳转中 DOM 上下文会替换，document.body 也可能短暂不存在；此时保持 unknown 并在同一观察预算内重读页面，不重新发起登录。上述结果仅证明当前账号、专用 profile 与 macOS 的认证子集；业务字段及可分发性门槛仍未通过。
+
+## 2026-10-28 新登录链补证（Task7前置）
+
+学校/login/saml实际重定向到精确租户`https://47277e8d-a0fd-490e-b982-ee46ab1fd96f.sin.login.instructure.com/am/oauth2/alpha/authorize`。不记录认证参数值。该精确域名的公开HTTPS根页在正常TLS校验下返回HTTP200、Log in to Canvas。来源归属与本校真实跳转为两项证据；只加入此精确来源，相似租户不允许。
+
+普通冷启动未恢复到可核实的本人课程数据，保留unknown。观察结束时页面可能仍在替换；新回归保证此时不抛内部错误、不误报成功。已打开专用可见登录窗口等待本人正常认证。当前不启用四项Canvas业务，遵守EVID-03与Task7 Step1。详细记录及认证分发边界见[Canvas认证前置](../acceptance/canvas-auth.md)。
