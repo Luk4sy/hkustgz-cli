@@ -1,9 +1,10 @@
-import {SkillChangeReportSchema} from './contracts.js';
+import {SkillChangeReportSchema,DoctorReportSchema} from './contracts.js';
 import type { CliError } from './contracts.js';
 export class CliFailure extends Error {
   constructor(public readonly code: string, public readonly remediation?: string, public readonly details?:unknown) { super(code); }
 }
 const errors: Record<string, {exitCode: number; message: string; remediation: string; retryable?: boolean}> = {
+  ENVIRONMENT_NOT_READY: {exitCode:8,message:'The runtime environment is not ready.',remediation:'Run doctor and resolve the failing requirements before querying.'},
   SKILL_CONFLICT: {exitCode:8,message:'The Skill has user changes or is not owned by this CLI.',remediation:'Back up and move conflicting files manually; no user changes were overwritten.'},
   UNSAFE_SKILL_TARGET: {exitCode:2,message:'The Skill destination is unsafe.',remediation:'Use an absolute skills root without symbolic links or traversal.'},
   SKILL_OPERATION_FAILED: {exitCode:1,message:'The Skill operation could not be completed safely.',remediation:'Inspect the owned Skill transaction and restore its verified backup if necessary; do not delete unknown locks.'},
@@ -28,7 +29,7 @@ const errors: Record<string, {exitCode: number; message: string; remediation: st
 export function classifyError(error: unknown): {error: CliError; exitCode: number} {
   const code = error instanceof CliFailure && Object.hasOwn(errors, error.code) ? error.code : 'INTERNAL_ERROR';
   const descriptor = errors[code]!;
-  const details=code==='SKILL_CONFLICT'&&error instanceof CliFailure?SkillChangeReportSchema.safeParse(error.details):null;
+  const details=code==='SKILL_CONFLICT'&&error instanceof CliFailure?SkillChangeReportSchema.safeParse(error.details):(code==='ENVIRONMENT_NOT_READY'||code==='INVALID_DATA_HOME')&&error instanceof CliFailure?DoctorReportSchema.safeParse(error.details):null;
   return {exitCode: descriptor.exitCode, error: {code, message: descriptor.message,
     remediation: error instanceof CliFailure ? error.remediation ?? descriptor.remediation : descriptor.remediation,
     retryable: descriptor.retryable ?? false,...details?.success?{details:details.data}:{}}};

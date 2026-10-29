@@ -93,7 +93,7 @@ test('unexpected handler exceptions are returned without private details', async
 });
 
 test('control features not implemented yet return pending, not false success', async () => {
-  for (const args of [['doctor'], ['auth', 'login', 'booking-library']]) {
+  for (const args of [['browser','install','chromium'], ['auth', 'login', 'booking-library']]) {
     const result = await executeCommand(args, { sessionRunner: noSession });
     assert.equal(result.exitCode, 8);
     assert.equal(JSON.parse(result.stdout).error.code, 'CAPABILITY_PENDING');

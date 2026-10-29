@@ -9,13 +9,14 @@
 ```bash
 npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.1.tgz'
 hkustgz-cli --version
+hkustgz-cli doctor
 hkustgz-cli --help
 hkustgz-cli capabilities --format table
 ```
 
 包使用生产依赖；安装需要npm依赖下载或已填充缓存。无需克隆仓库、运行TypeScript或在源码目录操作。不要使用尚未发布的npx地址。若npm提示全局目录权限不足，使用自己拥有的npm prefix并配置相应PATH；不要盲目sudo。
 
-本包安装不下载/启动浏览器、不发起学校请求、不登录、不安装Skill或修改Codex配置。doctor、browser install尚未实现；Skill管理命令现已实现，完整校园调用指引及客户端发现验证仍在后续批次。
+本包安装不下载/启动浏览器、不发起学校请求、不登录、不安装Skill或修改Codex配置。doctor与Skill管理现已实现；browser install仍pending，完整校园调用指引及客户端发现验证仍在后续批次。
 
 ## 首次查询和登录
 
@@ -65,3 +66,7 @@ hkustgz-cli skill uninstall --target codex
 ```
 
 自定义skills根目录使用--dir绝对路径，与--target互斥；卸载也支持--dry-run。现有用户编辑和未知文件会保留，发生冲突时按错误提示先自行备份处理，不能直接删除未知锁。包内目前只有管理说明，完整校园Skill及实际Codex识别尚未验收。若要清理Skill，在npm卸载CLI前显式执行skill uninstall；npm卸载不会替你清理Skill。
+
+## 只读环境检查
+
+运行hkustgz-cli doctor（或--format table）检查运行时、Chrome、专用目录和Skill状态，不启动浏览器或访问学校。警告如缺Skill/忙锁可先查看建议；fail退出8，需处理缺Chrome、不支持的平台/Node或浏览器选择；不安全数据路径退出2。doctor不自动安装软件、删除锁或证明学校认证有效。Node24要求在加载依赖前检查；旧引擎实际兼容测试仍未完成。

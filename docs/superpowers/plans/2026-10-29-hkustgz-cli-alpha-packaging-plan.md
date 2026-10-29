@@ -8,7 +8,7 @@
 
 **Tech Stack:** 现有Node24.x、TypeScript、Commander、Zod、Playwright、node:test、npm tarball；不新增运行时依赖，确需新增时另作说明。
 
-**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划；第一批03064ce已验收，第二批已授权实施，完成后停下待用户审查；第三至五批未开始。
+**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划；第一批03064ce、第二批e124993已验收；第三批已实现待用户审查，第四至五批未开始。
 
 ## Global Constraints
 
@@ -88,11 +88,11 @@ DoctorCheck、DoctorReport和可选错误details在第三批定义。错误detai
 
 **Interfaces:** `DoctorCheck={id:string;status:'pass'|'warn'|'fail';code:string;remediation:string}`；`DoctorReport={cliVersion:string;nodeVersion:string;platform:string;arch:string;checks:DoctorCheck[];capabilities:{verified:number;pending:number;unsupported:number;disabled:number}}`；`getDoctorReport(deps:CliDependencies):Promise<DoctorReport>`。生产信息读取抽成可注入探针供测试，复用SkillStatus、现有browser status/paths/lock观察，不调用SessionRunner。handler返回ControlResult或抛带验证details的CliFailure。
 
-- [ ] Step 1：写`healthy_doctor_exits_zero`、`unsupported_node_exits_eight_before_imports`、`missing_chrome_is_actionable`、`busy_or_unknown_lock_is_not_removed`、`unsafe_home_exits_two`、`doctor_redacts_home_and_identity`。测试使用探针断言无launch/request/delete；无Skill或旧Skill为warn并给安装建议，不阻塞终端公开查询；缺Chrome/不支持平台/Node为fail；忙锁warn，不杀进程。
-- [ ] Step 2：运行`node --import tsx --test tests/doctor.test.ts tests/doctor-cli.test.ts tests/privacy.test.ts`，确认新增行为失败。
-- [ ] Step 3：实现诊断及ENVIRONMENT_NOT_READY/8。bin在加载Commander/Zod等依赖前检测Node主版本；不支持时仍能生成固定schemaVersion1的JSON失败（或--format table的安全文本），不要求旧Node加载业务。通过独立旧Node进程验收；若运行时不可得则该条标未实测，注入测试不能冒充。
-- [ ] Step 4：扩展统一错误details白名单schema，JSON和table保留checks；不安全目录使用INVALID_DATA_HOME/2，未知异常仍INTERNAL_ERROR/1。执行目标和完整测试/类型检查、pack后安装版doctor，检查stdout单结果、stderr无身份路径。
-- [ ] Step 5：记录状态分级及实际支持矩阵，提交`feat: diagnose alpha runtime without school access`。交第三批审查并停止。
+- [x] Step 1：写`healthy_doctor_exits_zero`、`unsupported_node_exits_eight_before_imports`、`missing_chrome_is_actionable`、`busy_or_unknown_lock_is_not_removed`、`unsafe_home_exits_two`、`doctor_redacts_home_and_identity`。测试使用探针断言无launch/request/delete；无Skill或旧Skill为warn并给安装建议，不阻塞终端公开查询；缺Chrome/不支持平台/Node为fail；忙锁warn，不杀进程。
+- [x] Step 2：运行`node --import tsx --test tests/doctor.test.ts tests/doctor-cli.test.ts tests/privacy.test.ts`，确认新增行为失败。
+- [x] Step 3：实现诊断及ENVIRONMENT_NOT_READY/8。bin在加载Commander/Zod等依赖前检测Node主版本；不支持时仍能生成固定schemaVersion1的JSON失败（或--format table的安全文本），不要求旧Node加载业务。通过独立旧Node进程验收；若运行时不可得则该条标未实测，注入测试不能冒充。
+- [x] Step 4：扩展统一错误details白名单schema，JSON和table保留checks；不安全目录使用INVALID_DATA_HOME/2，未知异常仍INTERNAL_ERROR/1。执行目标和完整测试/类型检查、pack后安装版doctor，检查stdout单结果、stderr无身份路径。
+- [x] Step 5：记录状态分级及实际支持矩阵，提交`feat: diagnose alpha runtime without school access`。交第三批审查并停止。
 
 ### Task 4 / 第四批：完整Skill与Codex调用验收
 

@@ -21,7 +21,15 @@ export interface Collected<T> {
 }
 export interface DateRange { from: string; to: string; timezone: 'Asia/Shanghai' }
 export interface SkillChangeReport { action: 'install'|'uninstall'; dryRun:boolean; changed:string[]; preserved:string[]; complete:boolean }
-export interface CliError { code: string; message: string; retryable: boolean; remediation: string; details?:SkillChangeReport }
+export interface DoctorCheck {id:string;status:'pass'|'warn'|'fail';code:string;remediation:string}
+export interface DoctorReport {cliVersion:string;nodeVersion:string;platform:string;arch:string;checks:DoctorCheck[];capabilities:{verified:number;pending:number;unsupported:number;disabled:number}}
+export interface DoctorProbes {
+ runtime:()=>{nodeVersion:string;platform:string;arch:string};
+ data:(env:NodeJS.ProcessEnv)=>Promise<'absent'|'safe'|'busy'|'unknown-lock'>;
+ browser:(env:NodeJS.ProcessEnv)=>Promise<{selected:'chrome'|'edge'|'chromium';chromeAvailable:boolean}>;
+ skill:(env:NodeJS.ProcessEnv)=>Promise<{state:'absent'|'current'|'outdated'|'modified'|'unowned'|'unavailable';installedVersion:string|null;expectedVersion:string}>;
+}
+export interface CliError { code: string; message: string; retryable: boolean; remediation: string; details?:SkillChangeReport|DoctorReport }
 export interface QueryMeta {
   schemaVersion: '1'; command: string; service: ServiceId; sourceUrl: string; fetchedAt: string;
   timezone: 'Asia/Shanghai'; readMethod: ReadMethod; coverage: Coverage;
@@ -40,7 +48,7 @@ export interface Session { service: ServiceId; page: Page; context: BrowserConte
 export interface SessionOptions { browser: 'chrome' | 'edge' | 'chromium'; headless: boolean; deadlineMs: number; purpose: 'query' | 'login' }
 export type SessionRunner = <T>(service: ServiceId, options: SessionOptions, run: (session: Session) => Promise<T>) => Promise<T>;
 export type CommandHandler = (args: Readonly<Record<string, unknown>>, deps: CliDependencies) => Promise<QueryResult<unknown> | ControlResult<unknown>>;
-export interface CliDependencies { now: () => number; capabilities: Capability[]; sessionRunner: SessionRunner; handlers: Record<string, CommandHandler>; env?: NodeJS.ProcessEnv }
+export interface CliDependencies { now: () => number; capabilities: Capability[]; sessionRunner: SessionRunner; handlers: Record<string, CommandHandler>; env?: NodeJS.ProcessEnv; doctorProbes?:DoctorProbes }
 
 export const ServiceSchema = z.enum(['portal', 'sis', 'catalog', 'canvas', 'booking', 'booking-library']);
 export const CapabilitySchema = z.strictObject({
@@ -52,7 +60,9 @@ const RelativeSkillPath=z.string().min(1).refine(s=>{
  return !s.startsWith('/')&&!s.includes('\\')&&!/[\u0000-\u001f\u007f]/.test(s)&&parts.every(part=>part!==''&&part!=='.'&&part!=='..');
 });
 export const SkillChangeReportSchema=z.strictObject({action:z.enum(['install','uninstall']),dryRun:z.boolean(),changed:z.array(RelativeSkillPath),preserved:z.array(RelativeSkillPath),complete:z.boolean()});
-const ErrorSchema = z.strictObject({code: z.string().min(1), message: z.string().min(1), retryable: z.boolean(), remediation: z.string().min(1),details:SkillChangeReportSchema.optional()});
+const VersionSchema=z.string().regex(/^v?\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/);
+export const DoctorReportSchema=z.strictObject({cliVersion:VersionSchema,nodeVersion:VersionSchema,platform:z.enum(['darwin','linux','win32','aix','freebsd','openbsd','sunos','android','netbsd','haiku','cygwin']),arch:z.enum(['arm','arm64','ia32','x64','ppc','ppc64','s390','s390x','riscv64','loong64','mips','mipsel']),checks:z.array(z.strictObject({id:z.string().regex(/^[a-z_-]+$/),status:z.enum(['pass','warn','fail']),code:z.string().regex(/^[A-Z_]+$/),remediation:z.string().min(1)})),capabilities:z.strictObject({verified:z.number().int().nonnegative(),pending:z.number().int().nonnegative(),unsupported:z.number().int().nonnegative(),disabled:z.number().int().nonnegative()})});
+const ErrorSchema = z.strictObject({code: z.string().min(1), message: z.string().min(1), retryable: z.boolean(), remediation: z.string().min(1),details:z.union([SkillChangeReportSchema,DoctorReportSchema]).optional()});
 const MetaSchema = z.strictObject({
   schemaVersion: z.literal('1'), command: z.string().min(1), service: ServiceSchema,
   sourceUrl: z.url(), fetchedAt: z.iso.datetime({offset: true}), timezone: z.literal('Asia/Shanghai'),

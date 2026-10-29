@@ -37,6 +37,8 @@ test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_
     assert.equal(existsSync(join(home,'codex/skills/hkustgz-cli')),false);
     assert.equal(existsSync(join(home,'codex/config.toml')),false);
     assert.equal(existsSync(events),false);
+    const doctor=JSON.parse(run(bin,['doctor'],cwd,env));
+    assert.equal(doctor.data.capabilities.verified,13);assert.equal(existsSync(join(home,'campus')),false);assert.equal(existsSync(events),false);assert.equal(existsSync(join(home,'codex/config.toml')),false);
     const pkg=JSON.parse(readFileSync(join(installed,'package.json'),'utf8'));
     for(const hook of ['preinstall','install','postinstall','prepare'])assert.equal(pkg.scripts?.[hook],undefined);
   }finally{rmSync(f.root,{recursive:true,force:true});}

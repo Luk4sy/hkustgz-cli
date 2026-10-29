@@ -13,3 +13,5 @@ Portal全分类公告可能partial，不能称全校公告；SIS是计划课表�
 当前只读，不选退课、不交作业、不预约、不支付。--help按命令提供实际参数。例：canvas assignments --course使用canvas courses返回的课程ID；sis timetable --term使用sis terms的ID，不传任意URL。
 
 Skill管理属于控制命令，不计入19项校园能力：skill path/status/install/uninstall。status返回state与installedVersion/expectedVersion；变更返回action、dryRun、changed、preserved、complete。部分卸载退出8/SKILL_CONFLICT，error.details可携带相同的经过schema验证的相对路径报告；其他异常不附任意details。现有协议字段与schemaVersion1保持。
+
+doctor属于控制命令；健康ControlResult.data为DoctorReport，阻塞失败退出8/ENVIRONMENT_NOT_READY或不安全路径退出2/INVALID_DATA_HOME，error.details为经验证的DoctorReport。报告包括版本/平台/架构、检查状态与建议、能力状态计数，不含个人路径、身份或认证值。schemaVersion1保留原字段，只扩展可选details白名单；未知异常对象不能透传。
