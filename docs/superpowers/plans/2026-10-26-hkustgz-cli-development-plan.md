@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7四项查询已实现待审，Task8–9尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收，Task8–9尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -143,7 +143,7 @@
 
 ### Task 7：Canvas 学习信息读取
 
-**状态：本人已完成专用窗口认证及9课程冷启动复验，四命令已实现待审；个人截止日期/提交未证实时unknown，Planner只覆盖可见窗口。见docs/acceptance/canvas.md；不得进入Task8。**
+**状态：本人已完成专用窗口认证及9课程冷启动复验，四命令已于2026-10-29随34eb9e3获用户复审通过并验收；个人截止日期/提交未证实时unknown，Planner只覆盖可见窗口。见docs/acceptance/canvas.md；不得进入Task8。**
 
 **Files:** Create `src/adapters/canvas/{index,parser,model,manifest}.ts`、`tests/{canvas,canvas-cli}.test.ts`、`tests/fixtures/canvas/`、`docs/acceptance/canvas-auth.md`。
 

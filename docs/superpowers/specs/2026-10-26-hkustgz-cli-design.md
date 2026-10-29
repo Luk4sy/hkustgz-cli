@@ -1,7 +1,7 @@
 # hkustgz-cli 技术方案 v0.1
 
 日期：2026-10-26（Asia/Shanghai）  
-状态：设计已获用户授权分模块实施；Task 1–5 已验收，Task6已交付并实测，当前按用户指令推进Task7认证前置，业务仍pending。
+状态：设计已获用户授权分模块实施；Task 1–5 已验收，Task6已交付并实测；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收，未进入Task8。
 对象：使用自己学校账号的港科广学生，以及协助他们使用 CLI 的 AI 助手。
 
 ## 1. 已确认的产品决定
@@ -325,3 +325,5 @@ R0/R1 失败不能通过关闭 TLS 校验、导入个人 Chrome Cookie、硬编�
 2026-10-28：用户在实测Portal后指示继续开发，进入Task7认证前置。新观察的精确Canvas Identity租户已补证，冷启动读取尚未确认，当前等待本人在专用窗口正常认证；业务适配器未开始，不进入Task8。见docs/acceptance/canvas-auth.md。
 
 2026-10-29：本人完成Canvas专用窗口认证，关闭重开及9课程读取通过。Task7四项只读查询已实现待审；作业个人截止/提交明细未知时保留unknown，Planner窗口不等于所有作业。个人浏览器alpha；不进入Task8。见docs/acceptance/canvas.md。
+
+2026-10-29 验收更新：用户确认34eb9e3复审通过，第七模块Canvas已验收；198项测试（含54项Chrome）、构建、类型检查及差异检查的复审结果见docs/acceptance/canvas.md。尚未进入Task8。
