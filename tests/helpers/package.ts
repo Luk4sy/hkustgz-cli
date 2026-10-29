@@ -13,7 +13,7 @@ export function run(command:string,args:string[],cwd:string,env:NodeJS.ProcessEn
 export function fixture(){
   const root=mkdtempSync(join(tmpdir(),'hkustgz package '));
   const checkout=join(root,'checkout');mkdirSync(checkout);
-  for(const path of ['src','bin','scripts','package.json','package-lock.json','tsconfig.json','tsconfig.build.json','README.md'])cpSync(join(repo,path),join(checkout,path),{recursive:true});
+  for(const path of ['src','bin','scripts','skills','package.json','package-lock.json','tsconfig.json','tsconfig.build.json','README.md'])cpSync(join(repo,path),join(checkout,path),{recursive:true});
   for(const path of ['installation.md','cli-contract.md','errors.md']){
     try{mkdirSync(join(checkout,'docs'),{recursive:true});cpSync(join(repo,'docs',path),join(checkout,'docs',path));}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
   }

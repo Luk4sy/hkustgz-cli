@@ -13,6 +13,7 @@ const range = [{flags: '--from <date>', description: 'Start date, YYYY-MM-DD'}, 
 const idArg = {syntax: '<id>', key: 'id', kind: 'id' as const};
 
 export const COMMANDS: CommandDefinition[] = [
+  ...['path','status','install','uninstall'].map(action=>({path:`skill ${action}`,description:`${action} the owned CLI Skill bundle`,options:[{flags:'--target <target>',description:'Supported target: codex'},{flags:'--dir <path>',description:'Absolute custom skills root'},...['install','uninstall'].includes(action)?[{flags:'--dry-run',description:'Preview without writing files'}]:[]]})),
   {path: 'doctor', description: 'Inspect the runtime environment (pending)'},
   {path: 'capabilities', description: 'Show verified, pending and unsupported capabilities'},
   {path: 'auth login', description: 'Log in visibly (portal, sis, canvas; other services pending)', args: [{syntax: '<service>', key: 'service', kind: 'service'}]},

@@ -9,6 +9,7 @@ export function renderOutput(value: Output, format: 'json' | 'table'): string {
   if (format === 'json') return `${JSON.stringify(safe)}\n`;
   const lines: string[] = [];
   if (!safe.ok) lines.push(`${safe.error.code}: ${safe.error.message}`, safe.error.remediation);
+  if(!safe.ok&&safe.error.details)lines.push(JSON.stringify(safe.error.details,null,2));
   if ('data' in safe) {
     const data = safe.data;
     const items = data && typeof data === 'object' && 'items' in data ? data.items : null;

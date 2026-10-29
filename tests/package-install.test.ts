@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {existsSync,mkdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+import {existsSync,mkdirSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import test from 'node:test';
 import {fixture,pack,run,seedCache,tree} from './helpers/package.js';
@@ -29,6 +29,14 @@ test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_
     assert.equal(result.data.items.filter((v:{state:string})=>v.state==='pending').length,6);
     assert.equal(existsSync(events),false);
     assert.deepEqual(tree(home),before);
+    assert.equal(realpathSync(JSON.parse(run(bin,['skill','path'],cwd,env)).data.path),realpathSync(join(installed,'skills/hkustgz-cli')));
+    assert.equal(JSON.parse(run(bin,['skill','status'],cwd,env)).data.state,'absent');
+    run(bin,['skill','install','--target','codex'],cwd,env);
+    assert.equal(JSON.parse(run(bin,['skill','status'],cwd,env)).data.state,'current');
+    run(bin,['skill','uninstall','--target','codex'],cwd,env);
+    assert.equal(existsSync(join(home,'codex/skills/hkustgz-cli')),false);
+    assert.equal(existsSync(join(home,'codex/config.toml')),false);
+    assert.equal(existsSync(events),false);
     const pkg=JSON.parse(readFileSync(join(installed,'package.json'),'utf8'));
     for(const hook of ['preinstall','install','postinstall','prepare'])assert.equal(pkg.scripts?.[hook],undefined);
   }finally{rmSync(f.root,{recursive:true,force:true});}

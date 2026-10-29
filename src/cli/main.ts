@@ -115,6 +115,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         if(!handler&&definition.service==='canvas')handler=(await import('../adapters/canvas/index.js')).createCanvasHandlers()[id];
         if(!handler&&definition.service==='sis')handler=(await import('../adapters/sis/index.js')).createSisHandlers()[id];
         if(!handler&&definition.service==='catalog')handler=(await import('../adapters/catalog/index.js')).createCatalogHandlers()[id];
+        if(!handler&&definition.path.startsWith('skill '))handler=(await import('./skill/handlers.js')).createSkillHandlers()[id];
         if(!handler&&!definition.capabilityId&&definition.path!=='doctor')handler=(await import('../session/auth.js')).createControlHandlers()[id];
         if (!handler) throw new CliFailure(definition.capabilityId ? 'ADAPTER_CHANGED' : 'CAPABILITY_PENDING');
         const parsed = (definition.capabilityId ? QueryResultSchema : ControlResultSchema).safeParse(await handler(args, deps));

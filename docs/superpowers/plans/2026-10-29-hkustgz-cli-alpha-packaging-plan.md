@@ -8,7 +8,7 @@
 
 **Tech Stack:** 现有Node24.x、TypeScript、Commander、Zod、Playwright、node:test、npm tarball；不新增运行时依赖，确需新增时另作说明。
 
-**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划并授权第一批；第一批实现完成、待用户审查，后续批次未开始。
+**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划；第一批03064ce已验收，第二批已授权实施，完成后停下待用户审查；第三至五批未开始。
 
 ## Global Constraints
 
@@ -76,11 +76,11 @@ DoctorCheck、DoctorReport和可选错误details在第三批定义。错误detai
 
 **Interfaces:** 实现共享接口及`createSkillHandlers():Record<string,CommandHandler>`；注册skill path/status/install/uninstall。path/status允许--target codex或--dir，默认codex；install/uninstall同样支持目标和--dry-run，target与dir互斥。
 
-- [ ] Step 1：写`install_is_idempotent`、`modified_and_unowned_targets_are_preserved`、`symlink_ancestor_is_rejected`、`upgrade_failure_restores_old_bundle`、`uninstall_preserves_unknown_and_edited_files`；检查manifest文件摘要、A→B升级、摘要不匹配拒绝、不触碰根目录其他Skill和config.toml。父目录不存在时安全创建；读取状态不创建目录。dry-run前后文件树完全一致。
-- [ ] Step 2：运行`node --import tsx --test tests/skill-install.test.ts tests/skill-cli.test.ts`，确认新接口相关测试失败。
-- [ ] Step 3：实现目标解析、只读状态、白名单复制和归属检查。升级采用同文件系统暂存＋旧目录备份＋重命名提交，失败恢复旧目录；变更前重新核验路径/摘要，不覆盖安装开始后新增的用户文件；所有操作同目标互斥。写故障注入覆盖提交中断，读取不得将半更新当current。持久事务恢复规则由install模块定义并测试；无法确认归属则拒绝，不自动删除。macOS /var等系统路径别名先规范到物理根，再检查用户可变链，不能将普通临时路径一律判坏。
-- [ ] Step 4：为Skill失败新增SKILL_CONFLICT、UNSAFE_SKILL_TARGET、SKILL_OPERATION_FAILED的固定消息与退出8/2/1映射，SKILL_CONFLICT可携带受限report。安全拒绝返回2；改动冲突返回8。JSON/table都保留脱敏报告；执行目标测试、全套、类型检查和差异检查，不写真实Codex目录。
-- [ ] Step 5：记录测试和归属规则，重新pack检查Skill入包及私有内容排除。提交`feat: manage owned Codex skill bundles`。交第二批审查并停止。
+- [x] Step 1：写`install_is_idempotent`、`modified_and_unowned_targets_are_preserved`、`symlink_ancestor_is_rejected`、`upgrade_failure_restores_old_bundle`、`uninstall_preserves_unknown_and_edited_files`；检查manifest文件摘要、A→B升级、摘要不匹配拒绝、不触碰根目录其他Skill和config.toml。父目录不存在时安全创建；读取状态不创建目录。dry-run前后文件树完全一致。
+- [x] Step 2：运行`node --import tsx --test tests/skill-install.test.ts tests/skill-cli.test.ts`，确认新接口相关测试失败。
+- [x] Step 3：实现目标解析、只读状态、白名单复制和归属检查。升级采用同文件系统暂存＋旧目录备份＋重命名提交，失败恢复旧目录；变更前重新核验路径/摘要，不覆盖安装开始后新增的用户文件；所有操作同目标互斥。写故障注入覆盖提交中断，读取不得将半更新当current。持久事务恢复规则由install模块定义并测试；无法确认归属则拒绝，不自动删除。macOS /var等系统路径别名先规范到物理根，再检查用户可变链，不能将普通临时路径一律判坏。
+- [x] Step 4：为Skill失败新增SKILL_CONFLICT、UNSAFE_SKILL_TARGET、SKILL_OPERATION_FAILED的固定消息与退出8/2/1映射，SKILL_CONFLICT可携带受限report。安全拒绝返回2；改动冲突返回8。JSON/table都保留脱敏报告；执行目标测试、全套、类型检查和差异检查，不写真实Codex目录。
+- [x] Step 5：记录测试和归属规则，重新pack检查Skill入包及私有内容排除。提交`feat: manage owned Codex skill bundles`。交第二批审查并停止。
 
 ### Task 3 / 第三批：doctor与环境失败契约
 

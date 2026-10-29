@@ -20,7 +20,8 @@ export interface Collected<T> {
   truncationReason:QueryMeta['truncationReason']; failure?:CliError;
 }
 export interface DateRange { from: string; to: string; timezone: 'Asia/Shanghai' }
-export interface CliError { code: string; message: string; retryable: boolean; remediation: string }
+export interface SkillChangeReport { action: 'install'|'uninstall'; dryRun:boolean; changed:string[]; preserved:string[]; complete:boolean }
+export interface CliError { code: string; message: string; retryable: boolean; remediation: string; details?:SkillChangeReport }
 export interface QueryMeta {
   schemaVersion: '1'; command: string; service: ServiceId; sourceUrl: string; fetchedAt: string;
   timezone: 'Asia/Shanghai'; readMethod: ReadMethod; coverage: Coverage;
@@ -46,7 +47,12 @@ export const CapabilitySchema = z.strictObject({
   id: z.string().min(1), service: ServiceSchema, state: z.enum(['pending', 'verified', 'unsupported', 'disabled']),
   reason: z.string().nullable(), evidenceId: z.string().min(1).nullable(),
 }).refine((item) => item.state !== 'verified' || item.evidenceId !== null, 'Verified capabilities require evidence');
-const ErrorSchema = z.strictObject({code: z.string().min(1), message: z.string().min(1), retryable: z.boolean(), remediation: z.string().min(1)});
+const RelativeSkillPath=z.string().min(1).refine(s=>{
+ const parts=s.replace(/\/$/,'').split('/');
+ return !s.startsWith('/')&&!s.includes('\\')&&!/[\u0000-\u001f\u007f]/.test(s)&&parts.every(part=>part!==''&&part!=='.'&&part!=='..');
+});
+export const SkillChangeReportSchema=z.strictObject({action:z.enum(['install','uninstall']),dryRun:z.boolean(),changed:z.array(RelativeSkillPath),preserved:z.array(RelativeSkillPath),complete:z.boolean()});
+const ErrorSchema = z.strictObject({code: z.string().min(1), message: z.string().min(1), retryable: z.boolean(), remediation: z.string().min(1),details:SkillChangeReportSchema.optional()});
 const MetaSchema = z.strictObject({
   schemaVersion: z.literal('1'), command: z.string().min(1), service: ServiceSchema,
   sourceUrl: z.url(), fetchedAt: z.iso.datetime({offset: true}), timezone: z.literal('Asia/Shanghai'),
