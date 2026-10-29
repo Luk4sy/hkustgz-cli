@@ -11,7 +11,7 @@ test('tarball_is_allowlisted and builds from source without preexisting dist',()
     const p=pack(f);
     assert.ok(p.files.includes('dist/cli/main.js'),'pack must build runtime');
     for(const path of ['docs/installation.md','docs/cli-contract.md','docs/errors.md','skills/hkustgz-cli/SKILL.md'])assert.ok(p.files.includes(path),`missing ${path}`);
-    for(const path of p.files)assert.match(path,/^(package\.json|README\.md|skills\/hkustgz-cli\/SKILL\.md|bin\/hkustgz-cli\.mjs|docs\/(installation|cli-contract|errors)\.md|dist\/(cli|core|session|adapters)\/[\w/.-]+\.(js|d\.ts))$/);
+    for(const path of p.files)assert.match(path,/^(package\.json|README\.md|skills\/hkustgz-cli\/(SKILL\.md|references\/(commands|errors|examples|privacy)\.md)|bin\/hkustgz-cli\.mjs|docs\/(installation|cli-contract|errors)\.md|dist\/(cli|core|session|adapters)\/[\w/.-]+\.(js|d\.ts))$/);
     assert.ok(!p.files.includes('dist/stale-secret.js'));
   }finally{rmSync(f.root,{recursive:true,force:true});}
 });

@@ -1,5 +1,21 @@
 # hkustgz-cli
 
+## Alpha 安装与 Codex 使用
+
+目前提供13项已验证的只读查询（Catalog/SIS/Portal/Canvas），另6项仍pending；具体范围以`hkustgz-cli capabilities`为准。未发布npm，也未完成第二名学生验收。完整安装、升级和卸载见[安装指南](docs/installation.md)。
+
+```bash
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.1.tgz'
+hkustgz-cli doctor
+hkustgz-cli capabilities
+hkustgz-cli skill install --target codex --dry-run
+hkustgz-cli skill install --target codex
+```
+
+tgz需由维护者确认后交付。CLI安装不会自动写Skill或启动学校登录。安装Skill后刷新Codex，使用`$hkustgz-cli 查公开课程AIAA5032`；私人查询先由本人在专用窗口正常认证。版本必须与随包Skill精确一致；升级CLI后需显式同步Skill。
+
+Agent使用默认JSON，保留partial的可信子集，说明截断范围；unknown不等于未交/已交，Planner不代表全部作业。全部学校查询只读，不支持成绩、选退课、提交作业或创建预约。[第四批验收记录](docs/acceptance/alpha-agent.md)区分客户端发现、合成场景与真实查询。
+
 ## 简单介绍
 
 面向香港科技大学（广州）学生的校园服务命令行工具。希望把分散在不同系统里的课程、课表、通知和作业，变成终端里可以直接查询的命令，也方便 Agent 调用。

@@ -16,7 +16,7 @@ hkustgz-cli capabilities --format table
 
 包使用生产依赖；安装需要npm依赖下载或已填充缓存。无需克隆仓库、运行TypeScript或在源码目录操作。不要使用尚未发布的npx地址。若npm提示全局目录权限不足，使用自己拥有的npm prefix并配置相应PATH；不要盲目sudo。
 
-本包安装不下载/启动浏览器、不发起学校请求、不登录、不安装Skill或修改Codex配置。doctor与Skill管理现已实现；browser install仍pending，完整校园调用指引及客户端发现验证仍在后续批次。
+本包安装不下载/启动浏览器、不发起学校请求、不登录、不安装Skill或修改Codex配置。doctor与Skill管理现已实现；browser install仍pending，完整校园查询Skill现已随包提供，客户端发现和实际调用范围见第四批验收记录。
 
 ## 首次查询和登录
 
@@ -65,8 +65,14 @@ hkustgz-cli skill install --target codex
 hkustgz-cli skill uninstall --target codex
 ```
 
-自定义skills根目录使用--dir绝对路径，与--target互斥；卸载也支持--dry-run。现有用户编辑和未知文件会保留，发生冲突时按错误提示先自行备份处理，不能直接删除未知锁。包内目前只有管理说明，完整校园Skill及实际Codex识别尚未验收。若要清理Skill，在npm卸载CLI前显式执行skill uninstall；npm卸载不会替你清理Skill。
+自定义skills根目录使用--dir绝对路径，与--target互斥；卸载也支持--dry-run。现有用户编辑和未知文件会保留，发生冲突时按错误提示先自行备份处理，不能直接删除未知锁。包内现有校园查询指引与四份按需引用文件。安装后刷新或重启Codex；已验证新启动的Codex CLI发现和读取Skill，当前桌面会话热刷新未单独验收。若要清理Skill，在npm卸载CLI前显式执行skill uninstall；npm卸载不会替你清理Skill。
 
 ## 只读环境检查
 
 运行hkustgz-cli doctor（或--format table）检查运行时、Chrome、专用目录和Skill状态，不启动浏览器或访问学校。警告如缺Skill/忙锁可先查看建议；fail退出8，需处理缺Chrome、不支持的平台/Node或浏览器选择；不安全数据路径退出2。doctor不自动安装软件、删除锁或证明学校认证有效。Node24要求在加载依赖前检查；旧引擎实际兼容测试仍未完成。
+
+## 通过Codex查询
+
+CLI需已在当前终端PATH中，Skill与CLI版本精确一致；可用skill status检查文件状态，文件已安装不代表当前会话已刷新。输入`$hkustgz-cli 查公开课程AIAA5032`，Agent应先检查版本、doctor、capabilities，再运行对应查询。私人查询由本人在正常学校窗口完成认证，不要求Token。Agent串行调用，保留partial/unknown，遇限流停止。
+
+命令参考由构建时的真实注册表生成；Skill不抓网页或猜接口。完整CLI协议见cli-contract.md，错误及恢复边界见errors.md。第四批的CLI安装使用隔离prefix，不自动改用户全局PATH；日常使用仍需按本指南显式安装。对其他同学分发前仍须完成许可证、独立学生和发布验收。

@@ -26,7 +26,11 @@
     "docs/installation.md",
     "docs/cli-contract.md",
     "docs/errors.md",
-    "skills/hkustgz-cli/SKILL.md"
+    "skills/hkustgz-cli/SKILL.md",
+    "skills/hkustgz-cli/references/commands.md",
+    "skills/hkustgz-cli/references/errors.md",
+    "skills/hkustgz-cli/references/examples.md",
+    "skills/hkustgz-cli/references/privacy.md"
   ],
   "license": "UNLICENSED",
   "dependencies": {

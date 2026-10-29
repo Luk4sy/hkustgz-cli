@@ -42,7 +42,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
     }, ...overrides};
   let stdout = ''; const stderr = ''; let commandName = 'hkustgz-cli'; let exitCode = 0;
   let outputFormat: 'json' | 'table' = 'json';
-  const program = new Command('hkustgz-cli').description('Read-only HKUST(GZ) campus CLI — Catalog, SIS calendar and Portal available; other school queries pending.')
+  const program = new Command('hkustgz-cli').description('Read-only HKUST(GZ) campus CLI — Catalog, SIS, Portal and Canvas queries available; consult capabilities for support.')
     .version(version).exitOverride().showHelpAfterError(false)
     .addOption(new Option('--format <format>', 'Output format').choices(['json', 'table']).default('json'))
     .configureOutput({writeOut: (text) => {stdout += text;}, writeErr: () => {}});

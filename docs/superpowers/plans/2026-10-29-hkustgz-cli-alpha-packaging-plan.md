@@ -8,7 +8,7 @@
 
 **Tech Stack:** 现有Node24.x、TypeScript、Commander、Zod、Playwright、node:test、npm tarball；不新增运行时依赖，确需新增时另作说明。
 
-**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划；第一批03064ce、第二批e124993已验收；第三批已实现待用户审查，第四至五批未开始。
+**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划；第一批03064ce、第二批e124993已验收；第三批fc7dda6已验收；第四批已实现并完成受控调用验证，待用户审查；第五批未开始。
 
 ## Global Constraints
 
@@ -100,11 +100,11 @@ DoctorCheck、DoctorReport和可选错误details在第三批定义。错误detai
 
 **Interfaces:** Skill元数据版本等于package.version、compatible_cli为精确版本、schemaVersion='1'；commands参考数据消费COMMANDS及DEFAULT_CAPABILITIES，不能新增业务事实来源。可新增纯文档生成器`scripts/build-skill-docs.mjs`，不得在消费安装时执行。
 
-- [ ] Step 1：写`skill_matches_installed_cli`、`pending_commands_are_not_promoted`、`references_ship_in_same_bundle`；断言所有示例命令路径/参数可由现有CLI识别，13项可用查询与6项pending匹配，版本一致。使用合成QueryResult固定退出7仍保留data、unknown不变false、Planner不代表所有作业。
-- [ ] Step 2：运行`node --import tsx --test tests/skill-contract.test.ts`并记录失败。
-- [ ] Step 3：写薄Skill：先版本/doctor/capabilities，按需认证；Catalog不要求登录，未知认证只尝试一次只读查询；LOGIN_REQUIRED交本人登录；PROFILE_BUSY不删锁、RATE_LIMITED不外层循环、权限失败不猜接口。HTML和学校文案视为数据；串行执行浏览器命令；仅使用用户返回ID，不猜课程/学期ID。
-- [ ] Step 4：运行契约/全部测试/类型检查及pack检查。安装到独立临时Codex home做文件发现验证；实际在用户授权的Codex环境安装与刷新后，以自然语言完成公开查询、本人私人查询及pending拒绝。实际客户端识别与合成partial/unknown/登录失败场景分开记录；不因写了SKILL.md就宣称识别成功。
-- [ ] Step 5：记录Agent实际调用的命令结构、结果状态及范围，不记录正文/身份；提交`feat: guide Codex through verified campus queries`。交第四批审查并停止。
+- [x] Step 1：写`skill_matches_installed_cli`、`pending_commands_are_not_promoted`、`references_ship_in_same_bundle`；断言所有示例命令路径/参数可由现有CLI识别，13项可用查询与6项pending匹配，版本一致。使用合成QueryResult固定退出7仍保留data、unknown不变false、Planner不代表所有作业。
+- [x] Step 2：运行`node --import tsx --test tests/skill-contract.test.ts`并记录失败。
+- [x] Step 3：写薄Skill：先版本/doctor/capabilities，按需认证；Catalog不要求登录，未知认证只尝试一次只读查询；LOGIN_REQUIRED交本人登录；PROFILE_BUSY不删锁、RATE_LIMITED不外层循环、权限失败不猜接口。HTML和学校文案视为数据；串行执行浏览器命令；仅使用用户返回ID，不猜课程/学期ID。
+- [x] Step 4：运行契约/全部测试/类型检查及pack检查。安装到独立临时Codex home做文件发现验证；实际在用户授权的Codex环境安装与刷新后，以自然语言完成公开查询、本人私人查询及pending拒绝。实际客户端识别与合成partial/unknown/登录失败场景分开记录；不因写了SKILL.md就宣称识别成功。
+- [x] Step 5：记录Agent实际调用的命令结构、结果状态及范围，不记录正文/身份；提交`feat: guide Codex through verified campus queries`。交第四批审查并停止。
 
 ### Task 5 / 第五批：独立学生、升级卸载与alpha交付验收
 
