@@ -2,8 +2,8 @@
 name: hkustgz-cli
 description: Use when a HKUST(GZ) student asks about campus courses, timetables, notices, Canvas assignments or agenda, or needs help with the local hkustgz-cli installation and authentication. 适用于港科广课程、课表、公告、作业、日程与校园CLI请求。
 metadata:
-  version: 0.1.0-alpha.1
-  compatible_cli: 0.1.0-alpha.1
+  version: 0.1.0-alpha.2
+  compatible_cli: 0.1.0-alpha.2
   schemaVersion: '1'
 ---
 

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {join,dirname} from 'node:path';
+import {sameFixturePath} from './helpers/path-match.js';
 import test from 'node:test';
 import {resolveSkillTarget} from '../src/cli/skill/paths.js';
 import {inspectSkill,MANIFEST} from '../src/cli/skill/manifest.js';
@@ -33,7 +34,7 @@ test('modified_and_unowned_targets_are_preserved including unknown empty directo
 });
 test('symlink_ancestor_is_rejected and malformed manifests cannot escape the target',async()=>{
  const f=setup();try{
-  fs.symlinkSync(f.bundle.root,join(f.root,'alias'));assert.throws(()=>resolveSkillTarget({dir:join(f.root,'alias','skills')},{}),code('UNSAFE_SKILL_TARGET'));assert.equal(fs.existsSync(join(f.bundle.root,'skills')),false);
+  fs.symlinkSync(f.bundle.root,join(f.root,'alias'),process.platform==='win32'?'junction':'dir');assert.throws(()=>resolveSkillTarget({dir:join(f.root,'alias','skills')},{}),code('UNSAFE_SKILL_TARGET'));assert.equal(fs.existsSync(join(f.bundle.root,'skills')),false);
   await installSkill(f.target,f.bundle,{dryRun:false});const marker=join(f.root,'outside');fs.writeFileSync(marker,'keep');
   fs.writeFileSync(join(f.target.destination,MANIFEST),JSON.stringify({schemaVersion:'1',packageName:'hkustgz-cli',version:'1',files:{'../../outside':'0'.repeat(64)}}));
   await assert.rejects(uninstallSkill(f.target,f.bundle,{dryRun:false}),code('SKILL_CONFLICT'));assert.equal(fs.readFileSync(marker,'utf8'),'keep');
@@ -42,11 +43,11 @@ test('symlink_ancestor_is_rejected and malformed manifests cannot escape the tar
 test('upgrade_failure_restores_old_bundle and concurrent target edits prevent replacement',async(t)=>{
  const f=setup();try{
   await installSkill(f.target,f.bundle,{dryRun:false});const next={...f.bundle,version:'0.1.0-alpha.2'};fs.writeFileSync(join(f.bundle.root,'SKILL.md'),'version B');
-  const rename=fs.renameSync;t.mock.method(fs,'renameSync',(from:fs.PathLike,to:fs.PathLike)=>{if(String(from).endsWith('/stage'))throw new Error('injected secret');return rename(from,to);});
-  await assert.rejects(installSkill(f.target,next,{dryRun:false}),code('SKILL_OPERATION_FAILED'));t.mock.restoreAll();
+  const rename=fs.renameSync;let failedStage=false;t.mock.method(fs,'renameSync',(from:fs.PathLike,to:fs.PathLike)=>{if(sameFixturePath(from,join(f.target.destination+'.lock','stage'))){failedStage=true;throw new Error('injected secret');}return rename(from,to);});
+  await assert.rejects(installSkill(f.target,next,{dryRun:false}),code('SKILL_OPERATION_FAILED'));assert.equal(failedStage,true);t.mock.restoreAll();
   assert.equal(fs.readFileSync(join(f.target.destination,'SKILL.md'),'utf8'),'version A');assert.equal((await inspectSkill(f.target,next)).state,'outdated');
-  const write=fs.writeFileSync;let edited=false;t.mock.method(fs,'writeFileSync',(...args:Parameters<typeof fs.writeFileSync>)=>{if(String(args[0]).includes('/stage/')&&!edited){edited=true;write(join(f.target.destination,'new-user-file'),'keep');}return write(...args);});
-  await assert.rejects(installSkill(f.target,next,{dryRun:false}),code('SKILL_CONFLICT'));t.mock.restoreAll();assert.equal(fs.readFileSync(join(f.target.destination,'new-user-file'),'utf8'),'keep');assert.equal(fs.readFileSync(join(f.target.destination,'SKILL.md'),'utf8'),'version A');
+  const write=fs.writeFileSync;let edited=false;t.mock.method(fs,'writeFileSync',(...args:Parameters<typeof fs.writeFileSync>)=>{if(sameFixturePath(dirname(String(args[0])),join(f.target.destination+'.lock','stage'))&&!edited){edited=true;write(join(f.target.destination,'new-user-file'),'keep');}return write(...args);});
+  await assert.rejects(installSkill(f.target,next,{dryRun:false}),code('SKILL_CONFLICT'));assert.equal(edited,true);t.mock.restoreAll();assert.equal(fs.readFileSync(join(f.target.destination,'new-user-file'),'utf8'),'keep');assert.equal(fs.readFileSync(join(f.target.destination,'SKILL.md'),'utf8'),'version A');
  }finally{t.mock.restoreAll();fs.rmSync(f.root,{recursive:true,force:true});}
 });
 test('uninstall_preserves_unknown_and_edited_files and dry run is readonly',async()=>{
@@ -63,8 +64,8 @@ test('uninstall owned bundle leaves other skills and configuration intact',async
 test('staging write failure preserves old bundle and permits retry',async(t)=>{
  const f=setup();try{
  await installSkill(f.target,f.bundle,{dryRun:false});const next={...f.bundle,version:'0.1.0-alpha.2'};fs.writeFileSync(join(f.bundle.root,'SKILL.md'),'B');
- const write=fs.writeFileSync;t.mock.method(fs,'writeFileSync',(...args:Parameters<typeof fs.writeFileSync>)=>{if(String(args[0]).endsWith('/stage/SKILL.md'))throw Error('disk failure');return write(...args);});
- await assert.rejects(installSkill(f.target,next,{dryRun:false}),code('SKILL_OPERATION_FAILED'));t.mock.restoreAll();
+ const write=fs.writeFileSync;let failedWrite=false;t.mock.method(fs,'writeFileSync',(...args:Parameters<typeof fs.writeFileSync>)=>{if(sameFixturePath(args[0],join(f.target.destination+'.lock','stage','SKILL.md'))){failedWrite=true;throw Error('disk failure');}return write(...args);});
+ await assert.rejects(installSkill(f.target,next,{dryRun:false}),code('SKILL_OPERATION_FAILED'));assert.equal(failedWrite,true);t.mock.restoreAll();
  assert.equal(fs.readFileSync(join(f.target.destination,'SKILL.md'),'utf8'),'version A');await installSkill(f.target,next,{dryRun:false});assert.equal((await inspectSkill(f.target,next)).state,'current');
  }finally{t.mock.restoreAll();fs.rmSync(f.root,{recursive:true,force:true});}
 });
@@ -76,7 +77,7 @@ test('dead producer transaction recovers verified backup before next install',as
  const f=setup();try{
  await installSkill(f.target,f.bundle,{dryRun:false});const next={...f.bundle,version:'0.1.0-alpha.2'};fs.writeFileSync(join(f.bundle.root,'SKILL.md'),'B');
  const moduleUrl=new URL('../src/cli/skill/install.ts',import.meta.url).href;
- const script=`import fs from 'node:fs';import {installSkill} from ${JSON.stringify(moduleUrl)};const rename=fs.renameSync;fs.renameSync=(a,b)=>{if(String(a).endsWith('/stage'))process.exit(77);return rename(a,b)};await installSkill(${JSON.stringify(f.target)},${JSON.stringify(next)},{dryRun:false});`;
+ const script=`import fs from 'node:fs';import {installSkill} from ${JSON.stringify(moduleUrl)};const rename=fs.renameSync;fs.renameSync=(a,b)=>{if(String(a)===${JSON.stringify(join(f.target.destination+'.lock','stage'))})process.exit(77);return rename(a,b)};await installSkill(${JSON.stringify(f.target)},${JSON.stringify(next)},{dryRun:false});`;
  const child=spawnSync(process.execPath,['--import','tsx','--input-type=module','-e',script],{encoding:'utf8'});assert.equal(child.status,77,child.stderr);
  assert.equal(fs.existsSync(f.target.destination),false);await assert.rejects(inspectSkill(f.target,next),code('SKILL_OPERATION_FAILED'));
  await installSkill(f.target,next,{dryRun:false});assert.equal((await inspectSkill(f.target,next)).state,'current');assert.equal(fs.existsSync(f.target.destination+'.lock'),false);
@@ -86,8 +87,8 @@ test('cleanup never follows a backup directory replaced by a symbolic link',asyn
  const f=setup();try{
   await installSkill(f.target,f.bundle,{dryRun:false});const external=join(f.root,'external');fs.cpSync(f.target.destination,external,{recursive:true});
   const next={...f.bundle,version:'0.1.0-alpha.2'};fs.writeFileSync(join(f.bundle.root,'SKILL.md'),'B');
-  const rename=fs.renameSync;t.mock.method(fs,'renameSync',(from:fs.PathLike,to:fs.PathLike)=>{rename(from,to);if(String(to).endsWith('/backup')){rename(to,join(f.root,'saved-old'));fs.symlinkSync(external,to);}});
-  await assert.rejects(installSkill(f.target,next,{dryRun:false}));assert.equal(fs.readFileSync(join(external,'SKILL.md'),'utf8'),'version A');
+  const rename=fs.renameSync;let swapped=false;t.mock.method(fs,'renameSync',(from:fs.PathLike,to:fs.PathLike)=>{rename(from,to);if(sameFixturePath(to,join(f.target.destination+'.lock','backup'))){swapped=true;rename(to,join(f.root,'saved-old'));fs.symlinkSync(external,to,process.platform==='win32'?'junction':'dir');}});
+  await assert.rejects(installSkill(f.target,next,{dryRun:false}));assert.equal(swapped,true);assert.equal(fs.lstatSync(join(f.target.destination+'.lock','backup')).isSymbolicLink(),true);assert.equal(fs.readFileSync(join(external,'SKILL.md'),'utf8'),'version A');
  }finally{t.mock.restoreAll();fs.rmSync(f.root,{recursive:true,force:true});}
 });
 test('status does not report current when a transaction starts during inspection',async(t)=>{

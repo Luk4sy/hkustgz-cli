@@ -8,6 +8,7 @@ import type {DataPaths,SessionOptions,SessionRunner} from '../core/contracts.js'
 import {CANVAS_IDENTITY_ORIGIN} from './origins.js';
 import {CliFailure,classifyError} from '../core/errors.js';
 import {assertOwned,claimDirectory,ensureDataPaths,resolveDataPaths} from './paths.js';
+import {findChrome} from './chrome.js';
 import {acquireProfileLock} from './lock.js';
 export type BrowserName=SessionOptions['browser'];
 export const BROWSERS:BrowserName[]=['chrome','edge','chromium'];
@@ -25,9 +26,9 @@ export async function selectBrowser(paths:DataPaths,browser:BrowserName):Promise
  const temp=join(paths.root,`.config-${randomUUID()}.tmp`);
  try{await writeFile(temp,JSON.stringify({schemaVersion:1,browser}),{flag:'wx',mode:0o600});await rename(temp,join(paths.root,'config.json'));}finally{await rm(temp,{force:true});}
 }
-export async function browserAvailability():Promise<Array<{browser:BrowserName;available:boolean}>>{
+export async function browserAvailability(env:NodeJS.ProcessEnv=process.env):Promise<Array<{browser:BrowserName;available:boolean}>>{
  const {chromium}=await import('playwright');
- const paths:Record<BrowserName,string|null>={chrome:process.platform==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':null,edge:process.platform==='darwin'?'/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge':null,chromium:chromium.executablePath()};
+ const paths:Record<BrowserName,string|null>={chrome:await findChrome(process.platform,env),edge:process.platform==='darwin'?'/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge':null,chromium:chromium.executablePath()};
  return Promise.all(BROWSERS.map(async browser=>({browser,available:paths[browser]!==null&&await access(paths[browser]!,constants.X_OK).then(()=>true,()=>false)})));
 }
 const origins=new Set([CANVAS_IDENTITY_ORIGIN,'https://myportal.hkust-gz.edu.cn','https://sisn.hkust-gz.edu.cn','https://sso.hkust-gz.edu.cn','https://2fa.hkust-gz.edu.cn','https://hkust-gz.instructure.com','https://sso.canvaslms.com','https://booking.hkust-gz.edu.cn','https://libroombooking.hkust-gz.edu.cn']);
@@ -45,14 +46,19 @@ async function guardRedirects(context:BrowserContext,page:Page,allowed:ReadonlyS
  await client.send('Fetch.enable',{patterns:[{urlPattern:'*',resourceType:'Document',requestStage:'Request'}]});
 }
 type Launch=(profile:string,options:SessionOptions&{timeout:number})=>Promise<BrowserContext>;
-const launch:Launch=async(profile,options)=>{
+export async function launchBrowser(profile:string,options:SessionOptions&{timeout:number},config:{platform?:NodeJS.Platform;env?:NodeJS.ProcessEnv;probe?:(path:string)=>Promise<boolean>}={}):Promise<BrowserContext>{
  const {chromium}=await import('playwright');
+ const platform=config.platform??process.platform;
+ const executablePath=platform==='win32'&&options.browser==='chrome'?await findChrome(platform,config.env??process.env,config.probe):null;
+ if(platform==='win32'&&options.browser==='chrome'&&!executablePath)throw new CliFailure('BROWSER_UNAVAILABLE');
  try{return await chromium.launchPersistentContext(profile,{...(options.browser==='chromium'?{}:{channel:options.browser==='edge'?'msedge':'chrome'}),
+  ...executablePath?{executablePath}:{},
   headless:options.headless,timeout:options.timeout,acceptDownloads:false,chromiumSandbox:true,
   ignoreDefaultArgs:['--password-store=basic','--use-mock-keychain','--unsafely-disable-devtools-self-xss-warnings']});}
  catch(e){if(e instanceof Error&&e.name==='TimeoutError')throw new CliFailure('QUERY_TIMEOUT');throw new CliFailure('BROWSER_UNAVAILABLE');}
 };
-export function createSessionRunner(paths:DataPaths,dependencies:{launch?:Launch;signals?:EventEmitter;allowedOrigins?:ReadonlySet<string>}={}):SessionRunner{
+export function createSessionRunner(paths:DataPaths,dependencies:{launch?:Launch;signals?:EventEmitter;allowedOrigins?:ReadonlySet<string>;env?:NodeJS.ProcessEnv}={}):SessionRunner{
+ const start:Launch=dependencies.launch??((profile,options)=>launchBrowser(profile,options,{env:dependencies.env??process.env}));
  return async(service,options,run)=>{
   if(options.deadlineMs<=Date.now())throw new CliFailure('QUERY_TIMEOUT');
   await ensureDataPaths(paths);const profile=join(paths.profile,options.browser);
@@ -74,7 +80,7 @@ export function createSessionRunner(paths:DataPaths,dependencies:{launch?:Launch
   try{
    await claimDirectory(profile);
    if(cancelled)throw cancelled;
-   context=await (dependencies.launch??launch)(profile,{...options,timeout:Math.max(1,Math.min(30000,options.deadlineMs-Date.now()))});
+   context=await start(profile,{...options,timeout:Math.max(1,Math.min(30000,options.deadlineMs-Date.now()))});
    if(cancelled)throw cancelled;
    await context.route('**/*',async route=>{
     const req=route.request();

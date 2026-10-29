@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import {readFileSync} from 'node:fs';
-import {hostname} from 'node:os';
+import {hostname,release} from 'node:os';
 import {join} from 'node:path';
 import type {CliDependencies,CommandHandler,DoctorCheck,DoctorProbes,DoctorReport} from '../core/contracts.js';
 import {DoctorReportSchema} from '../core/contracts.js';
@@ -13,7 +13,7 @@ import {inspectSkill} from './skill/manifest.js';
 const {version}=JSON.parse(readFileSync(new URL('../../package.json',import.meta.url),'utf8')) as {version:string};
 async function present(path:string):Promise<boolean>{try{await fs.lstat(path);return true;}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')return false;throw error;}}
 const production:DoctorProbes={
- runtime:()=>({nodeVersion:process.version,platform:process.platform,arch:process.arch}),
+ runtime:()=>({nodeVersion:process.version,platform:process.platform,arch:process.arch,...process.platform==='win32'?{osRelease:release()}:{}}),
  data:async env=>{
   const paths=resolveDataPaths(env);
   try{
@@ -40,7 +40,7 @@ const production:DoctorProbes={
   }catch(error){if(error instanceof CliFailure)throw new CliFailure('INVALID_DATA_HOME');throw error;}
  },
  browser:async env=>{
-  const selected=await selectedBrowser(resolveDataPaths(env));const availability=await browserAvailability();
+  const selected=await selectedBrowser(resolveDataPaths(env));const availability=await browserAvailability(env);
   return{selected,chromeAvailable:availability.some(item=>item.browser==='chrome'&&item.available)};
  },
  skill:async env=>{
@@ -52,7 +52,8 @@ export async function getDoctorReport(deps:CliDependencies):Promise<DoctorReport
  const add=(id:string,status:DoctorCheck['status'],code:string,remediation:string)=>checks.push({id,status,code,remediation});
  const supported=/^v?24\./.test(runtime.nodeVersion);
  add('node',supported?'pass':'fail',supported?'NODE_SUPPORTED':'NODE_UNSUPPORTED',supported?'Node 24.x is available.':'Install Node.js 24.x manually, then run doctor again.');
- add('platform',runtime.platform==='darwin'?'pass':'fail',runtime.platform==='darwin'?'PLATFORM_SUPPORTED':'PLATFORM_UNVERIFIED',runtime.platform==='darwin'?'macOS is the alpha target.':'Use macOS with Google Chrome for this alpha; this platform is not verified.');
+ const windows=runtime.platform==='win32'&&/^10\.0\.\d+(?:\.\d+)?$/.test(runtime.osRelease??'')&&Number(runtime.osRelease?.split('.')[2])>=22000;
+ add('platform',runtime.platform==='darwin'?'pass':windows?'warn':'fail',runtime.platform==='darwin'?'PLATFORM_SUPPORTED':windows?'WINDOWS_CANDIDATE':'PLATFORM_UNVERIFIED',runtime.platform==='darwin'?'macOS has prior alpha evidence.':windows?'Windows 11 compatible NT build is a candidate; confirm edition and complete real-device acceptance.':'Use macOS or the Windows 11 candidate with Chrome; this platform or build is unverified.');
  let safe=true;
  const unsafeHome=()=>{safe=false;const prior=checks.findIndex(check=>check.id==='data');if(prior!==-1)checks.splice(prior,1);add('data','fail','DATA_HOME_UNSAFE','Set HKUSTGZ_CLI_HOME to a new empty absolute CLI-owned directory.');};
  try{
@@ -70,7 +71,8 @@ export async function getDoctorReport(deps:CliDependencies):Promise<DoctorReport
  const skill=await probes.skill(deps.env??process.env);
  add('skill',skill.state==='current'?'pass':'warn',skill.state==='current'?'SKILL_CURRENT':skill.state==='outdated'?'SKILL_OUTDATED':skill.state==='absent'?'SKILL_ABSENT':'SKILL_NEEDS_ATTENTION',skill.state==='current'?'The installed management Skill matches this CLI.':'Inspect skill status and explicitly install or synchronize the bundled Skill; terminal queries do not require it.');
  const capabilities={verified:0,pending:0,unsupported:0,disabled:0};for(const item of deps.capabilities)capabilities[item.state]++;
- return DoctorReportSchema.parse({cliVersion:version,...runtime,checks,capabilities});
+ const {osRelease,...base}=runtime;
+ return DoctorReportSchema.parse({cliVersion:version,...base,...osRelease&&/^\d+(?:\.\d+){1,3}$/.test(osRelease)?{osRelease}:{},checks,capabilities});
 }
 export function createDoctorHandler():CommandHandler{
  return async(_args,deps)=>{

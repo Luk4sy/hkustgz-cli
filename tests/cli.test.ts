@@ -18,7 +18,7 @@ test('help does not open browser or require a session', async () => {
 test('version works without starting a browser', async () => {
   const result = await executeCommand(['--version'], { sessionRunner: noSession });
   assert.equal(result.exitCode, 0);
-  assert.match(result.stdout, /^0\.1\.0-alpha\.1\n$/);
+  assert.match(result.stdout, /^0\.1\.0-alpha\.2\n$/);
 });
 
 test('unknown options and missing or invalid parameters exit 2', async () => {

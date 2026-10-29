@@ -38,7 +38,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
     env: process.env,
     sessionRunner: async (...args) => {
       const [{createSessionRunner},{resolveDataPaths}]=await Promise.all([import('../session/browser.js'),import('../session/paths.js')]);
-      return createSessionRunner(resolveDataPaths(deps.env??process.env))(...args);
+      return createSessionRunner(resolveDataPaths(deps.env??process.env),{env:deps.env??process.env})(...args);
     }, ...overrides};
   let stdout = ''; const stderr = ''; let commandName = 'hkustgz-cli'; let exitCode = 0;
   let outputFormat: 'json' | 'table' = 'json';

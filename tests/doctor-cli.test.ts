@@ -18,7 +18,7 @@ test('real doctor never creates data or Skill directories and retains unknown lo
  await claimDirectory(data);fs.mkdirSync(join(data,'profiles/chrome.lock'),{recursive:true});fs.writeFileSync(join(data,'profiles/chrome.lock','owner.json'),JSON.stringify({pid:process.pid,hostname:hostname(),tool:'hkustgz-cli',token:'test'}));
  const before=fs.readFileSync(join(data,'profiles/chrome.lock/owner.json'),'utf8');const result=await executeCommand(['doctor'],{env});assert.ok([0,8].includes(result.exitCode));assert.equal(fs.readFileSync(join(data,'profiles/chrome.lock/owner.json'),'utf8'),before);assert.equal(fs.existsSync(codex),false);
  fs.writeFileSync(join(data,'profiles/chrome.lock/owner.json'),'unowned');const unknown=await executeCommand(['doctor'],{env});const unknownValue=JSON.parse(unknown.stdout);assert.ok((unknownValue.data??unknownValue.error.details).checks.some((v:{code:string})=>v.code==='PROFILE_LOCK_UNKNOWN'));assert.equal(fs.readFileSync(join(data,'profiles/chrome.lock/owner.json'),'utf8'),'unowned');
- fs.mkdirSync(join(root,'outside'));fs.symlinkSync(join(root,'outside'),join(root,'alias'));assert.equal((await executeCommand(['doctor'],{env:{...env,HKUSTGZ_CLI_HOME:join(root,'alias')}})).exitCode,2);
+ fs.mkdirSync(join(root,'outside'));fs.symlinkSync(join(root,'outside'),join(root,'alias'),process.platform==='win32'?'junction':'dir');assert.equal((await executeCommand(['doctor'],{env:{...env,HKUSTGZ_CLI_HOME:join(root,'alias')}})).exitCode,2);
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
 test('unsupported_node_exits_eight_before_imports from standalone executable',()=>{

@@ -1,13 +1,13 @@
 # Alpha 安装与使用
 
-目前为本地验收阶段，未上传npm，尚未完成第二名学生验收。许可证已按维护者选择采用MIT；独立学生验收与交付渠道仍待确认，当前开发快照尚未交付。首轮目标为macOS、Google Chrome、Node.js 24.x与npm；其他平台未验收。
+目前为本地验收阶段，未上传npm，尚未完成第二名学生验收。许可证已按维护者选择采用MIT；独立学生验收与交付渠道仍待确认，当前开发快照尚未交付。macOS已有验收证据；新增Windows11/Chrome/Node24候选尚待真机，步骤见windows.md。其他平台未验收。
 
 ## 安装明确版本产物
 
 在维护者确认分发后，取得对应版本tgz及SHA256，从本机绝对路径安装：
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.1.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.2.tgz'
 hkustgz-cli --version
 hkustgz-cli doctor
 hkustgz-cli --help
@@ -69,10 +69,12 @@ hkustgz-cli skill uninstall --target codex
 
 ## 只读环境检查
 
-运行hkustgz-cli doctor（或--format table）检查运行时、Chrome、专用目录和Skill状态，不启动浏览器或访问学校。警告如缺Skill/忙锁可先查看建议；fail退出8，需处理缺Chrome、不支持的平台/Node或浏览器选择；不安全数据路径退出2。doctor不自动安装软件、删除锁或证明学校认证有效。Node24要求在加载依赖前检查；旧引擎实际兼容测试仍未完成。
+运行hkustgz-cli doctor（或--format table）检查运行时、Chrome、专用目录和Skill状态，不启动浏览器或访问学校。警告如缺Skill/忙锁可先查看建议；fail退出8，需处理缺Chrome、不支持的平台/Node或浏览器选择；不安全数据路径退出2。doctor不自动安装软件、删除锁或证明学校认证有效。Node24要求在加载依赖前检查；旧引擎实际兼容测试仍未完成。Windows11兼容NT build只显示候选警告，不表示实机通过。
 
 ## 通过Codex查询
 
 CLI需已在当前终端PATH中，Skill与CLI版本精确一致；可用skill status检查文件状态，文件已安装不代表当前会话已刷新。输入`$hkustgz-cli 查公开课程AIAA5032`，Agent应先检查版本、doctor、capabilities，再运行对应查询。私人查询由本人在正常学校窗口完成认证，不要求Token。Agent串行调用，保留partial/unknown，遇限流停止。
 
 命令参考由构建时的真实注册表生成；Skill不抓网页或猜接口。完整CLI协议见cli-contract.md，错误及恢复边界见errors.md。第四批的CLI安装使用隔离prefix，不自动改用户全局PATH；日常使用仍需按本指南显式安装。定向试用前需由维护者确认交付渠道；面向更多同学的alpha交付还需完成独立学生验收。MIT许可与实际发布授权分别记录。
+
+Windows用户使用npm.cmd/hkustgz-cli.cmd入口，完整PowerShell与loopback检查见[Windows候选](windows.md)。不改变执行策略、不自动安装Chrome，不把Windows候选当作已完成独立学生验收。

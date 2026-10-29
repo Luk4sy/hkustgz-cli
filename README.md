@@ -2,12 +2,12 @@
 
 ## Alpha 安装与 Codex 使用
 
-许可证采用[MIT](LICENSE)。当前alpha目标为macOS＋Chrome；Windows/Linux未验收，Windows仅可探索安装与诊断，不承诺学校查询。
+许可证采用[MIT](LICENSE)。macOS＋Chrome已有验收证据；新增Windows11＋Chrome＋Node24＋Codex适配候选`0.1.0-alpha.2`，实机尚待验证。Windows步骤见[候选指南](docs/windows.md)，Linux不在范围。
 
 目前提供13项已验证的只读查询（Catalog/SIS/Portal/Canvas），另6项仍pending；具体范围以`hkustgz-cli capabilities`为准。未发布npm，也未完成第二名学生验收。完整安装、升级和卸载见[安装指南](docs/installation.md)。
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.1.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.2.tgz'
 hkustgz-cli doctor
 hkustgz-cli capabilities
 hkustgz-cli skill install --target codex --dry-run

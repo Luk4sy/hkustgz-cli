@@ -21,3 +21,5 @@
 doctor健康退出0；缺Chrome、不支持的平台/Node或未验证浏览器选择退出8/ENVIRONMENT_NOT_READY；数据路径不安全退出2/INVALID_DATA_HOME。诊断失败的error.details为受限DoctorReport，JSON/table都保留checks；警告不表示登录有效，不自动清理任何锁。
 
 完整校园Skill按实际capabilities判断；成绩/历史/预约仍pending时直接说明不可用。版本不匹配停止Agent校园调用并显式同步随包Skill。登录状态unknown可尝试一次verified只读查询；明确LOGIN_REQUIRED后由本人正常认证，再按授权重查。实际客户端的沙箱若阻止浏览器，记录BROWSER_UNAVAILABLE为未验证，不改变安全配置或循环重启。
+
+Windows11候选在doctor中显示WINDOWS_CANDIDATE/warn；这不证明SKU或真机通过。Windows10/未知NT build继续ENVIRONMENT_NOT_READY。Chrome候选与实际启动共用解析；UNC/device/非本地盘符路径拒绝。Windows.cmd入口与本机smoke详见windows.md，不修改系统执行策略。

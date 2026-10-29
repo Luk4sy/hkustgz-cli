@@ -1,6 +1,6 @@
 {
   "name": "hkustgz-cli",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "private": true,
   "description": "Read-only campus service CLI for HKUST(GZ) students.",
   "type": "module",
@@ -31,7 +31,9 @@
     "skills/hkustgz-cli/references/errors.md",
     "skills/hkustgz-cli/references/examples.md",
     "skills/hkustgz-cli/references/privacy.md",
-    "LICENSE"
+    "LICENSE",
+    "bin/windows-smoke.mjs",
+    "docs/windows.md"
   ],
   "license": "MIT",
   "dependencies": {

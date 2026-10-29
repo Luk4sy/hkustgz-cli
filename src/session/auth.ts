@@ -70,7 +70,7 @@ export function createControlHandlers():Record<string,CommandHandler>{
  const result=(command:string,data:unknown)=>({ok:true as const,data,meta:{schemaVersion:'1' as const,command}});
  const dataPaths=(env:NodeJS.ProcessEnv|undefined):DataPaths=>resolveDataPaths(env??process.env);
  return {
-  'browser.status':async(_,deps)=>result('browser status',{selected:await selectedBrowser(dataPaths(deps.env)),items:await browserAvailability(),platform:process.platform,platformAcceptance:'not-verified-for-distribution'}),
+  'browser.status':async(_,deps)=>result('browser status',{selected:await selectedBrowser(dataPaths(deps.env)),items:await browserAvailability(deps.env??process.env),platform:process.platform,platformAcceptance:'not-verified-for-distribution'}),
   'browser.use':async(args,deps)=>{const browser=args.browser as 'chrome'|'edge'|'chromium';await selectBrowser(dataPaths(deps.env),browser);return result('browser use',{browser});},
   'auth.logout':async(_,deps)=>{await logoutProfiles(dataPaths(deps.env));return result('auth logout',{localProfilesCleared:true,schoolSessionsRevoked:false});},
   'auth.login':async(args,deps)=>{

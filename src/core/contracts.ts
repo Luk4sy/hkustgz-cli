@@ -22,9 +22,9 @@ export interface Collected<T> {
 export interface DateRange { from: string; to: string; timezone: 'Asia/Shanghai' }
 export interface SkillChangeReport { action: 'install'|'uninstall'; dryRun:boolean; changed:string[]; preserved:string[]; complete:boolean }
 export interface DoctorCheck {id:string;status:'pass'|'warn'|'fail';code:string;remediation:string}
-export interface DoctorReport {cliVersion:string;nodeVersion:string;platform:string;arch:string;checks:DoctorCheck[];capabilities:{verified:number;pending:number;unsupported:number;disabled:number}}
+export interface DoctorReport {cliVersion:string;nodeVersion:string;platform:string;arch:string;osRelease?:string|undefined;checks:DoctorCheck[];capabilities:{verified:number;pending:number;unsupported:number;disabled:number}}
 export interface DoctorProbes {
- runtime:()=>{nodeVersion:string;platform:string;arch:string};
+ runtime:()=>{nodeVersion:string;platform:string;arch:string;osRelease?:string|undefined};
  data:(env:NodeJS.ProcessEnv)=>Promise<'absent'|'safe'|'busy'|'unknown-lock'>;
  browser:(env:NodeJS.ProcessEnv)=>Promise<{selected:'chrome'|'edge'|'chromium';chromeAvailable:boolean}>;
  skill:(env:NodeJS.ProcessEnv)=>Promise<{state:'absent'|'current'|'outdated'|'modified'|'unowned'|'unavailable';installedVersion:string|null;expectedVersion:string}>;
@@ -61,7 +61,7 @@ const RelativeSkillPath=z.string().min(1).refine(s=>{
 });
 export const SkillChangeReportSchema=z.strictObject({action:z.enum(['install','uninstall']),dryRun:z.boolean(),changed:z.array(RelativeSkillPath),preserved:z.array(RelativeSkillPath),complete:z.boolean()});
 const VersionSchema=z.string().regex(/^v?\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/);
-export const DoctorReportSchema=z.strictObject({cliVersion:VersionSchema,nodeVersion:VersionSchema,platform:z.enum(['darwin','linux','win32','aix','freebsd','openbsd','sunos','android','netbsd','haiku','cygwin']),arch:z.enum(['arm','arm64','ia32','x64','ppc','ppc64','s390','s390x','riscv64','loong64','mips','mipsel']),checks:z.array(z.strictObject({id:z.string().regex(/^[a-z_-]+$/),status:z.enum(['pass','warn','fail']),code:z.string().regex(/^[A-Z_]+$/),remediation:z.string().min(1)})),capabilities:z.strictObject({verified:z.number().int().nonnegative(),pending:z.number().int().nonnegative(),unsupported:z.number().int().nonnegative(),disabled:z.number().int().nonnegative()})});
+export const DoctorReportSchema=z.strictObject({cliVersion:VersionSchema,nodeVersion:VersionSchema,osRelease:z.string().regex(/^\d+(?:\.\d+){1,3}$/).optional(),platform:z.enum(['darwin','linux','win32','aix','freebsd','openbsd','sunos','android','netbsd','haiku','cygwin']),arch:z.enum(['arm','arm64','ia32','x64','ppc','ppc64','s390','s390x','riscv64','loong64','mips','mipsel']),checks:z.array(z.strictObject({id:z.string().regex(/^[a-z_-]+$/),status:z.enum(['pass','warn','fail']),code:z.string().regex(/^[A-Z_]+$/),remediation:z.string().min(1)})),capabilities:z.strictObject({verified:z.number().int().nonnegative(),pending:z.number().int().nonnegative(),unsupported:z.number().int().nonnegative(),disabled:z.number().int().nonnegative()})});
 const ErrorSchema = z.strictObject({code: z.string().min(1), message: z.string().min(1), retryable: z.boolean(), remediation: z.string().min(1),details:z.union([SkillChangeReportSchema,DoctorReportSchema]).optional()});
 const MetaSchema = z.strictObject({
   schemaVersion: z.literal('1'), command: z.string().min(1), service: ServiceSchema,
