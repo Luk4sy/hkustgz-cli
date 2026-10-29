@@ -54,15 +54,19 @@ export async function getDoctorReport(deps:CliDependencies):Promise<DoctorReport
  add('node',supported?'pass':'fail',supported?'NODE_SUPPORTED':'NODE_UNSUPPORTED',supported?'Node 24.x is available.':'Install Node.js 24.x manually, then run doctor again.');
  add('platform',runtime.platform==='darwin'?'pass':'fail',runtime.platform==='darwin'?'PLATFORM_SUPPORTED':'PLATFORM_UNVERIFIED',runtime.platform==='darwin'?'macOS is the alpha target.':'Use macOS with Google Chrome for this alpha; this platform is not verified.');
  let safe=true;
+ const unsafeHome=()=>{safe=false;const prior=checks.findIndex(check=>check.id==='data');if(prior!==-1)checks.splice(prior,1);add('data','fail','DATA_HOME_UNSAFE','Set HKUSTGZ_CLI_HOME to a new empty absolute CLI-owned directory.');};
  try{
   const state=await probes.data(deps.env??process.env);
   add('data',state==='busy'||state==='unknown-lock'?'warn':'pass',state==='absent'?'DATA_HOME_ABSENT':state==='busy'?'PROFILE_BUSY':state==='unknown-lock'?'PROFILE_LOCK_UNKNOWN':'DATA_HOME_SAFE',state==='busy'||state==='unknown-lock'?'Wait for the existing session or inspect the CLI-owned lock manually; do not delete unknown locks.':'The CLI data directory is safe or will be created on explicit use.');
- }catch(error){if(!(error instanceof CliFailure)||error.code!=='INVALID_DATA_HOME')throw error;safe=false;add('data','fail','DATA_HOME_UNSAFE','Set HKUSTGZ_CLI_HOME to a new empty absolute CLI-owned directory.');}
+ }catch(error){if(!(error instanceof CliFailure)||error.code!=='INVALID_DATA_HOME')throw error;unsafeHome();}
  if(safe){
+  try{
   const browser=await probes.browser(deps.env??process.env);
   add('browser',browser.chromeAvailable?'pass':'fail',browser.chromeAvailable?'CHROME_AVAILABLE':'CHROME_MISSING',browser.chromeAvailable?'Google Chrome is available; no browser was launched.':'Install Google Chrome manually, then run browser use chrome and doctor.');
   if(browser.selected!=='chrome')add('browser_selection','fail','BROWSER_UNVERIFIED','Run browser use chrome; other browser selections are not verified for this alpha.');
- }else add('browser','warn','BROWSER_NOT_CHECKED','Resolve the unsafe data directory before checking browser selection.');
+  }catch(error){if(!(error instanceof CliFailure)||error.code!=='INVALID_DATA_HOME')throw error;unsafeHome();}
+ }
+ if(!safe)add('browser','warn','BROWSER_NOT_CHECKED','Resolve the unsafe data directory before checking browser selection.');
  const skill=await probes.skill(deps.env??process.env);
  add('skill',skill.state==='current'?'pass':'warn',skill.state==='current'?'SKILL_CURRENT':skill.state==='outdated'?'SKILL_OUTDATED':skill.state==='absent'?'SKILL_ABSENT':'SKILL_NEEDS_ATTENTION',skill.state==='current'?'The installed management Skill matches this CLI.':'Inspect skill status and explicitly install or synchronize the bundled Skill; terminal queries do not require it.');
  const capabilities={verified:0,pending:0,unsupported:0,disabled:0};for(const item of deps.capabilities)capabilities[item.state]++;

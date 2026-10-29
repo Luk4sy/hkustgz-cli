@@ -35,3 +35,17 @@ test('early runtime failure reads package version instead of a stale built-in va
  const result=spawnSync(process.execPath,['--require',join(root,'old.cjs'),join(root,'bin/cli.mjs'),'doctor'],{encoding:'utf8'});assert.equal(result.status,8);assert.equal(JSON.parse(result.stdout).error.details.cliVersion,'0.1.0-alpha.9');
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
+for(const format of ['json','table'])test(`unsafe browser config retains diagnostic report in ${format}`,async()=>{
+ const root=fs.mkdtempSync(join(tmpdir(),'doctor-config-'));try{
+  const data=join(root,'data'),codex=join(root,'codex'),external=join(root,'outside.json');await claimDirectory(data);
+  fs.writeFileSync(external,JSON.stringify({browser:'chrome',private:'SECRET_CONFIG_MARKER'}));fs.symlinkSync(external,join(data,'config.json'));
+  const before=fs.readFileSync(external,'utf8');
+  const result=await executeCommand(['doctor','--format',format],{env:{HKUSTGZ_CLI_HOME:data,CODEX_HOME:codex},sessionRunner:async()=>{throw Error('must not launch');}});
+  assert.equal(result.exitCode,2);assert.match(result.stdout,/INVALID_DATA_HOME/);assert.match(result.stdout,/DATA_HOME_UNSAFE/);
+  if(format==='json'){
+   const value=JSON.parse(result.stdout);assert.ok(value.error.details.checks.some((check:{code:string;status:string})=>check.code==='DATA_HOME_UNSAFE'&&check.status==='fail'));assert.equal(value.error.details.capabilities.verified,13);assert.ok(value.error.details.checks.some((check:{id:string})=>check.id==='skill'));
+  }
+  assert.equal(result.stderr,'');assert.ok(!result.stdout.includes(root));assert.ok(!result.stdout.includes('SECRET_CONFIG_MARKER'));
+  assert.equal(fs.readFileSync(external,'utf8'),before);assert.equal(fs.lstatSync(join(data,'config.json')).isSymbolicLink(),true);assert.equal(fs.existsSync(codex),false);
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});

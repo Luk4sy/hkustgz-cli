@@ -58,3 +58,15 @@ bin在加载dist/Commander/Zod/Playwright之前检查Node主版本；非24返回
 - `npm run typecheck`、`git diff --check`：通过。
 - 实际tgz隔离安装与安装版doctor通过，副作用探针无网络/子进程记录。
 - 旧Node引擎实测仍未验证；六份既有未提交文档未改动，未发布、未对外分发、未写真实Codex配置。第四批未开始。
+
+## 186ecce 用户复审修复：不安全浏览器配置
+
+用户复现：工具数据根目录归属正常，但config.json为符号链接；selectedBrowser抛出的INVALID_DATA_HOME原来直接越过报告构建，只返回退出2及错误码，缺少error.details。
+
+现将data/browser探针中的INVALID_DATA_HOME统一纳入诊断构建：把此前data检查更新为fail/DATA_HOME_UNSAFE，追加浏览器未检查提示，并继续保留其余诊断与能力计数，最终仍退出2。其他异常维持INTERNAL_ERROR处理。
+
+新增JSON/table两项真实临时目录回归，修复前均失败，修复后通过；并断言外部配置内容和符号链接保持原样、不创建Codex目录、输出不含私人路径或合成秘密。第三批doctor/privacy共10项通过；未进入第四批。
+
+修复后本地产物91文件，SHA256：`87cc4b4ae7f07e26ae0a248316fedae3bc1a5669ffb902c3600c325509b9ddc3`，保存在忽略目录task3-review-artifacts，与186ecce产物分开。仍为未发布alpha本地快照。
+
+本次复审修复最终验证：`HKUSTGZ_TEST_BROWSER=1 npm test` 224/224通过，0失败0跳过，含54项既有Chrome合成测试；构建、`npm run typecheck`和`git diff --check`通过。仅修改doctor、对应回归和本验收记录；原有六份未提交文档保持不动，真实Codex/profile未改，未发布，第四批未开始。
