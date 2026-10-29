@@ -7,7 +7,10 @@
 <p align="center"><strong>把港科广校园信息带进终端与 Codex。</strong></p>
 
 <p align="center">
-  <code>0.1.0-alpha.2</code> · <a href="LICENSE">MIT</a> · 本机运行 · 校园业务只读
+  <a href="docs/installation.md"><img src="docs/assets/badges/version.svg" alt="版本 0.1.0-alpha.2"></a>
+  <a href="LICENSE"><img src="docs/assets/badges/license.svg" alt="MIT 许可证"></a>
+  <a href="docs/installation.md"><img src="docs/assets/badges/node.svg" alt="需要 Node.js 24"></a>
+  <a href="#codex-集成"><img src="docs/assets/badges/codex.svg" alt="提供 Codex Skill"></a>
 </p>
 
 <p align="center">
