@@ -108,7 +108,7 @@
       "service": "canvas",
       "state": "verified",
       "evidenceId": "R7-CANVAS-20261029",
-      "readMethod": "response",
+      "readMethod": "dom",
       "documentPath": "docs/research/canvas.md",
       "reason": null
     },
