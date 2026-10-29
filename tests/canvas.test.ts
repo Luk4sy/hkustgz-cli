@@ -12,3 +12,10 @@ test('Canvas collector follows scoped pages and preserves trusted data after a l
  assert.throws(()=>parseLink('<'+next.replace('only_announcements=true','only_announcements=false')+'>; rel="next"',url));
 });
 test('Canvas agenda labels Planner scope independently from assignment completeness',async()=>{const {queryCanvas}=await import('../src/adapters/canvas/index.js');const url='https://hkust-gz.instructure.com/api/v1/planner/items?per_page=50';const r=await queryCanvas('agenda',{range:{from:'2026-10-29',to:'2026-11-05',timezone:'Asia/Shanghai'}},{refresh:false,deadlineMs:Date.now()+5000},{courses:async()=>[],initial:async()=>({url,body:[],link:null}),page:async()=>{throw new Error('No next page');}});assert.equal((r.data as {scope:string}).scope,'planner');assert.ok(r.meta.warnings.some(w=>w.code==='PLANNER_SCOPE'));});
+
+for(const suffix of ['; rel=next','; title="page, two"; rel="next"','; type="application/json"; rel="alternate next"'])test('Canvas collector follows Link variant '+suffix,async()=>{
+ const {queryCanvas}=await import('../src/adapters/canvas/index.js');const url='https://hkust-gz.instructure.com/api/v1/courses/42/discussion_topics?per_page=50',next=url+'&page=2';let reads=0;const item={id:1,title:'Synthetic',is_announcement:true,message:'Body'};
+ const r=await queryCanvas('announcements',{courseId:'42'},{refresh:false,deadlineMs:Date.now()+5000},{courses:async()=>[],initial:async()=>({url,body:[item],link:'<'+next+'>'+suffix}),page:async u=>{reads++;assert.equal(u,next);return{url:u,body:[{...item,id:2}],link:null};}});
+ assert.equal(reads,1);assert.equal(r.meta.pagesRead,2);assert.equal((r.data as {items:unknown[]}).items.length,2);assert.equal(r.meta.coverage,'complete');
+});
+test('Canvas Link malformed or ambiguous relations cannot establish exhaustion',()=>{const u='https://hkust-gz.instructure.com/api/v1/planner/items?per_page=50';for(const h of ['garbage','<'+u+'>; rel="next','<'+u+'>; title="missing relation"','<'+u+'&page=2>; rel="next"; rel="last"'])assert.throws(()=>parseLink(h,u),{code:'ADAPTER_CHANGED'});});

@@ -12,6 +12,7 @@ export function createCanvasReader(page:Page,templates:ReadonlyMap<string,string
  return{courses,page:read,initial:async(kind,course,range,signal)=>{
   const path=kind==='agenda'?'/api/v1/planner/items':'/api/v1/courses/'+course+'/'+(kind==='assignments'?'assignment_groups':'discussion_topics');
   if(kind!=='agenda'&&!prepared.has(path)){const own=await(ownCourses??=courses(signal));if(!own.some(c=>c.id===course))throw new CliFailure('PERMISSION_DENIED');await page.goto(ORIGIN+'/courses/'+course+'/'+(kind==='assignments'?'assignments':'announcements'),{waitUntil:'domcontentloaded'});}
+  if(kind==='agenda'&&!prepared.has(path)&&!templates.has(path))await page.goto(ORIGIN+'/',{waitUntil:'domcontentloaded'});
   // Discover this endpoint only from the normal page's observed GET request.
   for(;;){if(signal.aborted)throw signal.reason;const raw=templates.get(path);if(raw){const u=new URL(raw);prepared.add(path);u.searchParams.set('per_page','50');u.searchParams.delete('page');if(kind==='agenda'){u.searchParams.delete('filter');u.searchParams.set('start_date',range!.from+'T00:00:00+08:00');u.searchParams.set('end_date',range!.to+'T00:00:00+08:00');}return read(u.toString(),kind,signal);}await new Promise<void>((resolve,reject)=>{const timer=setTimeout(()=>{signal.removeEventListener('abort',cancel);resolve();},30);const cancel=()=>{clearTimeout(timer);signal.removeEventListener('abort',cancel);reject(signal.reason);};signal.addEventListener('abort',cancel,{once:true});});}
  }};
