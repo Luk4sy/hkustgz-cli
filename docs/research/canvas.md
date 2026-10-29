@@ -38,3 +38,13 @@ Planner 与列表响应可含 Link，实际观察到 page 翻页请求。作业�
 学校/login/saml实际重定向到精确租户`https://47277e8d-a0fd-490e-b982-ee46ab1fd96f.sin.login.instructure.com/am/oauth2/alpha/authorize`。不记录认证参数值。该精确域名的公开HTTPS根页在正常TLS校验下返回HTTP200、Log in to Canvas。来源归属与本校真实跳转为两项证据；只加入此精确来源，相似租户不允许。
 
 普通冷启动未恢复到可核实的本人课程数据，保留unknown。观察结束时页面可能仍在替换；新回归保证此时不抛内部错误、不误报成功。已打开专用可见登录窗口等待本人正常认证。当前不启用四项Canvas业务，遵守EVID-03与Task7 Step1。详细记录及认证分发边界见[Canvas认证前置](../acceptance/canvas-auth.md)。
+
+## R7-CANVAS-20261029：本人正常浏览器路线
+
+用户完成专用窗口登录后，实际auth login canvas authenticated；重开后学校SSO有时超过控制命令5秒观察，研究等待完成后进入/courses authenticated、my_courses_table9门（另my_groups_table2组不混入课程）。课程目录不是Dashboard卡片；未证实过去/未来课程全集，当前命令范围为当前表。未验证独立code字段时null，名称保留完整源标签。
+
+从实际课程导航取得Announcements/Assignments入口，不拼猜未知业务端点。响应观察确认discussion_topics参数only_announcements/per_page/page/filter_by/include[]；assignment_groups参数exclude_assignment_submission_types[]/exclude_response_fields[]/include[]/override_assignment_dates/per_page。样本公告1项、作业3组3项；Link含current/first/last，Planner实际含next。读取器只复用观察到的模板，参数范围及URL白名单固定，分页不跨课程或改变过滤条件。
+
+源assignment的id/course_id/name/due_at/html_url已观察，缺少个人submission/overrides，secure_params不得返回。保留due_at但来源unknown、个人提交unknown，不拿has_submitted_submissions或graded_submissions_exist替代本人状态。Planner的plannable_type/plannable_id/plannable_date/plannable.title保留种类，submissions.submitted/graded若明确则映射；planner_override.marked_complete独立保留。此窗口不是全部作业目录。
+
+编译CLI四命令分别complete9课程、3作业、1公告、7Planner项；仅数量与覆盖范围作为验收摘要，未持久化私人响应。公开平台文档不代替本校第三方客户端批准；此版本仍为本地个人浏览器alpha，通用发布条件保留。

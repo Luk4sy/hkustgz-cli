@@ -23,7 +23,8 @@ test('callback error closes owned context exactly once and releases its profile'
 });
 test('deadline closes context, aborts callback signal, and releases lock',async t=>{
  let closed=0;let aborted=false;const {runner,paths}=await setup(t,async()=>{closed++;});
- await assert.rejects(runner('sis',{...options(),deadlineMs:Date.now()+100},async s=>{s.signal?.addEventListener('abort',()=>{aborted=true;});return new Promise(()=>{});}),{code:'QUERY_TIMEOUT'});
+ t.mock.timers.enable({apis:['Date','setTimeout'],now:Date.now()});
+ await assert.rejects(runner('sis',{...options(),deadlineMs:Date.now()+100},async s=>{s.signal?.addEventListener('abort',()=>{aborted=true;});t.mock.timers.tick(100);return new Promise(()=>{});}),{code:'QUERY_TIMEOUT'});
  assert.equal(closed,1);assert.equal(aborted,true);const lock=await acquireProfileLock(join(paths.profile,'chrome'));await lock.release();
 });
 for(const [signal,code] of [['SIGINT','INTERRUPTED'],['SIGTERM','TERMINATED']])test(`${signal} cleans up and removes listeners`,async t=>{

@@ -51,7 +51,7 @@ test('capabilities reports verified Catalog SIS calendar and Portal and leaves o
   assert.equal(payload.ok, true);
   const services = new Set(payload.data.items.map((item: { service: string }) => item.service));
   for (const service of ['portal', 'sis', 'catalog', 'canvas', 'booking-library']) assert.equal(services.has(service), true);
-  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['portal.apps','portal.notices','portal.notice','portal.agenda','sis.terms','sis.timetable','sis.today','catalog.search','catalog.course']);
+  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['portal.apps','portal.notices','portal.notice','portal.agenda','sis.terms','sis.timetable','sis.today','catalog.search','catalog.course','canvas.courses','canvas.announcements','canvas.assignments','canvas.agenda']);
 });
 
 test('one JSON document on stdout preserves a verified read and strips temporary source tokens', async () => {

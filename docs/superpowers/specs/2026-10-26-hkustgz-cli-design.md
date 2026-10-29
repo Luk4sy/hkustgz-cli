@@ -323,3 +323,5 @@ R0/R1 失败不能通过关闭 TLS 校验、导入个人 Chrome Cookie、硬编�
 2026-10-27 第六模块进度：第五模块d708ac5已获用户验收；Portal四命令已实现待审。公告全分类受未确认响应结构限制返回partial8条，外部详情不支持；日程来源及未知ID均明确保留。未进入第七模块。详见docs/acceptance/portal.md。
 
 2026-10-28：用户在实测Portal后指示继续开发，进入Task7认证前置。新观察的精确Canvas Identity租户已补证，冷启动读取尚未确认，当前等待本人在专用窗口正常认证；业务适配器未开始，不进入Task8。见docs/acceptance/canvas-auth.md。
+
+2026-10-29：本人完成Canvas专用窗口认证，关闭重开及9课程读取通过。Task7四项只读查询已实现待审；作业个人截止/提交明细未知时保留unknown，Planner窗口不等于所有作业。个人浏览器alpha；不进入Task8。见docs/acceptance/canvas.md。

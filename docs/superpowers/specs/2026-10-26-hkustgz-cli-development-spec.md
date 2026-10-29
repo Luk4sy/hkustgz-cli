@@ -1,7 +1,7 @@
 # hkustgz-cli 开发 Spec v0.1
 
 日期：2026-10-26（Asia/Shanghai）  
-状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；Task 5 SIS（d708ac5）已验收；Task6 Portal已交付并实测，用户于2026-10-28授权继续Task7；Canvas认证前置进行中，未进入Task8；其余业务取证仍进行中，发布未获授权。
+状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；Task 5 SIS（d708ac5）已验收；Task6 Portal已交付并实测，用户于2026-10-28授权继续Task7；Canvas四项查询已实现待用户审查，未进入Task8；其余业务取证仍进行中，发布未获授权。
 上位设计：[技术方案](2026-10-26-hkustgz-cli-design.md)  
 执行配套：[分阶段开发计划](../plans/2026-10-26-hkustgz-cli-development-plan.md)
 
@@ -239,6 +239,8 @@ Task 4复审落实：Catalog改为读取页面现有客户端返回的完整响�
 - CANVAS-02：标记完成不等于已提交；Planner 当前可见项不等于全部作业。
 - CANVAS-03：先验证合法可分发认证路线；不要求其他用户提供手动个人 Token，不把 client secret 放进 npm 包。
 - CANVAS-04：任何浏览器读取路线也要经平台/学校适用规则及实测审查；条件不具备时保留 pending，不降级成硬编码令牌。
+
+Task7实证细化：当前课程表提供9门，不以Dashboard推断全部课程；独立code字段未证明时null。assignment_groups保留due_at但个人覆盖/提交明细无证据时dueAtSource/submissionStatus=unknown；Planner窗口明示scope，不代表所有作业。Canvas业务读取准备允许在90秒总预算内额外等待最多25秒已验证SSO完成，再核实/courses；控制状态的短观察仍可报告unknown。个人浏览器alpha不代表学校批准第三方OAuth客户端或通用发布。见docs/acceptance/canvas.md。
 
 ### 7.5 Booking / Library
 

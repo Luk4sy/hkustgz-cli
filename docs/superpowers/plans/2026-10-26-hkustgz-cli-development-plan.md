@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7认证前置进行中，Task8–9尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7四项查询已实现待审，Task8–9尚未开始，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -143,17 +143,17 @@
 
 ### Task 7：Canvas 学习信息读取
 
-**状态：认证前置进行中。新观察精确Canvas Identity租户已补证及回归，实际冷启动尚未核实课程数据，等待本人在专用窗口认证。Step1未通过，不进入Step2–5或Task8。见docs/acceptance/canvas-auth.md。**
+**状态：本人已完成专用窗口认证及9课程冷启动复验，四命令已实现待审；个人截止日期/提交未证实时unknown，Planner只覆盖可见窗口。见docs/acceptance/canvas.md；不得进入Task8。**
 
 **Files:** Create `src/adapters/canvas/{index,parser,model,manifest}.ts`、`tests/{canvas,canvas-cli}.test.ts`、`tests/fixtures/canvas/`、`docs/acceptance/canvas-auth.md`。
 
 **Interfaces:** Produces `listCanvasCourses(options:QueryOptions)`、`listCanvasAnnouncements(input:{courseId:string},options:QueryOptions)`、`listCanvasAssignments(input:{courseId:string},options:QueryOptions)`、`readCanvasAgenda(input:DateRange,options:QueryOptions)`；数据分别为 `{items:CanvasCourse[]}`、`{items:CanvasAnnouncement[]}`、`{items:CanvasAssignment[]}`、`{items:CanvasAgendaItem[]}` 的 QueryResult；类型遵循 Spec §7.4。
 
-- [ ] Step 1：核实 Task 0 的认证分发结论。若未通过，记录阻碍、保留 pending，此任务不开始真实读取实现；不得以手动个人Token或公开secret补救。
-- [ ] Step 2：条件通过后写 `student_due_date_wins_over_base`、`marked_complete_is_not_submitted`、`planner_does_not_claim_all_assignments`、`pagination_preserves_course_scope`。例如 markedComplete=true、未证实提交时断言 submissionStatus=unknown。
-- [ ] Step 3：运行 `node --import tsx --test tests/canvas.test.ts tests/canvas-cli.test.ts` 确认失败，再实现已批准/核实的读取路线与上述函数；只读请求不创建 Planner override 或已读状态。
-- [ ] Step 4：复跑测试、build，并在本人真实页面核对课程范围、作业有效截止日期、公告、分页和登录失效；无法确认学生有效时间时保留来源及 unknown，不假装已覆盖全部作业。
-- [ ] Step 5：验收后更新能力表，提交 `feat: query canvas courses assignments and agenda`；若认证受阻，单独提交脱敏阻碍记录并回到版本范围决策，不宣布功能完成。
+- [x] Step 1：核实 Task 0 的认证分发结论。若未通过，记录阻碍、保留 pending，此任务不开始真实读取实现；不得以手动个人Token或公开secret补救。
+- [x] Step 2：条件通过后写 `student_due_date_wins_over_base`、`marked_complete_is_not_submitted`、`planner_does_not_claim_all_assignments`、`pagination_preserves_course_scope`。例如 markedComplete=true、未证实提交时断言 submissionStatus=unknown。个人日期优先的正向样本缺少实证，本轮改测unknown，不虚构覆盖字段（见Ruling与验收文档）。
+- [x] Step 3：运行 `node --import tsx --test tests/canvas.test.ts tests/canvas-cli.test.ts` 确认失败，再实现已批准/核实的读取路线与上述函数；只读请求不创建 Planner override 或已读状态。
+- [x] Step 4：复跑测试、build，并在本人真实页面核对课程范围、作业有效截止日期、公告、分页和登录失效；无法确认学生有效时间时保留来源及 unknown，不假装已覆盖全部作业。
+- [x] Step 5：验收后更新能力表，提交 `feat: query canvas courses assignments and agenda`；若认证受阻，单独提交脱敏阻碍记录并回到版本范围决策，不宣布功能完成。
 
 ### Task 8：Booking 分类与图书馆可用区间
 

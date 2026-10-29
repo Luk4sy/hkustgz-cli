@@ -6,7 +6,7 @@
 
 工具在用户电脑上运行，使用本人的学校账号和专用浏览器会话，查询结果直接来自学校使用的服务。支持 JSON 和表格输出，首期只做查询。
 
-这是非官方项目，目前为 `0.1.0-alpha.1`：前五个开发模块已验收，**课程目录（Catalog）的搜索与详情已可用**；SIS 学期、本人计划课表与今日课程已验收；第六模块 Portal 查询已交付并实测；当前按用户指令推进第七模块 Canvas 认证前置。作业查询仍待开发。项目尚未发布到 npm。
+这是非官方项目，目前为 `0.1.0-alpha.1`：前五个开发模块已验收，**课程目录（Catalog）的搜索与详情已可用**；SIS 学期、本人计划课表与今日课程已验收；第六模块 Portal 查询已交付并实测；第七模块 Canvas 四项查询已实现，等待用户审查。作业列表已接通，个人截止时间和提交状态未确认时标为 unknown。项目尚未发布到 npm。
 
 ## 快速开始
 
@@ -69,6 +69,17 @@ node bin/hkustgz-cli.mjs portal agenda --from 2026-10-27 --to 2026-11-03 --forma
 
 公告搜索匹配已读取的标题和分类。真实全分类扫描目前在第三来源遇到未确认结构，保留前两来源8条并返回 `partial`/退出7；不代表全校公告全量。详情支持已确认的校内文章正文，外部钉钉链接需在官方入口查看。日程按来源保留；原始事件ID缺失为 `null`，相似事件只标记，不删除。
 
+### Canvas 查询（第七模块待审）
+
+```bash
+node bin/hkustgz-cli.mjs canvas courses --format table
+node bin/hkustgz-cli.mjs canvas assignments --course '<课程ID>' --format table
+node bin/hkustgz-cli.mjs canvas announcements --course '<课程ID>' --format table
+node bin/hkustgz-cli.mjs canvas agenda --format table
+```
+
+课程来自当前All Courses表，不以Dashboard收藏卡片推断全集。作业缺少个人覆盖或提交证据时保留unknown；Planner只代表指定窗口可见项，不是全部作业。“标记完成”和“已提交”分开报告。
+
 ### 登录与会话检查
 
 ```bash
@@ -107,11 +118,11 @@ Catalog 的课程与班次来自同一份完整、绑定目标学期的响应批
 |---|---|---|
 | SIS | 学期、课表、今日课程已验收；课程历史与成绩仍 pending | 第五模块已验收 |
 | Portal | 应用、公告列表/详情、日程已实现；来源覆盖限制见下文 | 第六模块待审 |
-| Canvas | 课程、公告、作业、日程；先验证正常登录及读取路线 | 第七模块认证前置进行中，业务仍 pending |
+| Canvas | 当前课程、课程公告/作业、Planner窗口；个人截止时间和提交明细证据不足时unknown | 第七模块待审 |
 | Booking | 分类发现、图书馆房间、可用时段、本人预约记录 | 待开发 |
 | 发行支持 | doctor、浏览器安装、跨平台及安装验收 | 待开发 |
 
-目前 **9/19 项业务能力已验证**（Portal 四项所属模块待审）。不提供选退课、提交作业、预约或取消等写入操作。每个模块完成后先审查验收，再进入下一个模块。
+目前 **13/19 项业务能力已验证**（Canvas 四项所属模块待审）。不提供选退课、提交作业、预约或取消等写入操作。每个模块完成后先审查验收，再进入下一个模块。
 
 ### 开发与文档
 
@@ -125,7 +136,7 @@ HKUSTGZ_TEST_BROWSER=1 npm test   # 本机 Chrome 合成页面测试，不登录
 - [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md) · [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md)
 - 验收记录：[CLI 基础](docs/acceptance/cli-foundation.md) · [认证](docs/acceptance/session-auth.md) · [查询基础层](docs/acceptance/query-core.md) · [Catalog](docs/acceptance/catalog.md) · [SIS](docs/acceptance/sis.md) · [Portal](docs/acceptance/portal.md)
 - [读取证据索引](docs/research/evidence-index.json) · [会话复用验证](docs/acceptance/session-reuse.md)
-- [Canvas 认证前置进展](docs/acceptance/canvas-auth.md)
+- [Canvas 认证记录](docs/acceptance/canvas-auth.md) · [第七模块验收](docs/acceptance/canvas.md)
 - [Git 阶段记录与验收标签](docs/git-history.md)
 
 ## 灵感来源

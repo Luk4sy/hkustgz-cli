@@ -24,6 +24,7 @@ const limit = (value: string): number => {
 };
 function validateArguments(definition: CommandDefinition, args: Record<string, unknown>): void {
   if (definition.path === 'portal notice' && !/^[\w-]+:[\w-]+$/.test(String(args.id))) throw new CliFailure('INVALID_ARGUMENT','Use a source-qualified notice id returned by portal notices.');
+  if (['canvas assignments','canvas announcements'].includes(definition.path) && !/^\d+$/.test(String(args.course))) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'auth status' && Boolean(args.service) === Boolean(args.all)) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser use' && !['chrome', 'edge', 'chromium'].includes(String(args.browser))) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser install' && args.browser !== 'chromium') throw new CliFailure('INVALID_ARGUMENT');
@@ -111,6 +112,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         const id = definition.capabilityId ?? definition.path.replace(' ', '.');
         let handler = Object.hasOwn(deps.handlers, id) ? deps.handlers[id] : undefined;
         if(!handler&&definition.service==='portal')handler=(await import('../adapters/portal/index.js')).createPortalHandlers()[id];
+        if(!handler&&definition.service==='canvas')handler=(await import('../adapters/canvas/index.js')).createCanvasHandlers()[id];
         if(!handler&&definition.service==='sis')handler=(await import('../adapters/sis/index.js')).createSisHandlers()[id];
         if(!handler&&definition.service==='catalog')handler=(await import('../adapters/catalog/index.js')).createCatalogHandlers()[id];
         if(!handler&&!definition.capabilityId&&definition.path!=='doctor')handler=(await import('../session/auth.js')).createControlHandlers()[id];

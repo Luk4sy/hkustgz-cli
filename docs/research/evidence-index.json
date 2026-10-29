@@ -2,7 +2,7 @@
   "schemaVersion": "1",
   "observedAt": "2026-10-26",
   "status": "in_progress",
-  "note": "Catalog, SIS calendar and bounded Portal reads verified. Task6 awaits user review; Portal all-category notices currently partial after8 records, external notice details unsupported.",
+  "note": "Task7 local-personal-browser Canvas reads verified; awaiting user review. Assignment personal due provenance/submission unknown where unproved; Planner scope only. Portal partial limitations retained.",
   "entries": [
     {
       "capabilityId": "portal.apps",
@@ -106,38 +106,38 @@
     {
       "capabilityId": "canvas.courses",
       "service": "canvas",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R7-CANVAS-20261029",
+      "readMethod": "response",
       "documentPath": "docs/research/canvas.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "canvas.announcements",
       "service": "canvas",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R7-CANVAS-20261029",
+      "readMethod": "response",
       "documentPath": "docs/research/canvas.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "canvas.assignments",
       "service": "canvas",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R7-CANVAS-20261029",
+      "readMethod": "response",
       "documentPath": "docs/research/canvas.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "canvas.agenda",
       "service": "canvas",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R7-CANVAS-20261029",
+      "readMethod": "response",
       "documentPath": "docs/research/canvas.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "booking.providers",
@@ -176,6 +176,6 @@
       "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
     }
   ],
-  "updatedAt": "2026-10-27",
+  "updatedAt": "2026-10-29",
   "authenticationAcceptance": "docs/acceptance/session-auth.md"
 }
