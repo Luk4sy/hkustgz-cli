@@ -1,12 +1,23 @@
-# hkustgz-cli
+<p align="center">
+  <img src="docs/assets/hkustgz-cli-logo.png" width="220" height="220" alt="hkustgz-cli：红鸟日晷与终端提示符组成的图标">
+</p>
 
-**把港科广校园信息带进终端与 Codex。**
+<h1 align="center">hkustgz-cli</h1>
+
+<p align="center"><strong>把港科广校园信息带进终端与 Codex。</strong></p>
+
+<p align="center">
+  <code>0.1.0-alpha.2</code> · <a href="LICENSE">MIT</a> · 本机运行 · 校园业务只读
+</p>
+
+<p align="center">
+  <a href="#快速开始">快速开始</a> ·
+  <a href="#codex-集成">Codex 集成</a> ·
+  <a href="#隐私与查询边界">查询边界</a> ·
+  <a href="#文档导航">文档</a>
+</p>
 
 面向香港科技大学（广州）学生的非官方校园命令行工具。查询课程、课表、公告和作业，在终端查看表格，或把 JSON 结果交给脚本与 Agent。
-
-`0.1.0-alpha.2` · [MIT](LICENSE) · 本机运行 · 校园业务只读
-
-[快速开始](#快速开始) · [Codex 集成](#codex-集成) · [查询边界](#隐私与查询边界) · [文档](#文档导航)
 
 ```bash
 hkustgz-cli catalog search AIAA5032 --format table
