@@ -11,16 +11,21 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "pretest": "npm run build",
     "test": "node --import tsx --test --test-concurrency=2 tests/*.test.ts",
-    "start": "node bin/hkustgz-cli.mjs"
+    "start": "node bin/hkustgz-cli.mjs",
+    "prepack": "npm run build"
   },
   "files": [
-    "bin",
-    "dist",
-    "README.md"
+    "bin/hkustgz-cli.mjs",
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md",
+    "docs/installation.md",
+    "docs/cli-contract.md",
+    "docs/errors.md"
   ],
   "license": "UNLICENSED",
   "dependencies": {

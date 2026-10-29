@@ -8,7 +8,7 @@
 
 **Tech Stack:** 现有Node24.x、TypeScript、Commander、Zod、Playwright、node:test、npm tarball；不新增运行时依赖，确需新增时另作说明。
 
-**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。本文待审，尚未开始实施。
+**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划并授权第一批；第一批实现完成、待用户审查，后续批次未开始。
 
 ## Global Constraints
 
@@ -64,11 +64,11 @@ DoctorCheck、DoctorReport和可选错误details在第三批定义。错误detai
 
 **Interfaces:** 消费现有bin和executeCommand；产出`npm pack`的明确版本tgz，生产环境直接运行hkustgz-cli。公开协议沿用现有ControlResult/QueryResult/Failure，不新增学校命令。
 
-- [ ] Step 1：写失败测试`tarball_is_allowlisted`、`private_markers_excluded`、`installed_bin_is_cwd_independent`、`install_has_no_campus_or_client_side_effects`。断言tgz不含src/tests/.hkustgz-cli/.superpowers/profile/HAR/trace及合成密钥标记；隔离prefix安装后版本、帮助、capabilities可运行，19项中13 verified/6 pending，stdout为单个结果。
-- [ ] Step 2：运行`node --import tsx --test tests/package.test.ts tests/package-install.test.ts`记录失败；若现有实现已满足某断言，保留为基线，不人为改坏实现制造RED。
-- [ ] Step 3：设精确白名单，编译src；打包阶段构建，安装阶段无业务钩子。用npm install --global --prefix临时目录安装真实tgz及生产依赖，显式执行对应bin；HOME、CODEX_HOME、缓存及prefix均隔离。生命周期脚本正常启用，不能靠--ignore-scripts证明无副作用。验证包外无tsx/src依赖，目录带空格且cwd在仓库外。
-- [ ] Step 4：运行目标测试、全套及类型检查；实际检查tgz文件。网络/进程证据结合静态钩子检查、隔离安装观察及安装文件快照；不以“没创建profile”单独证明无校园请求。npm依赖获取失败记录外部条件，不假称包失败或通过。
-- [ ] Step 5：更新安装/协议/错误文档和alpha-package记录，明确LICENSE未决时只做本地验证，不添加虚构许可证；后续阶段补LICENSE后重新打包。提交`build: prepare isolated alpha package installation`。交第一批审查并停止。
+- [x] Step 1：写失败测试`tarball_is_allowlisted`、`private_markers_excluded`、`installed_bin_is_cwd_independent`、`install_has_no_campus_or_client_side_effects`。断言tgz不含src/tests/.hkustgz-cli/.superpowers/profile/HAR/trace及合成密钥标记；隔离prefix安装后版本、帮助、capabilities可运行，19项中13 verified/6 pending，stdout为单个结果。
+- [x] Step 2：运行`node --import tsx --test tests/package.test.ts tests/package-install.test.ts`记录失败；若现有实现已满足某断言，保留为基线，不人为改坏实现制造RED。
+- [x] Step 3：设精确白名单，编译src；打包阶段构建，安装阶段无业务钩子。用npm install --global --prefix临时目录安装真实tgz及生产依赖，显式执行对应bin；HOME、CODEX_HOME、缓存及prefix均隔离。生命周期脚本正常启用，不能靠--ignore-scripts证明无副作用。验证包外无tsx/src依赖，目录带空格且cwd在仓库外。
+- [x] Step 4：运行目标测试、全套及类型检查；实际检查tgz文件。网络/进程证据结合静态钩子检查、隔离安装观察及安装文件快照；不以“没创建profile”单独证明无校园请求。npm依赖获取失败记录外部条件，不假称包失败或通过。
+- [x] Step 5：更新安装/协议/错误文档和alpha-package记录，明确LICENSE未决时只做本地验证，不添加虚构许可证；后续阶段补LICENSE后重新打包。提交`build: prepare isolated alpha package installation`。交第一批审查并停止。
 
 ### Task 2 / 第二批：Skill安装、归属与卸载控制
 

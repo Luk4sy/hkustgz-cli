@@ -5,8 +5,12 @@
     "outDir": "dist",
     "noEmit": false,
     "declaration": true,
-    "sourceMap": true
+    "sourceMap": false
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["tests"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "tests"
+  ]
 }
