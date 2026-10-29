@@ -43,3 +43,27 @@ test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_
     for(const hook of ['preinstall','install','postinstall','prepare'])assert.equal(pkg.scripts?.[hook],undefined);
   }finally{rmSync(f.root,{recursive:true,force:true});}
 });
+
+test('installed A to B upgrade synchronizes Skill explicitly and uninstall preserves session and user files',async()=>{
+ const a=fixture(),b=fixture();try{
+  const metadata=JSON.parse(readFileSync(join(b.checkout,'package.json'),'utf8'));metadata.version='0.1.0-alpha.2';writeFileSync(join(b.checkout,'package.json'),JSON.stringify(metadata,null,2));
+  const lock=JSON.parse(readFileSync(join(b.checkout,'package-lock.json'),'utf8'));lock.version=metadata.version;lock.packages[''].version=metadata.version;writeFileSync(join(b.checkout,'package-lock.json'),JSON.stringify(lock,null,2));
+  const skill=join(b.checkout,'skills/hkustgz-cli/SKILL.md');writeFileSync(skill,readFileSync(skill,'utf8').replaceAll('0.1.0-alpha.1','0.1.0-alpha.2'));
+  const artifactA=pack(a),artifactB=pack(b);await seedCache(a.cache);
+  const home=join(a.root,'student'),prefix=join(a.root,'prefix');mkdirSync(home);
+  const env={...a.env,HOME:home,CODEX_HOME:join(home,'codex'),HKUSTGZ_CLI_HOME:join(home,'campus'),npm_config_userconfig:join(home,'npmrc'),npm_config_globalconfig:join(home,'global-npmrc')};
+  const install=(artifact:string)=>run('npm',['install','--global','--prefix',prefix,'--offline','--no-audit','--no-fund',artifact],home,env);
+  install(artifactA.artifact);const bin=join(prefix,'bin/hkustgz-cli');run(bin,['skill','install'],home,env);
+  mkdirSync(join(home,'campus'),{recursive:true});writeFileSync(join(home,'campus/session-canary'),'SYNTHETIC_SESSION_ONLY');
+  writeFileSync(join(home,'codex/config.toml'),'UNRELATED_CLIENT_CONFIG');mkdirSync(join(home,'codex/skills/other'),{recursive:true});writeFileSync(join(home,'codex/skills/other/SKILL.md'),'UNRELATED_SKILL');
+  install(artifactB.artifact);assert.equal(run(bin,['--version'],home,env).trim(),'0.1.0-alpha.2');
+  assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'outdated');
+  assert.match(readFileSync(join(home,'codex/skills/hkustgz-cli/SKILL.md'),'utf8'),/compatible_cli: 0\.1\.0-alpha\.1/);
+  run(bin,['skill','install','--dry-run'],home,env);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'outdated');
+  run(bin,['skill','install'],home,env);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'current');
+  run(bin,['skill','uninstall'],home,env);assert.equal(existsSync(join(home,'codex/skills/hkustgz-cli')),false);
+  run('npm',['uninstall','--global','--prefix',prefix,'--offline','--no-audit','--no-fund','hkustgz-cli'],home,env);
+  assert.equal(existsSync(bin),false);assert.equal(readFileSync(join(home,'campus/session-canary'),'utf8'),'SYNTHETIC_SESSION_ONLY');
+  assert.equal(readFileSync(join(home,'codex/config.toml'),'utf8'),'UNRELATED_CLIENT_CONFIG');assert.equal(readFileSync(join(home,'codex/skills/other/SKILL.md'),'utf8'),'UNRELATED_SKILL');
+ }finally{rmSync(a.root,{recursive:true,force:true});rmSync(b.root,{recursive:true,force:true});}
+});

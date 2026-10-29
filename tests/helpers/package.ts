@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {cpSync, mkdtempSync, mkdirSync, readFileSync, readdirSync} from 'node:fs';
+import {cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -17,6 +17,7 @@ export function fixture(){
   for(const path of ['installation.md','cli-contract.md','errors.md']){
     try{mkdirSync(join(checkout,'docs'),{recursive:true});cpSync(join(repo,'docs',path),join(checkout,'docs',path));}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
   }
+  if(existsSync(join(repo,'LICENSE')))cpSync(join(repo,'LICENSE'),join(checkout,'LICENSE'));
   // Build tooling belongs to the producer only, never the installed consumer.
   run('ln',['-s',join(repo,'node_modules'),join(checkout,'node_modules')],root);
   const cache=join(root,'cache');

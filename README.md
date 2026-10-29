@@ -2,6 +2,8 @@
 
 ## Alpha 安装与 Codex 使用
 
+许可证采用[MIT](LICENSE)。当前alpha目标为macOS＋Chrome；Windows/Linux未验收，Windows仅可探索安装与诊断，不承诺学校查询。
+
 目前提供13项已验证的只读查询（Catalog/SIS/Portal/Canvas），另6项仍pending；具体范围以`hkustgz-cli capabilities`为准。未发布npm，也未完成第二名学生验收。完整安装、升级和卸载见[安装指南](docs/installation.md)。
 
 ```bash

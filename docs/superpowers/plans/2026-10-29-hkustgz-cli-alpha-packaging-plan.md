@@ -8,7 +8,7 @@
 
 **Tech Stack:** 现有Node24.x、TypeScript、Commander、Zod、Playwright、node:test、npm tarball；不新增运行时依赖，确需新增时另作说明。
 
-**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划；第一批03064ce、第二批e124993已验收；第三批fc7dda6已验收；第四批已实现并完成受控调用验证，待用户审查；第五批未开始。
+**Spec:** [已批准Spec](../specs/2026-10-29-hkustgz-cli-alpha-packaging-spec.md)，用户于2026-10-29批准。用户于2026-10-29批准本计划；第一批03064ce、第二批e124993已验收；第三批fc7dda6已验收；第四批a85469b已验收；第五批本地MIT候选、升级卸载和清单已准备，待用户审查与独立学生验收，尚未完成。
 
 ## Global Constraints
 
@@ -112,9 +112,9 @@ DoctorCheck、DoctorReport和可选错误details在第三批定义。错误detai
 
 **Interfaces:** 一个确定版本、SHA256校验的tgz及其同版本Skill；验收表字段`artifactVersion/artifactSha256/os/arch/node/npm/chrome/testerAlias/capabilityId/outcome(pass|partial|unknown|permission_denied|not_tested)/notes`，不含姓名学号或私人结果。
 
-- [ ] Step 1：补自动升级/卸载回归：隔离prefix安装A、安装B、检查bin版本B；Skill保持A且status outdated，显式更新后current；保留合成会话标记及其他客户端文件；Skill卸载只删归属未改文件，npm卸载不触碰会话；主动logout走既有安全测试而非手工rm。
-- [ ] Step 2：运行目标测试确认新场景失败，再补最小实现/文档；不为了人为RED破坏已正确功能。执行全部检查，最终实际pack和解包白名单审计；版本A/B只用于受控本地测试，不冒充已发布版本。
-- [ ] Step 3：先整理可审查的tgz、校验值、许可证/包名/交付渠道选择和学生操作清单。许可证或分发授权未给时，停在本地验收完成；不擅自传给同学。用户自行邀请或明确授权联系，不能把此前写计划视为发消息许可。
+- [x] Step 1：补自动升级/卸载回归：隔离prefix安装A、安装B、检查bin版本B；Skill保持A且status outdated，显式更新后current；保留合成会话标记及其他客户端文件；Skill卸载只删归属未改文件，npm卸载不触碰会话；主动logout走既有安全测试而非手工rm。
+- [x] Step 2：运行目标测试确认新场景失败，再补最小实现/文档；不为了人为RED破坏已正确功能。执行全部检查，最终实际pack和解包白名单审计；版本A/B只用于受控本地测试，不冒充已发布版本。
+- [x] Step 3：先整理可审查的tgz、校验值、许可证/包名/交付渠道选择和学生操作清单。许可证或分发授权未给时，停在本地验收完成；不擅自传给同学。用户自行邀请或明确授权联系，不能把此前写计划视为发消息许可。
 - [ ] Step 4：自愿第二名学生自行安装自己的Mac，公开Catalog查询、专用窗口本人登录及SIS或Canvas一项私人查询。两个账号对13项能力填矩阵，未测如实标记；保留Portal partial和Canvas unknown限制。不得读取第二名学生profile、密码、Token或响应，只接收其脱敏结论。
 - [ ] Step 5：维护者与第二名学生各执行升级、Skill同步及卸载步骤并记录；无法取得第二名学生则标“待独立学生验收”，实现可交审但本批验收未完成。更新支持范围、已知问题和失败指南，提交`docs: record independent student alpha acceptance`。交最终审查；npm publish需要单独授权，不属于本计划执行动作。
 
