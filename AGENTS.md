@@ -47,3 +47,5 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 2026-11-01最新授权：M1基线5105fcc已获用户复审通过并验收；用户明确要求按Spec开发L2-M2，完成后停下审查，不进入M3。M2覆盖只读创建/取消预览、本地操作凭据/状态锁/防重/恢复框架；M0缺口不关闭，学校业务发送仍pending。计划及验收见docs/superpowers/plans/2026-11-01-library-booking-phase-2-m2-plan.md与docs/acceptance/library-booking-phase-2-m2.md。保持实际CLI/Skill/候选不变，不访问真实账号或进行学校写入测试。
 
 2026-11-01 M2交付待审：只读预览、300秒本地凭据/确认校验、状态锁/防重/崩溃恢复及独立OperationResult已实现；新增学校四项仍pending，源码24项中17 verified/7 pending。独立审阅3项P2均经回归RED→GREEN修复；全量326/326、0跳过，构建/类型/差异通过。保持实际CLI/Skill/候选不变；等待用户审查及明确继续，不进入M3。详见docs/acceptance/library-booking-phase-2-m2.md。
+
+2026-11-01最新授权：M2（4d59e09＋ccafc4a）已获用户审查通过；解释M3范围后用户明确要求继续。当前开发M3一次创建与结果核对，完成后交审，不进入M4。M0缺口/生产unknown及学校pending门槛保持，真实业务须另有具体ready预览和单次确认；本轮仅合成发送测试与公开脚本GET，不访问真实账号或创建预约。见docs/superpowers/plans/2026-11-01-library-booking-phase-2-m3-plan.md。

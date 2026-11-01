@@ -1,9 +1,10 @@
 import type {Page,Response} from 'playwright';import type {CliDependencies,QueryOptions} from '../../core/contracts.js';import {CliFailure} from '../../core/errors.js';import {HttpReadError} from '../../core/policy.js';import {withSession,selectedBrowser} from '../../session/browser.js';import {resolveDataPaths} from '../../session/paths.js';import {LIBRARY_ORIGIN,LIBRARY_URL} from './manifest.js';import {parseFloors} from './parser.js';import type {Floor,LibraryReader} from './model.js';
 const signalCheck=(s:AbortSignal)=>{if(s.aborted)throw s.reason;};
 async function project(response:Response):Promise<unknown>{if(response.status()!==200)throw new HttpReadError(response.status(),response.headers()['retry-after']);let b:any;try{b=await response.json();}catch{throw new CliFailure('ADAPTER_CHANGED');}if(b?.code===300)throw new CliFailure('LOGIN_REQUIRED');if(b?.code!==0||!Array.isArray(b.data))throw new CliFailure('ADAPTER_CHANGED');return{code:b.code,count:b.count,data:b.data.map((x:any)=>({devId:x.devId,devName:x.devName,labId:x.labId,labName:x.labName,maxUser:x.maxUser,kindName:x.kindName,openTimes:Array.isArray(x.openTimes)?x.openTimes.map((o:any)=>({openStartTime:o.openStartTime,openEndTime:o.openEndTime,openLimit:o.openLimit})):null,resvInfo:Array.isArray(x.resvInfo)?x.resvInfo.map((r:any)=>({startTime:r.startTime,endTime:r.endTime,resvStatus:r.resvStatus})):null}))};}
+import {createLibraryCreateTransport} from './create-transport.js';
 import {createLibraryInspectionReader} from './inspection-reader.js';
 export function createLibraryPageReader(page:Page,floors:Floor[]):LibraryReader{
- return{inspection:createLibraryInspectionReader(page),mine:async(range,p,signal)=>{
+ return{submitCreate:createLibraryCreateTransport(page),inspection:createLibraryInspectionReader(page),mine:async(range,p,signal)=>{
   signalCheck(signal);if(new URL(page.url()).origin!==LIBRARY_ORIGIN)throw new CliFailure('LOGIN_REQUIRED');
   if(new URL(page.url()).hash!=='#/ic/userinfo')await page.goto(LIBRARY_ORIGIN+'/#/ic/userinfo',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>[...document.querySelectorAll('*')].some(e=>typeof (e as any).__vue__?.initTable==='function'&&(e as any).__vue__?.search?.date));

@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm,writeFile} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {executeCommand} from '../src/cli/main.js';import {DEFAULT_CAPABILITIES} from '../src/core/capabilities.js';
+import test from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm,writeFile,readFile} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {executeCommand} from '../src/cli/main.js';import {DEFAULT_CAPABILITIES} from '../src/core/capabilities.js';
 const load=async()=>{const m=await import('../src/booking-operations/handlers.js').catch(()=>null);assert.equal(typeof m?.createOperationHandlers,'function','operation CLI handlers exist');return m!;};
 const now=Date.parse('2026-11-01T00:00:00Z');const intent={roomId:'2',startsAt:'2026-11-02T09:00:00+08:00',endsAt:'2026-11-02T10:00:00+08:00',participantIds:['12']};
 const evidence={eligibility:'unknown' as const,ruleVersion:'b'.repeat(64),checks:[{id:'quota',state:'unknown' as const,reason:'Unverified quota'}],preview:{rooms:[{id:'2',name:'Room',location:'Floor4'}],startsAt:intent.startsAt,endsAt:intent.endsAt,durationMinutes:60,participantIds:['12'],participantCount:1,purpose:null,approvalState:'unknown' as const,effects:['Check-in is required'],feeState:'unknown' as const}};
@@ -25,9 +25,17 @@ test('uncertain local operation returns exit 10 with its receipt in JSON and tab
 });
 
 test('state lock cleanup failure retains the prepared operation receipt',async()=>{
- const m=await load();const home=await mkdtemp(join(tmpdir(),'hkustgz-cleanup-cli-'));try{
-  const handlers=m.createOperationHandlers({session:async(_k:any,_o:any,run:any)=>{const r=await run({identity:async()=> 'a'.repeat(64),createAssessment:async()=>evidence});await writeFile(join(home,'operations','.lock','foreign'),'preserve');return r;}});
+ const m=await load(),{OperationStore}=await import('../src/booking-operations/store.js');const home=await mkdtemp(join(tmpdir(),'hkustgz-cleanup-cli-'));const prepare=OperationStore.prototype.prepare;
+ OperationStore.prototype.prepare=async function(...args){const r=await prepare.apply(this,args);await writeFile(join(home,'operations','.lock','foreign'),'preserve');return r;};
+ try{
+  const handlers=m.createOperationHandlers({session:async(_k:any,_o:any,run:any)=>run({identity:async()=> 'a'.repeat(64),createAssessment:async()=>evidence})});
   const r=await executeCommand(['booking','preview','--provider','library','--input','-'],{capabilities,handlers,env:{HKUSTGZ_CLI_HOME:home},readInput:async()=>JSON.stringify(intent)});assert.equal(r.exitCode,1,r.stdout);const body=JSON.parse(r.stdout);assert.equal(body.error.code,'OPERATION_STATE_UNAVAILABLE');assert.ok(body.data?.operationId,'the prepared receipt must survive lock cleanup failure');assert.equal(body.data.outcome,'not_attempted');assert.equal(body.data.confirmationDigest,undefined);
+ }finally{OperationStore.prototype.prepare=prepare;await rm(home,{recursive:true,force:true});}
+});
+test('lease ownership lost before prepare prevents state persistence',async()=>{
+ const m=await load();const home=await mkdtemp(join(tmpdir(),'hkustgz-lost-lease-'));try{
+  const handlers=m.createOperationHandlers({session:async(_k:any,_o:any,run:any)=>{const r=await run({identity:async()=> 'a'.repeat(64),createAssessment:async()=>evidence});await writeFile(join(home,'operations','.lock','foreign'),'preserve');return r;}});
+  const r=await executeCommand(['booking','preview','--provider','library','--input','-'],{capabilities,handlers,env:{HKUSTGZ_CLI_HOME:home},readInput:async()=>JSON.stringify(intent)});assert.equal(r.exitCode,1);assert.equal(JSON.parse(r.stdout).data,null);assert.deepEqual(JSON.parse(await readFile(join(home,'operations','state.json'),'utf8')).payload.records,[]);
  }finally{await rm(home,{recursive:true,force:true});}
 });
 

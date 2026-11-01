@@ -26,7 +26,7 @@ export function createLibraryInspectionReader(page:Page):LibraryInspectionReader
   identityVerified=true;
   }catch(failure){throw new LibraryIdentityReadError(failure);}
  };
- return{fingerprint(secret){if(!identityVerified||!binding)throw new CliFailure('LOGIN_REQUIRED');return binding.fingerprint(secret);},get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal)=>{
+ return{fingerprint(secret){if(!identityVerified||!binding)throw new CliFailure('LOGIN_REQUIRED');return binding.fingerprint(secret);},get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal,expectation)=>{
   check(signal);if(!binding)throw new CliFailure('LOGIN_REQUIRED');
   if(new URL(page.url()).hash!=='#/ic/userinfo')await page.goto(LIBRARY_ORIGIN+'/#/ic/userinfo',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>[...document.querySelectorAll('*')].some(e=>typeof (e as any).__vue__?.initTable==='function'&&(e as any).__vue__?.search?.date&&Array.isArray((e as any).__vue__?.statusOption)));
@@ -44,6 +44,6 @@ export function createLibraryInspectionReader(page:Page):LibraryInspectionReader
   },{from:range.from,endDate,p,values,filter});
   const body=await json(await waiting);lastRequest=Date.now();check(signal);await assertIdentity(signal);
   if(!Array.isArray(body.data))throw new CliFailure('ADAPTER_CHANGED');
-  return{scope:{...range,page:p,needStatus:filter},body:{code:0,count:body.count,data:body.data.map((r:any)=>({resvId:r.resvId,resvBeginTime:r.resvBeginTime,resvEndTime:r.resvEndTime,resvStatus:r.resvStatus,ownerMatches:binding!.owns(r.appAccNo),memberCount:Array.isArray(r.resvMemberInfoList)?r.resvMemberInfoList.length:null,resvDevInfoList:Array.isArray(r.resvDevInfoList)?r.resvDevInfoList.map((d:any)=>({devId:d.devId,devName:d.devName})):null}))}};
+  return{scope:{...range,page:p,needStatus:filter},body:{code:0,count:body.count,data:body.data.map((r:any)=>({resvId:r.resvId,resvBeginTime:r.resvBeginTime,resvEndTime:r.resvEndTime,resvStatus:r.resvStatus,...expectation?{intentMatches:Array.isArray(r.resvMemberInfoList)&&r.resvMemberInfoList.length===expectation.participantIds.length&&r.resvMemberInfoList.every((m:any)=>Number.isSafeInteger(m.accNo)&&m.accNo>0)&&new Set(r.resvMemberInfoList.map((m:any)=>String(m.accNo))).size===expectation.participantIds.length&&r.resvMemberInfoList.every((m:any)=>expectation.participantIds.includes(String(m.accNo)))&&(typeof r.testName==='string'?r.testName:'')===(expectation.purpose??'')}:{},ownerMatches:binding!.owns(r.appAccNo),memberCount:Array.isArray(r.resvMemberInfoList)?r.resvMemberInfoList.length:null,resvDevInfoList:Array.isArray(r.resvDevInfoList)?r.resvDevInfoList.map((d:any)=>({devId:d.devId,devName:d.devName})):null}))}};
  }};
 }
