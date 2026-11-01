@@ -4,7 +4,7 @@
 
 ## 产物与安装
 
-使用用户已审查的[alpha.4候选](../../artifacts/alpha.4/hkustgz-cli-0.1.0-alpha.4.tgz)及[SHA256SUMS](../../artifacts/alpha.4/SHA256SUMS)。安装前重新核对SHA-256为`5f2b5c5f5766d88a4b20492c16f7aaff22a2b9b77224f422258f8d6ef949fc85`，与M5记录一致；未重新打包或修改候选内容。
+使用用户已审查的本地alpha.4候选 `artifacts/alpha.4/hkustgz-cli-0.1.0-alpha.4.tgz` 及 `artifacts/alpha.4/SHA256SUMS`（由维护者提供，不纳入Git仓库）。安装前重新核对SHA-256为`5f2b5c5f5766d88a4b20492c16f7aaff22a2b9b77224f422258f8d6ef949fc85`，与M5记录一致；未重新打包或修改候选内容。
 
 原日常CLI/Skill均alpha.3，Skill状态current、现有Node24.20.0全局prefix归属明确。升级前由源码alpha.4执行skill install --dry-run，五个归属文件无冲突。复用已缓存生产依赖，使用临时npm缓存离线安装到现有Node24全局目录，不执行sudo或调整系统权限。
 

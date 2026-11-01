@@ -1,6 +1,12 @@
-# Windows 11 适配候选验收（待用户审查）
+# Windows 适配与验证记录
 
-2026-10-29。用户批准Windows11＋Chrome＋Node24＋Codex的单批适配；不扩学校业务、Edge、其他Agent或Linux。本机为Mac，Windows实机尚未验证，原封装第五批独立学生验收仍未完成。
+## 当前状态（2026-11-01）
+
+用户确认上一版本alpha.3已完成Windows验证。现有文字未提供具体系统版本、测试者或逐项结果，因此先记录该结论，不替用户补造明细，也不据此认定第二名学生验收或alpha.4回归已完成。alpha.4的Windows升级与回归仍待记录。
+
+## alpha.2适配交付记录（2026-10-29）
+
+用户批准Windows11＋Chrome＋Node24＋Codex的单批适配；不扩学校业务、Edge、其他Agent或Linux。以下为当时Mac实现及合成验证记录，Windows“未实测”表示alpha.2交付时状态。
 
 ## 实现
 
@@ -24,7 +30,7 @@ alpha.2＋同版Skill、MIT、private:true。没有自动替换用户已安装�
 
 新增测试先复现缺Windows接口/识别、缺smoke/共享安全模块及缺打包指南，再实现后验证。模拟Windows路径/NT build、实际launcher入参验证在Mac执行；实际localhost Chrome仍是Mac。旧Mac回归、打包/升级等复验在最终检查记录，不拿模拟数代替实机。
 
-| Windows真实步骤 | 当前状态 |
+| Windows真实步骤 | alpha.2交付时状态（历史） |
 | --- | --- |
 | Win11/Node24/npm安装与.cmd shim | 未实测 |
 | 系统级/用户级Chrome检测与实际启动 | 未实测 |
@@ -42,7 +48,7 @@ alpha.2＋同版Skill、MIT、private:true。没有自动替换用户已安装�
 
 修复后定向测试通过，完整238/238通过，0失败0跳过；包含既有54项Chrome加新增Mac loopback流程1项。构建、类型检查、差异检查通过。先前一轮完整237项中，生命周期测试在编辑修正前的快照里因shim变量未绑定失败（236通过/1失败）；修正后全新进程237项全部通过，审阅修复后再完整238项通过。没有扩大产品预算或删断言。
 
-当前完整测试运行主机仍是Mac。Windows实际Chrome启动、.cmd执行、junction/句柄/Ctrl+C、本人学校认证/查询及Codex执行权限都未验证；审阅也未将这些缺口判为已完成。无第二轮审阅，重要问题以回归RED→GREEN和完整套件验证。
+上述2026-10-29完整测试运行主机为Mac。Windows实际Chrome启动、.cmd执行、junction/句柄/Ctrl+C、本人学校认证/查询及Codex执行权限都未验证；审阅也未将这些缺口判为已完成。无第二轮审阅，重要问题以回归RED→GREEN和完整套件验证。
 
 ## 候选产物与阶段
 

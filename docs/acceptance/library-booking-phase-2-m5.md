@@ -51,7 +51,7 @@ Skill入口保持短指引，详细操作/结果放既有examples/errors/privacy
 
 首次完整套件445项中439通过、5失败、1取消、0跳过：旧版号断言写死alpha.3；SIS冷启动浏览器清理失败（原结果success）、未认可SIS路径/Canvas官方SSO两项预算超时、精确Canvas身份租户测试10秒超时、SIS账号切换Chrome原始launch超时180秒。只读主机负载观察显示繁忙，未停止任何其他进程。版号断言改为精确比较package.json公开版本契约并通过；其余未改认证/浏览器代码、生产或测试超时，六项定向串行复测全部通过、0跳过（约12秒），再以原并发2的npm test全量重跑。
 
-候选：[alpha.4 tgz](../../artifacts/alpha.4/hkustgz-cli-0.1.0-alpha.4.tgz)，[SHA256SUMS](../../artifacts/alpha.4/SHA256SUMS)。SHA-256 `5f2b5c5f5766d88a4b20492c16f7aaff22a2b9b77224f422258f8d6ef949fc85`；154个包条目。实际包解到临时目录复验版本alpha.4、24/17/7及pending取消零会话目录。常规pack首次因沙箱外npm缓存不可写失败，改用临时缓存离线打包成功，未更改系统权限。
+候选：本地 `artifacts/alpha.4/hkustgz-cli-0.1.0-alpha.4.tgz`，校验文件 `artifacts/alpha.4/SHA256SUMS`（产物由维护者提供，不纳入Git仓库）。SHA-256 `5f2b5c5f5766d88a4b20492c16f7aaff22a2b9b77224f422258f8d6ef949fc85`；154个包条目。实际包解到临时目录复验版本alpha.4、24/17/7及pending取消零会话目录。常规pack首次因沙箱外npm缓存不可写失败，改用临时缓存离线打包成功，未更改系统权限。
 
 原alpha.3候选SHA256仍`ea5a190680e193865a91d55d459ddf1180eb9f581bd80124cfe27feceef3c2d0`，未覆盖；只读检查日常CLI --version与Codex归属Skill metadata仍均为alpha.3。新候选尚未同步实际安装，不代表客户端已识别新版Skill。
 

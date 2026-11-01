@@ -26,7 +26,7 @@
 hkustgz-cli catalog search AIAA5032 --format table
 ```
 
-> **Alpha 阶段**：尚未发布到 npm，独立学生试用仍待完成。macOS + Chrome 已有实测记录；Windows 11 适配候选待真机验证，Linux 暂不支持。
+> **Alpha 阶段**：当前版本为 `0.1.0-alpha.4`，CLI 与 Skill 已完成本地同步，尚未发布到 npm。macOS + Chrome 已有实测记录；Windows 上一版本 alpha.3 已验证，alpha.4 的 Windows 升级与回归验证待完成。Linux 暂不支持。
 
 ## 核心能力
 
@@ -37,9 +37,12 @@ hkustgz-cli catalog search AIAA5032 --format table
 | **Portal** | 查应用入口、公告、校内正文和日程 | 公告来源覆盖有限，外部正文不支持 |
 | **Canvas** | 查当前课程、课程公告、作业和 Planner 日程 | 个人截止时间、提交状态可能无法确认 |
 | **Booking / Library** | 查预约入口、图书馆房间、开放与占用、本人记录 | 只读；规则覆盖可能unknown，记录限来源状态筛选 |
-| **Codex** | 用自然语言调用上述 CLI 查询 | 提供随包 Skill，需显式安装并匹配版本 |
+| **图书馆预约闭环** | 详情、创建与取消预览、单次创建/取消、操作结果核对 | 实现已验收，新增五项学校路线仍 pending，尚未开放真实预约 |
+| **Codex** | 用自然语言调用 CLI，解释查询及操作结果 | 随包 Skill 与 CLI 同为 alpha.4，需显式安装并匹配版本 |
 
-当前alpha.4候选包含已验收的 **17项校园查询**，其中新增Booking入口、图书馆房间、开放与占用、本人预约记录。规则未知时不承诺可订，本人记录仅保留来源状态过滤8454。SIS课程历史/成绩及图书馆detail/preview/create/cancel-preview/cancel共7项保持pending；其他预约供应商目前只列入口。详见[第八模块验收](docs/acceptance/booking-library.md)。CLI与Skill按同一版本交付；文件安装与客户端识别需分别验证。
+当前版本封装 **37 个命令入口**，包括查询、认证、环境检查、Skill管理和预约操作。业务能力共24项：**17项 verified、7项 pending**；pending包括暂缓的SIS课程历史/成绩，以及已实现但未通过真实路线验收的图书馆detail/preview/create/cancel-preview/cancel。其他预约供应商目前只列入口。
+
+CLI与Skill均为 `0.1.0-alpha.4`，本地同步已完成。Skill文件安装与客户端识别分别验证；具体命令支持以capabilities输出为准。
 
 查看逐项能力状态：
 
@@ -51,7 +54,7 @@ hkustgz-cli capabilities --format table
 
 ### 1. 准备与安装
 
-需要 **Node.js 24.x、npm 和 Google Chrome**。在候选通过审查、维护者确认安装后，取得 `0.1.0-alpha.4` 安装包及校验值后，核对文件，从本地绝对路径安装：
+需要 **Node.js 24.x、npm 和 Google Chrome**。取得维护者提供的 `0.1.0-alpha.4` 安装包及SHA-256校验值，核对文件后从本地绝对路径安装：
 
 ```bash
 npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.4.tgz'
@@ -61,7 +64,7 @@ hkustgz-cli doctor
 
 将示例路径替换为实际文件路径。安装不会下载浏览器、发起学校登录或写入 Skill；`doctor` 只检查运行环境，不访问学校，也不代表已经登录。
 
-以上为 macOS 命令。Windows 候选请使用 [PowerShell 与 `.cmd` 入口指南](docs/windows.md)；升级、卸载和路径配置见[安装指南](docs/installation.md)。
+以上为 macOS 命令。Windows 请使用 [PowerShell 与 `.cmd` 入口指南](docs/windows.md)；升级、卸载和路径配置见[安装指南](docs/installation.md)。
 
 ### 2. 查询公开课程
 
@@ -161,14 +164,19 @@ HKUSTGZ_TEST_BROWSER=1 npm test
 npm pack
 ```
 
+M5的真实旧版升级回归使用已验收alpha.3提交`3be2d3b`的历史对象；浅克隆运行完整开发测试前需补齐该历史。测试仅在临时prefix离线安装，不更新日常CLI/Skill或访问学校。
+
+本地tgz与校验文件位于artifacts目录，由维护者提供；该目录不纳入Git仓库。GitHub源码更新不等于npm发布。
+
 ## 文档导航
 
 | 用途 | 文档 |
 | --- | --- |
-| 安装与平台 | [安装、升级与卸载](docs/installation.md) · [Windows 11 候选试用](docs/windows.md) |
+| 安装与平台 | [安装、升级与卸载](docs/installation.md) · [Windows 使用与验证](docs/windows.md) |
 | 命令与结果 | [完整命令参考](skills/hkustgz-cli/references/commands.md) · [CLI 输出协议](docs/cli-contract.md) · [错误处理](docs/errors.md) |
 | Codex 与隐私 | [随包 Skill 指引](skills/hkustgz-cli/SKILL.md) · [隐私说明](skills/hkustgz-cli/references/privacy.md) |
 | 开发与设计 | [技术方案](docs/superpowers/specs/2026-10-26-hkustgz-cli-design.md) · [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md) · [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md) |
+| 第二阶段 | [图书馆预约 Spec](docs/superpowers/specs/2026-11-01-library-booking-phase-2-spec.md) · [M5 实现验收](docs/acceptance/library-booking-phase-2-m5.md) · [alpha.4 本地同步](docs/acceptance/alpha4-local-sync.md) |
 | 查询验收 | [Catalog](docs/acceptance/catalog.md) · [SIS](docs/acceptance/sis.md) · [Portal](docs/acceptance/portal.md) · [Canvas](docs/acceptance/canvas.md) |
 | Alpha 与平台验证 | [交付准备](docs/acceptance/alpha-release.md) · [独立学生验收](docs/acceptance/alpha-students.md) · [Codex 调用记录](docs/acceptance/alpha-agent.md) · [Windows 验证记录](docs/acceptance/windows-alpha.md) |
 
@@ -179,5 +187,3 @@ npm pack
 受 [AwesomeHou/szu-cli](https://github.com/AwesomeHou/szu-cli) 启发，借鉴其命令行产品形式和分层适配思路，围绕港科广的实际系统独立开发。
 
 本项目采用 [MIT 许可证](LICENSE)，是非官方项目。
-
-M5的真实旧版升级回归使用已验收alpha.3提交`3be2d3b`的历史对象；浅克隆运行完整开发测试前需补齐该历史。测试仅在临时prefix离线安装，不更新日常CLI/Skill或访问学校。

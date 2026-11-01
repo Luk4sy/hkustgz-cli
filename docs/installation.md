@@ -1,6 +1,6 @@
 # Alpha 安装与使用
 
-目前为本地验收阶段，未上传npm，尚未完成第二名学生验收。许可证已按维护者选择采用MIT；独立学生验收与交付渠道仍待确认，当前开发快照尚未交付。macOS已有验收证据；新增Windows11/Chrome/Node24候选尚待真机，步骤见windows.md。其他平台未验收。
+当前版本0.1.0-alpha.4，CLI/随包Skill已获用户审查并完成维护者本地同步，尚未上传npm。macOS已有验收证据；Windows上一版本alpha.3已获用户确认验证，alpha.4的Windows升级与回归结果待补。跨账号独立试用以对应版本的记录为准，其他平台未验收。许可证为MIT。
 
 ## 安装明确版本产物
 
@@ -81,9 +81,9 @@ Windows用户使用npm.cmd/hkustgz-cli.cmd入口，完整PowerShell与loopback�
 
 2026-11-01个人本地alpha.3同步：CLI与Skill精确同版本，包含已验收的17项只读路线及图书馆规则/状态限制指引。旧alpha.1/alpha.2候选保留；本次不是npm发布、Windows真机或第二位学生验收。
 
-## alpha.4 候选与操作状态
+## alpha.4 安装与操作状态
 
-alpha.4为本轮待审候选，真实已安装版本仍为alpha.3，用户验收后才同步安装。候选保留17项已验证查询；SIS历史/成绩及图书馆detail、preview、create、cancel-preview、cancel共7项pending。M0规则证据和CLI真实创建/取消验收尚未完成；不因有命令或Skill指引就启用业务写入。
+alpha.4实现与候选已获用户审查通过，维护者日常CLI及Codex归属Skill均已同步alpha.4、status=current。当前保留17项已验证查询；SIS历史/成绩及图书馆detail、preview、create、cancel-preview、cancel共7项pending。M0规则证据和CLI真实创建/取消验收尚未完成；不因有命令或Skill指引就启用业务写入。
 
 升级CLI不会自动升级Skill；版本精确匹配后才由Agent调用。显式skill install之前旧Skill应显示outdated，dry-run不改变它；刷新客户端后再检查实际识别。npm升级/卸载、auth logout均不删除operations未决状态，不删除key/state或未知锁“恢复重试”。本机防重只覆盖同一CLI_HOME，不提供跨设备全局exactly-once。
 
