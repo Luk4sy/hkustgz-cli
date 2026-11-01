@@ -13,7 +13,7 @@ export interface CancelProof {reservationId:string;target:CancelTarget;evidence:
 const actor=(x:string)=>{if(!/^[a-f0-9]{64}$/.test(x))throw new CliFailure('ADAPTER_CHANGED');return x;};
 const hash=(x:unknown)=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 export function cancellationTarget(id:string,preview:Preview):CancelTarget|undefined{const p=CancelTargetSchema.safeParse({reservationId:id,roomIds:preview.rooms.map(x=>x.id),startsAt:preview.startsAt,endsAt:preview.endsAt,memberCount:preview.participantCount});return p.success?p.data:undefined;}
-function matchingTarget(a:CancelTarget,b:CancelTarget){return a.reservationId===b.reservationId&&JSON.stringify(a.roomIds)===JSON.stringify(b.roomIds)&&Date.parse(a.startsAt)===Date.parse(b.startsAt)&&Date.parse(a.endsAt)===Date.parse(b.endsAt);}
+function matchingTarget(a:CancelTarget,b:CancelTarget){return a.reservationId===b.reservationId&&a.memberCount===b.memberCount&&JSON.stringify(a.roomIds)===JSON.stringify(b.roomIds)&&Date.parse(a.startsAt)===Date.parse(b.startsAt)&&Date.parse(a.endsAt)===Date.parse(b.endsAt);}
 export function readCancellationEvidence(id:string,range:DateRange,value:unknown):CancelProof|undefined{
  const p=CancellationEvidenceSchema.safeParse(value);if(!p.success)return;const e=p.data;
  if(e.reservationId!==id||!e.isOwner||e.scope.from!==range.from||e.scope.to!==range.to||Date.parse(e.startsAt)>=Date.parse(range.to+'T00:00:00+08:00')||Date.parse(e.endsAt)<=Date.parse(range.from+'T00:00:00+08:00'))return;

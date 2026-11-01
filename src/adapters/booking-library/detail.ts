@@ -8,6 +8,8 @@ import {LIBRARY_ORIGIN,LIBRARY_URL} from './manifest.js';
 import {LibraryIdentityReadError} from './identity.js';
 export interface CreationExpectation {participantIds:readonly string[];purpose:string|null}
 export interface LibraryInspectionReader {
+ /** Publish private page handles only after all detail/page validation succeeds. */
+ acceptPage?:(value:unknown)=>void;
  cancellationBinding?:(target:CancelTarget,secret:Uint8Array)=>string|undefined;
  submitCancel?:(target:CancelTarget,options:QueryOptions)=>Promise<CancelSubmission>;
  /** False throughout an internal refresh, and until fresh identity has been verified. */
@@ -38,7 +40,7 @@ export async function queryLibraryDetail(input:{id:string;range:DateRange;expect
    if(x.resvBeginTime>=x.resvEndTime||x.resvBeginTime>=end||x.resvEndTime<=start)throw new CliFailure('ADAPTER_CHANGED');
    const blocked=!x.ownerMatches||(x.resvStatus&4)!==0||(x.resvStatus&128)!==0;
    return{id:String(x.resvId),rooms:x.resvDevInfoList.map(d=>({id:String(d.devId),name:d.devName})),startsAt:new Date(x.resvBeginTime).toISOString(),endsAt:new Date(x.resvEndTime).toISOString(),statusCode:x.resvStatus,...input.expectation?{intentMatches:x.intentMatches!}:{},memberCount:x.memberCount,isOwner:x.ownerMatches,cancellationEligibility:blocked?'blocked' as const:'unknown' as const,cancellationReason:blocked?'Source ownership or status does not permit this cancellation route.':'Cancellation window, maintenance and permission are not fully verified.'};
-  });ids.forEach(id=>seen.add(id));const done=p*10>=body.count;return{items,next:done?null:String(p+1),exhausted:done,emptyConfirmed:body.count===0};
+  });reader.acceptPage?.(value);ids.forEach(id=>seen.add(id));const done=p*10>=body.count;return{items,next:done?null:String(p+1),exhausted:done,emptyConfirmed:body.count===0};
  }}, {...options,limit:2000});
  if(identityFailed)throw identityFailure instanceof CliFailure?identityFailure:new CliFailure(collected.failure?.code??'ADAPTER_CHANGED');
  // A timed-out refresh may still be awaiting its response after collectPages returns.
