@@ -14,7 +14,7 @@ const read=(path:string)=>fs.readFileSync(new URL('../skills/hkustgz-cli/'+path,
 test('skill_matches_installed_cli and every documented example parses as a real command',async()=>{
  const bundle=await readBundleInfo(),skill=read('SKILL.md');assert.equal(skill.match(/^  version: (.+)$/m)?.[1],bundle.version);assert.equal(skill.match(/^  compatible_cli: (.+)$/m)?.[1],bundle.version);assert.match(skill,/^  schemaVersion: '1'$/m);
  assert.ok(fs.existsSync(new URL('../skills/hkustgz-cli/references/examples.md',import.meta.url)),'missing examples reference');
- const examples=JSON.parse(read('references/examples.md').match(/```json\n([\s\S]*?)\n```/)![1]!) as Array<{argv:string[];kind:string}>;
+ const examples=JSON.parse(read('references/examples.md').match(/```json\r?\n([\s\S]*?)\r?\n```/)![1]!) as Array<{argv:string[];kind:string}>;
  for(const example of examples){
   const def=[...COMMANDS].sort((a,b)=>b.path.length-a.path.length).find(d=>d.path.split(' ').every((part,i)=>example.argv[i]===part));assert.ok(def,example.argv.join(' '));
   let calls=0;const control={ok:true as const,data:{},meta:{schemaVersion:'1' as const,command:def.path}};
@@ -41,7 +41,7 @@ test('synthetic planner partial and unknown survive CLI boundary without a live 
  assert.equal(result.exitCode,7);const value=JSON.parse(result.stdout);assert.equal(value.data.scope,'planner');assert.equal(value.data.items[0].submissionStatus,'unknown');assert.equal(value.data.items[0].markedComplete,true);assert.equal(value.meta.truncationReason,'page_cap');
 });
 test('booking workflows describe verified commands and preserve eligibility and status limits',()=>{
- const skill=read('SKILL.md'),examples=JSON.parse(read('references/examples.md').match(/```json\n([\s\S]*?)\n```/)![1]!) as Array<{argv:string[]}>;
+ const skill=read('SKILL.md'),examples=JSON.parse(read('references/examples.md').match(/```json\r?\n([\s\S]*?)\r?\n```/)![1]!) as Array<{argv:string[]}>;
  for(const command of ['providers','rooms','availability','mine'])assert.ok(examples.some(e=>e.argv[0]==='booking'&&e.argv[1]===command),'missing booking '+command+' example');
  assert.match(skill,/rulesCoverage/);assert.match(skill,/8454/);assert.match(skill,/预约.*参观|参观.*预约/);
 });

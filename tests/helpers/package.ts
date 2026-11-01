@@ -12,7 +12,9 @@ function npmCli():string{
  const found=candidates.find((path):path is string=>Boolean(path&&path.endsWith('npm-cli.js')&&existsSync(path)));assert.ok(found,'Install Node24/npm with a resolvable npm-cli.js');return found;
 }
 export function run(command:string,args:string[],cwd:string,env:NodeJS.ProcessEnv=process.env) {
-  const target=command==='npm'?{command:process.execPath,args:[npmCli(),...args]}:command.endsWith('.mjs')?{command:process.execPath,args:[command,...args]}:{command,args};
+  // Git Bash's GNU tar treats C: archive paths as remote hosts. Use Windows' native bsdtar.
+  const executable=command==='tar'&&process.platform==='win32'?win32.join(process.env.SystemRoot??'C:\\Windows','System32','tar.exe'):command;
+  const target=command==='npm'?{command:process.execPath,args:[npmCli(),...args]}:command.endsWith('.mjs')?{command:process.execPath,args:[command,...args]}:{command:executable,args};
   const result=spawnSync(target.command,target.args,{cwd,env,encoding:'utf8',timeout:120000,maxBuffer:8*1024*1024});
   assert.equal(result.status,0,`${command} ${args.join(' ')}\n${result.error??''}\n${result.stdout}\n${result.stderr}`);
   return result.stdout;
