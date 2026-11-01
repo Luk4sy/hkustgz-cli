@@ -4,24 +4,201 @@
 
 ```json
 [
- {"kind":"preflight","argv":["doctor"]},
- {"kind":"preflight","argv":["capabilities"]},
- {"kind":"public","argv":["catalog","search","AIAA5032","--limit","5"]},
- {"kind":"public","argv":["catalog","course","2026-27 Fall:AIAA5032"]},
- {"kind":"auth","argv":["auth","status","sis"]},
- {"kind":"login","argv":["auth","login","sis"]},
- {"kind":"private","argv":["sis","terms"]},
- {"kind":"private","argv":["sis","timetable","--term","synthetic-term"]},
- {"kind":"private","argv":["sis","today","--date","2026-10-30"]},
- {"kind":"private","argv":["portal","apps"]},
- {"kind":"private","argv":["portal","notices","--query","scholarship","--limit","5"]},
- {"kind":"private","argv":["portal","notice","mnews_16:123"]},
- {"kind":"private","argv":["portal","agenda","--from","2026-10-30","--to","2026-10-31"]},
- {"kind":"private","argv":["canvas","courses"]},
- {"kind":"private","argv":["canvas","assignments","--course","12345"]},
- {"kind":"private","argv":["canvas","announcements","--course","12345"]},
- {"kind":"private","argv":["canvas","agenda","--from","2026-10-30","--to","2026-10-31"]},
- {"kind":"pending","argv":["sis","grades"]}
+ {
+  "kind": "preflight",
+  "argv": [
+   "doctor"
+  ]
+ },
+ {
+  "kind": "preflight",
+  "argv": [
+   "capabilities"
+  ]
+ },
+ {
+  "kind": "public",
+  "argv": [
+   "catalog",
+   "search",
+   "AIAA5032",
+   "--limit",
+   "5"
+  ]
+ },
+ {
+  "kind": "public",
+  "argv": [
+   "catalog",
+   "course",
+   "2026-27 Fall:AIAA5032"
+  ]
+ },
+ {
+  "kind": "auth",
+  "argv": [
+   "auth",
+   "status",
+   "sis"
+  ]
+ },
+ {
+  "kind": "login",
+  "argv": [
+   "auth",
+   "login",
+   "sis"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "sis",
+   "terms"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "sis",
+   "timetable",
+   "--term",
+   "synthetic-term"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "sis",
+   "today",
+   "--date",
+   "2026-10-30"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "portal",
+   "apps"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "portal",
+   "notices",
+   "--query",
+   "scholarship",
+   "--limit",
+   "5"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "portal",
+   "notice",
+   "mnews_16:123"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "portal",
+   "agenda",
+   "--from",
+   "2026-10-30",
+   "--to",
+   "2026-10-31"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "canvas",
+   "courses"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "canvas",
+   "assignments",
+   "--course",
+   "12345"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "canvas",
+   "announcements",
+   "--course",
+   "12345"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "canvas",
+   "agenda",
+   "--from",
+   "2026-10-30",
+   "--to",
+   "2026-10-31"
+  ]
+ },
+ {
+  "kind": "pending",
+  "argv": [
+   "sis",
+   "grades"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "booking",
+   "providers"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "booking",
+   "rooms",
+   "--provider",
+   "library",
+   "--floor",
+   "2"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "booking",
+   "availability",
+   "--provider",
+   "library",
+   "--room",
+   "20",
+   "--date",
+   "2026-11-01"
+  ]
+ },
+ {
+  "kind": "private",
+  "argv": [
+   "booking",
+   "mine",
+   "--provider",
+   "library",
+   "--from",
+   "2026-11-01",
+   "--to",
+   "2026-11-08"
+  ]
+ }
 ]
 ```
 
@@ -30,3 +207,5 @@
 “查成绩”遇到sis.grades pending，直接说明目前不可用。不得以Canvas完成标记冒充教务成绩。partial结果说明只读取可信子集、返回数量与截断原因。登录错误由本人正常认证；限流停止，不能因为着急再循环调用。
 
 Canvas --course只接受数字ID。若来源意外返回非数字标识，不改写、不猜值，应报告契约不符。作业字段为effectiveDueAt、dueAtSource、submissionStatus、markedComplete；当前assignments的dueAtSource及submissionStatus通常为unknown，即使effectiveDueAt有来源时间，也不能确认是本人的有效截止日期。Planner使用startsAt、itemType、submissionStatus；仅明确submitted/not_submitted可说明提交状态，完成标记不替代该字段。
+
+“我能预约哪些空间”先查providers和已验证的library房间；provider入口不等于个人权限。availability的rulesCoverage未知不承诺可订；mine的8454过滤不等于全历史。其他供应商CLI仍pending，用户明确要求的浏览器现场盘点与CLI已实现能力分开说明。

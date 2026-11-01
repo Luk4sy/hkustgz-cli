@@ -39,3 +39,8 @@ test('synthetic planner partial and unknown survive CLI boundary without a live 
  const result=await executeCommand(['canvas','agenda'],{handlers:{'canvas.agenda':async()=>({ok:false,data:{scope:'planner',items:[{id:'synthetic',markedComplete:true,submissionStatus:'unknown',dueAt:null}]},error:{code:'PARTIAL_RESULT',message:'Incomplete',retryable:false,remediation:'Inspect coverage'},meta:{...queryMeta(),command:'canvas agenda',service:'canvas',coverage:'partial',truncationReason:'page_cap'}})}});
  assert.equal(result.exitCode,7);const value=JSON.parse(result.stdout);assert.equal(value.data.scope,'planner');assert.equal(value.data.items[0].submissionStatus,'unknown');assert.equal(value.data.items[0].markedComplete,true);assert.equal(value.meta.truncationReason,'page_cap');
 });
+test('booking workflows describe verified commands and preserve eligibility and status limits',()=>{
+ const skill=read('SKILL.md'),examples=JSON.parse(read('references/examples.md').match(/```json\n([\s\S]*?)\n```/)![1]!) as Array<{argv:string[]}>;
+ for(const command of ['providers','rooms','availability','mine'])assert.ok(examples.some(e=>e.argv[0]==='booking'&&e.argv[1]===command),'missing booking '+command+' example');
+ assert.match(skill,/rulesCoverage/);assert.match(skill,/8454/);assert.match(skill,/预约.*参观|参观.*预约/);
+});

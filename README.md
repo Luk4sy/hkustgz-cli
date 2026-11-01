@@ -7,7 +7,7 @@
 <p align="center"><strong>把港科广校园信息带进终端与 Codex。</strong></p>
 
 <p align="center">
-  <a href="docs/installation.md"><img src="docs/assets/badges/version.svg" alt="版本 0.1.0-alpha.2"></a>
+  <a href="docs/installation.md"><img src="docs/assets/badges/version.svg" alt="版本 0.1.0-alpha.3"></a>
   <a href="LICENSE"><img src="docs/assets/badges/license.svg" alt="MIT 许可证"></a>
   <a href="docs/installation.md"><img src="docs/assets/badges/node.svg" alt="需要 Node.js 24"></a>
   <a href="#codex-集成"><img src="docs/assets/badges/codex.svg" alt="提供 Codex Skill"></a>
@@ -36,11 +36,10 @@ hkustgz-cli catalog search AIAA5032 --format table
 | **SIS** | 查看学期、本人计划课表和今日课程 | 计划安排，临时调整未核实 |
 | **Portal** | 查应用入口、公告、校内正文和日程 | 公告来源覆盖有限，外部正文不支持 |
 | **Canvas** | 查当前课程、课程公告、作业和 Planner 日程 | 个人截止时间、提交状态可能无法确认 |
+| **Booking / Library** | 查预约入口、图书馆房间、开放与占用、本人记录 | 只读；规则覆盖可能unknown，记录限来源状态筛选 |
 | **Codex** | 用自然语言调用上述 CLI 查询 | 提供随包 Skill，需显式安装并匹配版本 |
 
-**开发分支补充（2026-10-30，待审）**：新增 `booking providers`、`booking rooms --provider library`、`booking availability --provider library --room <id> --date YYYY-MM-DD` 和 `booking mine --provider library`，源码已验证17项。availability规则未知，不承诺时段可订；mine保留源状态过滤8454。候选包和已安装Skill尚未同步这些新增功能，待本模块验收后集中封装。详见[第八模块验收](docs/acceptance/booking-library.md)。
-
-既有封装候选四个校园系统共 **13 项查询已有验证记录**。SIS 课程历史、成绩，以及 Booking 的供应系统、房间、可用时段、本人预约记录，共 6 项能力尚未接通。验证通过不代表所有账号权限或来源覆盖都相同。
+当前本地alpha.3包含已验收的 **17项校园查询**，其中新增Booking入口、图书馆房间、开放与占用、本人预约记录。规则未知时不承诺可订，本人记录仅保留来源状态过滤8454。SIS课程历史与成绩2项暂缓并保留pending；其他预约供应商目前只列入口。详见[第八模块验收](docs/acceptance/booking-library.md)。CLI与Skill按同一版本交付；文件安装与客户端识别需分别验证。
 
 查看逐项能力状态：
 
@@ -52,10 +51,10 @@ hkustgz-cli capabilities --format table
 
 ### 1. 准备与安装
 
-需要 **Node.js 24.x、npm 和 Google Chrome**。取得维护者确认的 `0.1.0-alpha.2` 安装包及校验值后，核对文件，从本地绝对路径安装：
+需要 **Node.js 24.x、npm 和 Google Chrome**。取得维护者确认的 `0.1.0-alpha.3` 安装包及校验值后，核对文件，从本地绝对路径安装：
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.2.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.3.tgz'
 hkustgz-cli --version
 hkustgz-cli doctor
 ```

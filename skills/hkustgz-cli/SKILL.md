@@ -2,8 +2,8 @@
 name: hkustgz-cli
 description: Use when a HKUST(GZ) student asks about campus courses, timetables, notices, Canvas assignments or agenda, or needs help with the local hkustgz-cli installation and authentication. 适用于港科广课程、课表、公告、作业、日程与校园CLI请求。
 metadata:
-  version: 0.1.0-alpha.2
-  compatible_cli: 0.1.0-alpha.2
+  version: 0.1.0-alpha.3
+  compatible_cli: 0.1.0-alpha.3
   schemaVersion: '1'
 ---
 
@@ -23,6 +23,9 @@ metadata:
 - 私人Portal/SIS/Canvas必要时先auth status对应服务。unknown不能解释为已登录或失效；可以尝试一次实际只读查询，以其明确结果决定下一步。
 - 课表：先sis terms取得学期ID，再按需sis timetable/sis today；来源是计划安排，不能保证包含临时调课或取消。
 - Canvas：先canvas courses取得本人课程ID，再查该课程的assignments/announcements。课程选择不唯一时列出必要候选供用户选择；不猜课程ID，不跨全部课程盲目抓取。
+- 预约入口：booking providers列出当前页面可见目录；区分预约使用与预约参观，入口可见不证明本人有使用权限，其他provider的pending不表示学校不能预约。
+- 图书馆：booking rooms --provider library返回房间及楼层ID，再用booking availability --provider library --room <id> --date <date>查指定日。rulesCoverage=unknown时，availableIntervals=[]表示尚不能确认可订，不能说没有空闲或保证预约成功；开放和占用仍可说明。图书馆认证控制仍unknown，查询会沿已有SSO恢复；明确需要登录时先auth login portal，不运行尚未支持的auth login booking-library。
+- 本人预约：booking mine --provider library按[from,to)查询；statusFilter=8454只覆盖正常页面默认的部分状态，不能说已查全历史。statusCode保留来源值，不猜测组合含义。
 - 查询“明天”“本周”时按当前任务日期换算Asia/Shanghai明确日期；日期范围[from,to)，默认7天、最多31天。canvas agenda是Planner窗口，不是全部作业清单；作业是否未交以明确提交字段为准。
 
 ## 结果必须这样解释
@@ -48,3 +51,7 @@ metadata:
 按需查[错误处理](references/errors.md)、[示例](references/examples.md)、[隐私](references/privacy.md)。不要索取或保存Cookie、profile、原始响应或用户画像；不把私人查询输出写入Skill或日志。
 
 管理接口为skill path/status/install/uninstall；显式install/uninstall支持--dry-run。冲突时保留用户文件和未知锁。安装文件成功不等于客户端已发现Skill，刷新后需实际调用验证。
+
+## 用户明确要求现场盘点其他预约系统时
+
+尚未接通的provider没有CLI业务命令。用户明确要求登录并盘点本人权限时，将这部分作为独立浏览器调研，沿已发现的官方入口、正常页面和本人认证完成只读观察，不猜接口；不要将观察结果标成CLI verified。需要密码、验证码或人工确认时交给用户。列明可见空间、资源类型、申请/预约/参观区别及未完成检查的系统，不因入口可见或时间轴空白断言可订。没有授权时不提交预约、付款或取消等操作。

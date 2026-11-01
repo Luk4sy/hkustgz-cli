@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收，Task8四项只读查询实现待审；Task9封装候选由独立批次推进，新增功能封装须等待验收，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收，Task8（62685a9）已于2026-11-01获用户复审通过并验收；Task9封装候选由独立批次推进，新增功能封装须等待验收，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -157,7 +157,7 @@
 
 ### Task 8：Booking 分类与图书馆可用区间
 
-**状态：2026-11-01楼层绑定竞态修复后258项全量回归（含Chrome）通过，构建/类型/差异检查通过，四项CLI真实复验通过，待用户审查；规则覆盖仍unknown，本人记录保留8454状态筛选。见docs/acceptance/booking-library.md。**
+**状态：2026-11-01楼层绑定竞态修复后258项全量回归（含Chrome）通过，构建/类型/差异检查通过，四项CLI真实复验通过；62685a9已获用户复审通过并验收；规则覆盖仍unknown，本人记录保留8454状态筛选。见docs/acceptance/booking-library.md。**
 
 **Files:** Create `src/adapters/booking/{index,model,manifest}.ts`、`src/adapters/booking-library/{index,parser,model,manifest,intervals}.ts`、`tests/{booking,booking-intervals,booking-cli}.test.ts`、`tests/fixtures/booking-library/`。
 
@@ -210,3 +210,5 @@
 请先审阅开发Spec和本计划。开工前选择：由主代理按任务顺序实施，或每任务由独立实施/审阅代理执行。建议先由主代理连续完成证据和共享基础，再根据真实适配器规模决定是否拆给独立代理；学校会话实验只允许单一操作者串行使用，不能让多个代理共享profile并发探测。
 
 若选择主代理方式，按 Superpowers executing-plans 执行；若明确选择子代理方式，按 subagent-driven-development 执行。在选定方法并批准开工前，不执行本计划。
+
+2026-11-01 Task9本地增量：用户授权将已验收Task8同步到CLI/Skill alpha.3，实际全局安装及归属Skill更新通过，status=current/doctor通过。新候选与旧候选分别保留；23项相关契约及安装/隐私检查通过，未增加业务写入。用户另授权的正常浏览器盘点不等于供应商CLI接通。详见docs/acceptance/alpha3-local-sync.md。未发布或推送；Windows/独立学生发布门槛不变。

@@ -4,7 +4,7 @@
 
 先读 README.md、开发 Spec、开发计划及 docs/acceptance/cli-foundation.md。用户已授权按模块开发，并明确要求：每完成一个模块先交付用户审查，通过后才能开发下一个模块。此要求优先于任何技能的连续执行默认值。
 
-Task 1（3681ae2）、Task 2（c3bafa6）均已获用户复审通过并验收。Task 3（32f0bab）已获用户验收。Task 4 Catalog（7b5c559）已获用户验收。Task 5 SIS（d708ac5）已获用户复审通过并验收。Task 6 Portal（2d547ff）已交付并实测，用户于2026-10-28授权继续Task7；既有公告覆盖限制保留。Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收；Task8四项只读查询已实现、待用户审查。本人已完成登录及课程冷启动复验；作业个人截止时间/提交状态证据缺失时unknown，Planner不代表全部作业。详见docs/acceptance/canvas-auth.md。Task 0 的 Portal/SIS/Canvas 认证子集已有证据，Booking/Library 专用会话查询已补证，通用认证控制状态仍为 unknown。Catalog两项、SIS三项、Portal四项及Canvas四项业务已验证（第七模块已验收），加上Booking四项共17项源码业务能力已有验证，SIS历史/成绩2项继续 pending；Portal公告全分类扫描当前仅保留已确认8条并返回partial，外部公告详情不支持。详见 docs/acceptance/catalog.md 及 docs/acceptance/query-core.md；不得猜学校接口或用模拟数据冒充真实查询。
+Task 1（3681ae2）、Task 2（c3bafa6）均已获用户复审通过并验收。Task 3（32f0bab）已获用户验收。Task 4 Catalog（7b5c559）已获用户验收。Task 5 SIS（d708ac5）已获用户复审通过并验收。Task 6 Portal（2d547ff）已交付并实测，用户于2026-10-28授权继续Task7；既有公告覆盖限制保留。Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收；Task8（62685a9）已于2026-11-01获用户复审通过并验收。本人已完成登录及课程冷启动复验；作业个人截止时间/提交状态证据缺失时unknown，Planner不代表全部作业。详见docs/acceptance/canvas-auth.md。Task 0 的 Portal/SIS/Canvas 认证子集已有证据，Booking/Library 专用会话查询已补证，通用认证控制状态仍为 unknown。Catalog两项、SIS三项、Portal四项及Canvas四项业务已验证（第七模块已验收），加上Booking四项共17项源码业务能力已有验证，SIS历史/成绩2项继续 pending；Portal公告全分类扫描当前仅保留已确认8条并返回partial，外部公告详情不支持。详见 docs/acceptance/catalog.md 及 docs/acceptance/query-core.md；不得猜学校接口或用模拟数据冒充真实查询。
 
 Git 文档基线已建立，工作分支 feat/cli-foundation。按用户指定原目录工作。npm test（含构建）和 npm run typecheck 是当前验证命令。
 
@@ -28,4 +28,8 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 
 2026-10-30 Task8：四项Booking/Library只读查询已实现并实测，当前源码17/19项verified，待用户审查。availability规则unknown，available=[]不代表没空闲；mine限定源8454状态过滤。既有候选包/安装Skill未更新，模块验收后再统一封装；不推送或发布。详见docs/acceptance/booking-library.md。
 
-2026-11-01 Task8交付：楼层异步绑定P2修复后258项全量测试全部通过（含Chrome，0跳过），构建、类型检查、差异检查通过；真实CLI分类8项/全楼59项/指定日开放占用/默认状态本人记录查询均通过。仍等待用户审查，不开始新增封装或推送。构建仅自动生成源码Skill命令表，完整Skill版本/说明与安装状态待验收后同步。
+2026-11-01 Task8交付：楼层异步绑定P2修复后258项全量测试全部通过（含Chrome，0跳过），构建、类型检查、差异检查通过；真实CLI分类8项/全楼59项/指定日开放占用/默认状态本人记录查询均通过。62685a9已获用户复审通过并验收；尚未开始新增封装或推送。构建仅自动生成源码Skill命令表，完整Skill版本/说明与安装状态待验收后同步。
+
+2026-11-01 用户调整优先级：sis history与sis grades暂缓开发，保留pending，不删除既有命令；下一阶段优先预约相关功能。具体供应系统及查询/预约操作范围待本轮设计明确，继续沿用按模块审查的交付方式。
+
+2026-11-01 用户授权本地同步：CLI与Codex归属Skill已安装为0.1.0-alpha.3，status=current，doctor全部通过。已验收17项业务及新增Booking指引进入新候选，旧候选保留。版本/安装升级/隐私相关23项通过，构建/类型/差异检查通过；本批未改业务读取代码，也未重复完整Chrome套件。另按用户明确授权进行了独立浏览器预约目录盘点，未新增其他供应商CLI能力、未提交预约、未保存私人盘点数据。详见docs/acceptance/alpha3-local-sync.md；不推送或发布。

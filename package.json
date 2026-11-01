@@ -1,6 +1,6 @@
 {
   "name": "hkustgz-cli",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "private": true,
   "description": "Read-only campus service CLI for HKUST(GZ) students.",
   "type": "module",

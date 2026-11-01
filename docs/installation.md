@@ -7,7 +7,7 @@
 在维护者确认分发后，取得对应版本tgz及SHA256，从本机绝对路径安装：
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.2.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.3.tgz'
 hkustgz-cli --version
 hkustgz-cli doctor
 hkustgz-cli --help
@@ -78,3 +78,5 @@ CLI需已在当前终端PATH中，Skill与CLI版本精确一致；可用skill st
 命令参考由构建时的真实注册表生成；Skill不抓网页或猜接口。完整CLI协议见cli-contract.md，错误及恢复边界见errors.md。第四批的CLI安装使用隔离prefix，不自动改用户全局PATH；日常使用仍需按本指南显式安装。定向试用前需由维护者确认交付渠道；面向更多同学的alpha交付还需完成独立学生验收。MIT许可与实际发布授权分别记录。
 
 Windows用户使用npm.cmd/hkustgz-cli.cmd入口，完整PowerShell与loopback检查见[Windows候选](windows.md)。不改变执行策略、不自动安装Chrome，不把Windows候选当作已完成独立学生验收。
+
+2026-11-01个人本地alpha.3同步：CLI与Skill精确同版本，包含已验收的17项只读路线及图书馆规则/状态限制指引。旧alpha.1/alpha.2候选保留；本次不是npm发布、Windows真机或第二位学生验收。
