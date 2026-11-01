@@ -63,11 +63,18 @@ export async function preparePreview(store:OperationStore,session:OperationSessi
  catch(error){if(error instanceof DuplicateOperationFailure){const value=operationData(error.operation);delete value.preview;return operationFailure(command,error,value);}throw error;}
 }
 export async function inspectOperation(store:OperationStore,id:string,session:OperationSession|undefined,options:QueryOptions,now:()=>number=Date.now):Promise<OperationResult>{
- let r=await store.read(id,now());
- if(session){try{const evidence=await withOperationDeadline(options,outer=>session(store.secret,outer,async(source,inner)=>{const o=sessionOperationOptions(outer,inner);
+ let r=await store.read(id,now());let verifiedConfirmation:StoredOperation|undefined;
+ try{
+ if(session){const evidence=await withOperationDeadline(options,outer=>session(store.secret,outer,async(source,inner)=>{const o=sessionOperationOptions(outer,inner);
   if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);
   const evidence=await source.reconcile(r,o);assertOperationLive(o);
-  if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);return evidence;
- }));assertOperationLive(options);if(r.action==='create'&&r.outcome==='unknown'&&r.receiptEvidence==='create_success'){const {confirmCreation}=await import('./create.js');r=await confirmCreation(store,r,evidence,now());}}catch(e){return operationFailure('booking operation',e,operationData(r));}}
+  if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);
+  if(r.action==='create'&&r.outcome==='unknown'&&r.receiptEvidence==='create_success'){
+   const {matchesCreation,confirmedCreationSnapshot}=await import('./create.js');assertOperationLive(o);
+   const proof=matchesCreation(r,evidence);if(proof)verifiedConfirmation=confirmedCreationSnapshot(r,proof);
+  }
+  return evidence;
+ }));assertOperationLive(options);if(r.action==='create'&&r.outcome==='unknown'&&r.receiptEvidence==='create_success'){const {confirmCreation}=await import('./create.js');r=await confirmCreation(store,r,evidence,now());}}
  r=await store.read(id,now());return operationReceipt('booking operation',r);
+ }catch(e){return operationFailure('booking operation',e,operationData(verifiedConfirmation??r));}
 }

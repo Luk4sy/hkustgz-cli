@@ -23,6 +23,11 @@ export function matchesCreation(record:StoredOperation,evidence:unknown):Creatio
  if(e.reservationId!==record.reservationId||!e.isOwner||!e.intentMatches||e.roomIds.length!==1||e.roomIds[0]!==i.roomId||Date.parse(e.startsAt)!==Date.parse(i.startsAt)||Date.parse(e.endsAt)!==Date.parse(i.endsAt)||(e.statusCode&1)!==1)return;
  return e;
 }
+/** Reporting a verified observation never changes durable operation state. */
+export function confirmedCreationSnapshot(record:StoredOperation,proof:CreationEvidence):StoredOperation{
+ const {intent,preview,confirmationDigest,...minimal}=record;
+ return{...minimal,lifecycle:'resolved',outcome:'confirmed',reservationId:proof.reservationId,sourceStatusCode:proof.statusCode,approvalState:proof.approvalState};
+}
 export async function confirmCreation(store:OperationStore,record:StoredOperation,evidence:unknown,now:number){const matched=matchesCreation(record,evidence);if(!matched)return record;return store.finalizeCreation(record.operationId,{outcome:'confirmed',sourceStatusCode:matched.statusCode,approvalState:matched.approvalState},now);}
 export async function createReservation(store:OperationStore,session:OperationSession,id:string,digest:string,options:QueryOptions,now:()=>number=Date.now):Promise<OperationResult>{
  let record:StoredOperation|undefined;let observedReceipt:string|undefined;let observedProof:CreationEvidence|undefined;
@@ -58,7 +63,7 @@ export async function createReservation(store:OperationStore,session:OperationSe
   // Re-read a possibly durable receipt, including a write racing the deadline.
   if(record){try{record=await store.read(id,now());}catch{/* Preserve last trustworthy in-memory receipt; never infer success. */}}
   if(record&&observedReceipt)record={...record,reservationId:observedReceipt};
-  if(record&&observedProof){const {intent,preview,confirmationDigest,...minimal}=record;record={...minimal,lifecycle:'resolved',outcome:'confirmed',reservationId:observedProof.reservationId,sourceStatusCode:observedProof.statusCode,approvalState:observedProof.approvalState};}
+  if(record&&observedProof)record=confirmedCreationSnapshot(record,observedProof);
   const signalCode=error instanceof CliFailure&&['INTERRUPTED','TERMINATED','CLEANUP_FAILED','OPERATION_STATE_UNAVAILABLE'].includes(error.code);
   if(record?.outcome==='unknown'&&!signalCode)return operationFailure('booking create',new CliFailure('OPERATION_UNCERTAIN'),operationData(record));
   return operationFailure('booking create',error,record?operationData(record):null);
