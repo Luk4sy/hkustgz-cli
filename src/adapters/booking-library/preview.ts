@@ -30,7 +30,7 @@ export function createLibraryOperationSource(reader:LibraryReader,now:()=>number
   if(!r)return;const bits=[256,512,1024].filter(b=>(r.statusCode&b)!==0);const approvalState=bits.length!==1?'unknown':bits[0]===256?'pending_review':bits[0]===512?'rejected':'approved';
   return{kind:'creation_readback',reservationId:r.id,isOwner:r.isOwner,intentMatches:r.intentMatches===true,roomIds:r.rooms.map(x=>x.id),startsAt:r.startsAt,endsAt:r.endsAt,statusCode:r.statusCode,approvalState};
  };
- return{identity,readCreated,submitCreate:async(intent,o)=>{if(!reader.submitCreate)throw new CliFailure('CAPABILITY_PENDING');return createQueryPolicy(o.deadlineMs).run(LIBRARY_ORIGIN,signal=>reader.submitCreate!(intent,{...o,signal}),{readOnly:false,...o.signal?{signal:o.signal}:{}});},createAssessment:async(intent,o)=>{
+ return{identity,readCreated,submitCreate:async(intent,o)=>{if(!reader.submitCreate)throw new CliFailure('CAPABILITY_PENDING');return createQueryPolicy(o.deadlineMs).run(LIBRARY_ORIGIN,signal=>{if(o.dispatchDeadlineMs!==undefined&&Date.now()>=o.dispatchDeadlineMs)throw new CliFailure('PREVIEW_EXPIRED');return reader.submitCreate!(intent,{...o,signal});},{readOnly:false,...o.signal?{signal:o.signal}:{}});},createAssessment:async(intent,o)=>{
   const date=intent.startsAt.slice(0,10);const scanned=await scanRooms({date},o,reader);const room=scanned.collected.items.find(x=>x.id===intent.roomId);const raw=scanned.raw.get(intent.roomId);
   if(!room||!raw){if(scanned.collected.coverage==='partial')throw new CliFailure('ADAPTER_CHANGED');throw new CliFailure('INVALID_ARGUMENT');}
   const availability=parseAvailability(raw,room.id,date);

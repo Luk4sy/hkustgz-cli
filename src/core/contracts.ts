@@ -7,7 +7,8 @@ export type ReadMethod = 'api' | 'response' | 'dom';
 export type Coverage = 'complete' | 'partial';
 export type CapabilityState = 'pending' | 'verified' | 'unsupported' | 'disabled';
 export interface Capability { id: string; service: ServiceId; state: CapabilityState; reason: string | null; evidenceId: string | null }
-export interface QueryOptions { limit?: number; refresh: boolean; deadlineMs: number; signal?: AbortSignal }
+/** dispatchDeadlineMs limits write admission only; receipt/readback retain the command budget. */
+export interface QueryOptions { dispatchDeadlineMs?:number; limit?: number; refresh: boolean; deadlineMs: number; signal?: AbortSignal }
 export interface PageBatch<T> { items:T[]; next:string|null; exhausted:boolean; emptyConfirmed:boolean }
 export interface PageSource<T> {
   readPage:(cursor:string|null,signal:AbortSignal)=>Promise<PageBatch<T>>;

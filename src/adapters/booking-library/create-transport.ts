@@ -11,7 +11,7 @@ const localTime=(s:string)=>s.slice(0,19).replace('T',' ');
 export function createLibraryCreateTransport(page:Page){
  let used=false;
  return async(intent:LibraryBookingIntent,options:QueryOptions):Promise<CreateSubmission>=>{
-  const live=()=>!options.signal?.aborted&&Date.now()<options.deadlineMs;
+  const live=()=>!options.signal?.aborted&&Date.now()<options.deadlineMs&&(options.dispatchDeadlineMs===undefined||Date.now()<options.dispatchDeadlineMs);
   if(used||!live()||intent.participantIds.length!==1||new URL(page.url()).origin!==LIBRARY_ORIGIN)return{kind:'unknown'};used=true;
   let done=false,forwarded=false;let resolve!:(r:CreateSubmission)=>void;
   const result=new Promise<CreateSubmission>(r=>{resolve=r;});

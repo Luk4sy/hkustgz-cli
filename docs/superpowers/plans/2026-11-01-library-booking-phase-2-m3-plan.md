@@ -47,10 +47,14 @@
   Run: `HKUSTGZ_TEST_BROWSER=1 node --import tsx --test tests/booking-create-transport.test.ts`
 - [x] Step3: RED actual CLI both formats and pending gates, add create dispatch integration. Default live capabilities unchanged (24 total,17 verified/7 pending), cancel pending. Ensure known data retained for errors and refresh.
   Run: `node --import tsx --test tests/booking-create-cli.test.ts`
-- [ ] Step4: Full Chrome suite/build/typecheck/diff and documentation link checks; commit coherent implementation. Independent final review (fresh reviewer per executing-plans), Important/Critical fixes RED→GREEN plus full suite; record minor/rulings, stop M3.
+- [x] Step4: Full Chrome suite/build/typecheck/diff and documentation link checks; commit coherent implementation. Independent final review (fresh reviewer per executing-plans), Important/Critical fixes RED→GREEN plus full suite; record minor/rulings, stop M3.
 
 ## Decisions / scope check
 
 公开单次表单脚本重取SHA256与M0相同（08ea4daf...838e8fa）。首批sender只覆盖已记录的sysKind1/resvKind2/resvProperty0、本人单成员、无附件/验证码/附加服务载荷；未知客户端基址或其他情况拒绝。没有已验证的拒绝码及服务端幂等，生产非成功响应保持unknown。实时资格缺口不以“本次测试”放宽，无法形成ready就不进行真实预约验收，不为补样本绕过门槛。
 
 执行记录：初次全量364/365，仅旧锁清理注入时序不再对应已保存回执；分为保存前失锁零写入与保存后清理失败保回执两测试后，最终全量366/366、0跳过，构建/类型/差异通过。当前等待独立代码审阅。
+
+独立审阅：1项P1及3项P2全部补回归RED→GREEN（会话信号传递、发送入口过期、保存失败保留观察凭据、已确认重复保护）。最小确认回执的活动时段防重保留规则按Spec L2-T05细化，完整载荷仍及时删除；最终全量376/376、0跳过，构建/类型/差异/文档链接通过。
+
+最终交付：d422a76实现及本轮集中审阅修复，学校创建路线仍pending，无真实创建/账号访问，不更新安装及Skill/候选。全部测试使用合成来源/Chrome/文件系统；停M3等用户审查，不进入M4。

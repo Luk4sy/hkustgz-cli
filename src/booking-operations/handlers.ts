@@ -25,7 +25,7 @@ export function createOperationHandlers(config:{session?:OperationSession}={}):R
   const options:QueryOptions={refresh:false,deadlineMs:Number(args.deadlineMs)};
   const session:OperationSession=config.session??(async(secret,o,run)=>{
    const [{withLibraryReader},{createLibraryOperationSource}]=await Promise.all([import('../adapters/booking-library/reader.js'),import('../adapters/booking-library/preview.js')]);
-   return withLibraryReader(o,(reader)=>run(createLibraryOperationSource(reader,deps.now)),deps,args.headed===true);
+   return withLibraryReader(o,(reader,sessionOptions)=>run(createLibraryOperationSource(reader,deps.now),sessionOptions),deps,args.headed===true);
   });
   let receipt:OperationResult|undefined;
   try{return await withOperationStore(paths.root,async store=>{

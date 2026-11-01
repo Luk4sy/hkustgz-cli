@@ -14,7 +14,7 @@ export interface OperationSource {
  /** M2 may observe candidates only. No result here can resolve a possibly sent operation. */
  reconcile(record:StoredOperation,options:QueryOptions):Promise<unknown>;
 }
-export type OperationSession=<T>(secret:Buffer,options:QueryOptions,run:(source:OperationSource)=>Promise<T>)=>Promise<T>;
+export type OperationSession=<T>(secret:Buffer,options:QueryOptions,run:(source:OperationSource,options?:QueryOptions)=>Promise<T>)=>Promise<T>;
 export type PreviewRequest={action:'create';intent:unknown}|{action:'cancel';id:string;range:DateRange};
 export function operationData(r:StoredOperation,confirmation=false):OperationData{return{operationId:r.operationId,action:r.action,lifecycle:r.lifecycle,outcome:r.outcome,eligibility:r.eligibility,reservationId:r.reservationId,sourceStatusCode:r.sourceStatusCode,approvalState:r.approvalState,expiresAt:new Date(r.expiresAt).toISOString(),checks:r.checks,...r.preview?{preview:r.preview}:{},...confirmation&&r.confirmationDigest?{confirmationDigest:r.confirmationDigest}:{}};}
 export function operationFailure(command:string,error:unknown,value:OperationData|null=null):OperationResult{const e=classifyError(error).error;return{ok:false,data:value,error:{code:e.code,message:e.message,remediation:e.remediation,retryable:false},meta:{schemaVersion:'1',kind:'operation',command}};}
@@ -39,18 +39,23 @@ export function assertOperationLive(options:QueryOptions){if(options.signal?.abo
 function actor(value:string){if(!/^[a-f0-9]{64}$/.test(value))throw new CliFailure('ADAPTER_CHANGED');return value;}
 export function validateCreateAssessment(intent:LibraryBookingIntent,value:unknown):Assessment{
  const parsed=AssessmentSchema.safeParse(value);if(!parsed.success)throw new CliFailure('ADAPTER_CHANGED');const p=parsed.data.preview;
- if(p.rooms.length!==1||p.rooms[0]!.id!==intent.roomId||p.startsAt!==intent.startsAt||p.endsAt!==intent.endsAt||p.durationMinutes!==(Date.parse(intent.endsAt)-Date.parse(intent.startsAt))/60000||JSON.stringify([...p.participantIds].sort((a,b)=>Number(a)-Number(b)))!==JSON.stringify(intent.participantIds)||p.participantCount!==intent.participantIds.length||p.purpose!==(intent.purpose??null))throw new CliFailure('ADAPTER_CHANGED');return parsed.data;
+ if(p.rooms.length!==1||p.rooms[0]!.id!==intent.roomId||p.startsAt!==intent.startsAt||p.endsAt!==intent.endsAt||p.durationMinutes!==(Date.parse(intent.endsAt)-Date.parse(intent.startsAt))/60000||JSON.stringify([...p.participantIds].sort((a,b)=>Number(a)-Number(b)))!==JSON.stringify(intent.participantIds)||p.participantCount!==intent.participantIds.length||p.purpose!==(intent.purpose??null))throw new CliFailure('ADAPTER_CHANGED');return parsed.data.reservationId?{...parsed.data,eligibility:'blocked',checks:[...parsed.data.checks,{id:'existingReservation',state:'fail',reason:`An existing reservation (${parsed.data.reservationId}) already matches this intent.`}]}:parsed.data;
+}
+export function sessionOperationOptions(outer:QueryOptions,inner?:QueryOptions):QueryOptions{
+ const signals=[outer.signal,inner?.signal].filter((s):s is AbortSignal=>!!s);
+ const dispatch=[outer.dispatchDeadlineMs,inner?.dispatchDeadlineMs].filter((n):n is number=>n!==undefined);
+ return{...outer,deadlineMs:Math.min(outer.deadlineMs,inner?.deadlineMs??Infinity),...signals.length?{signal:AbortSignal.any(signals)}:{},...dispatch.length?{dispatchDeadlineMs:Math.min(...dispatch)}:{}};
 }
 export async function preparePreview(store:OperationStore,session:OperationSession,request:PreviewRequest,options:QueryOptions,now:()=>number=Date.now):Promise<OperationResult>{
  const intent=request.action==='create'?normalizeIntent(request.intent,now()):{reservationId:SourceId.parse(request.id),...(({from,to})=>({from,to}))(resolveDateRange(request.range,now()))};
- const evidence=await withOperationDeadline(options,o=>session(store.secret,o,async source=>{
+ const evidence=await withOperationDeadline(options,outer=>session(store.secret,outer,async(source,inner)=>{const o=sessionOperationOptions(outer,inner);
   const subject=actor(await source.identity(store.secret,o));assertOperationLive(o);
   const value=request.action==='create'?await source.createAssessment(intent as LibraryBookingIntent,o):await source.cancelAssessment(request.id,request.range,o);assertOperationLive(o);
   const parsed=AssessmentSchema.safeParse(value);if(!parsed.success)throw new CliFailure('ADAPTER_CHANGED');
-  if(request.action==='create')validateCreateAssessment(intent as LibraryBookingIntent,value);
+  const assessment=request.action==='create'?validateCreateAssessment(intent as LibraryBookingIntent,value):parsed.data;
   const fresh=actor(await source.identity(store.secret,o));assertOperationLive(o);if(subject!==fresh)throw new CliFailure('LOGIN_REQUIRED');
   if(request.action==='cancel'&&parsed.data.reservationId!==request.id)throw new CliFailure('ADAPTER_CHANGED');
-  return{subject,assessment:parsed.data};
+  return{subject,assessment};
  }));
  // Persist only after the source session (including cleanup) has successfully returned.
  assertOperationLive(options);if(request.action==='create')normalizeIntent(intent,now());const command=request.action==='create'?'booking preview':'booking cancel-preview';
@@ -59,7 +64,7 @@ export async function preparePreview(store:OperationStore,session:OperationSessi
 }
 export async function inspectOperation(store:OperationStore,id:string,session:OperationSession|undefined,options:QueryOptions,now:()=>number=Date.now):Promise<OperationResult>{
  let r=await store.read(id,now());
- if(session){try{const evidence=await withOperationDeadline(options,o=>session(store.secret,o,async source=>{
+ if(session){try{const evidence=await withOperationDeadline(options,outer=>session(store.secret,outer,async(source,inner)=>{const o=sessionOperationOptions(outer,inner);
   if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);
   const evidence=await source.reconcile(r,o);assertOperationLive(o);
   if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);return evidence;

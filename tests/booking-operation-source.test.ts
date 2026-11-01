@@ -11,3 +11,7 @@ test('operation identity preserves authentication failure codes rather than trea
 test('create sender is scheduled after the last identity read without enabling retries',async()=>{
  const r=reader();let lastIdentity=0,sends=0,gap=0;r.inspection.assertIdentity=async()=>{lastIdentity=Date.now();};const source=createLibraryOperationSource({...r,submitCreate:async()=>{sends++;gap=Date.now()-lastIdentity;return{kind:'unknown' as const};}},()=>now);const o={refresh:false,deadlineMs:Date.now()+10000};await source.identity(Buffer.alloc(32,1),o);await source.submitCreate!(intent,o);assert.ok(gap>=500,`identity-to-write gap ${gap}`);assert.equal(sends,1);
 });
+
+test('preview expiry during source pacing prevents any sender admission',async()=>{
+ const r=reader();let sends=0;const source=createLibraryOperationSource({...r,submitCreate:async()=>{sends++;return{kind:'unknown' as const};}},()=>now);const o={refresh:false,deadlineMs:Date.now()+10000};await source.identity(Buffer.alloc(32,1),o);await assert.rejects(source.submitCreate!(intent,{...o,dispatchDeadlineMs:Date.now()+50} as any),{code:'PREVIEW_EXPIRED'});assert.equal(sends,0);
+});
