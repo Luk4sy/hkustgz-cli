@@ -1,12 +1,12 @@
 # 第二阶段 L2-M5：闭环整合、Skill与alpha.4候选
 
-日期：2026-11-01。状态：M4 d82e697已获用户验收；用户了解M5范围后明确继续，本轮实现及全量445/445验证完成，独立审阅无阻塞，停下交用户审查。
+日期：2026-11-01。状态：M4 d82e697已获用户验收；用户了解M5范围后明确继续，M5实现及alpha.4候选已获用户审查通过；之后用户要求继续，本地CLI/Skill同步见[安装记录](alpha4-local-sync.md)。
 
 ## 交付范围
 
 依据[Spec](../superpowers/specs/2026-11-01-library-booking-phase-2-spec.md)及[M5计划](../superpowers/plans/2026-11-01-library-booking-phase-2-m5-plan.md)。原目录feat/cli-foundation内inline实施；保持逐模块审查，本轮不更新日常安装、push/merge/publish，不访问真实账号、不实际预约/取消。
 
-源码/候选CLI与随包Skill统一0.1.0-alpha.4，package-lock根包同步，schemaVersion仍1。17项既有查询verified、7项pending不变；M0缺口继续保留，图书馆detail/preview/create/cancel-preview/cancel没有真实CLI路线验收，不能声称可现场预约。alpha.3日常安装与旧候选均保留。
+源码/候选CLI与随包Skill统一0.1.0-alpha.4，package-lock根包同步，schemaVersion仍1。17项既有查询verified、7项pending不变；M0缺口继续保留，图书馆detail/preview/create/cancel-preview/cancel没有真实CLI路线验收，不能声称可现场预约。在候选交付时alpha.3日常安装与旧候选均保留；审查后的日常安装升级单独记录。
 
 ## M3已知风险修复
 
@@ -76,4 +76,4 @@ Skill入口保持短指引，详细操作/结果放既有examples/errors/privacy
 - 首轮浏览器失败的唯一根因未确定：负载观察、定向及全量恢复支持可复测，不保证偶发故障不会再现。
 - 未对所有旧模块做完整现场重新验收：只做全量合成回归及本轮相关路径审查，未覆盖的真实来源变化仍可能存在。
 
-实现与候选交付完成，**不等于M0和真实操作路线验收通过**。M3已知not_applied保存失败风险已在本轮修复；M4已验收。当前停M5等待用户审查，未安排日常安装同步、推送、合并或发布。
+实现与候选交付完成，**不等于M0和真实操作路线验收通过**。M3已知not_applied保存失败风险已在本轮修复；M4已验收。上述为M5候选交付时状态。用户后续已审查通过并要求继续，本地同步结果见[alpha.4记录](alpha4-local-sync.md)；真实路线仍pending，没有推送、合并或发布。

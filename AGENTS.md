@@ -63,3 +63,5 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 2026-11-01最新授权：M4 d82e697已获用户复审通过并验收，用户获知M5规划后要求继续。当前按M5计划修复M3 not_applied保存失败风险、整合生命周期、更新随包Skill/公开说明及alpha.4候选，完成后停下审查。日常安装CLI/Skill不变，无真实账号访问/预约/取消，不push/merge/publish；学校7项pending/M0缺口不放宽。见docs/superpowers/plans/2026-11-01-library-booking-phase-2-m5-plan.md及docs/acceptance/library-booking-phase-2-m5.md。
 
 2026-11-01 M5交付待审：M3 not_applied保存/信号回执风险已修复，生命周期整合、alpha.4 CLI/Skill及候选完成。原并发2全量445/445、0失败/取消/跳过；构建/类型/差异/44文档链接与Skill语法检查通过。一次独立终审无Critical/Important，两项Minor保留：生命周期取消未直接消费创建回执ID、Skill下节引用方向。实际CLI/归属Skill仍alpha.3，旧候选未覆盖；新包SHA与证据见docs/acceptance/library-booking-phase-2-m5.md。M0缺口和真实学校7项pending不变，无真实账号访问/预约/取消，不安装/推送/合并/发布，停下等待用户审查。
+
+2026-11-01用户已审查通过M5 bff9796＋d3331d7并保留两项轻微建议，之后明确要求继续。按Spec下一步已将已审查alpha.4候选离线同步到现有日常Node24 CLI，再dry-run并显式同步Codex归属Skill。实际CLI/Skill均alpha.4、status=current，五个文件匹配随包版本，doctor五项pass，24项中17verified/7pending不变。未改产品代码或候选、未访问真实账号/预约/取消、未清理登录态或未决状态、未push/merge/publish。记录见docs/acceptance/alpha4-local-sync.md；客户端自动发现/热刷新及真实校园查询未单独验收。M0三项缺口继续保留，不能因M5实现或安装完成启用学校写入。
