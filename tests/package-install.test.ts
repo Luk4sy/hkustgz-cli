@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import {existsSync,mkdirSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
+import {existsSync,mkdirSync,readFileSync,realpathSync,rmSync,writeFileSync,symlinkSync} from 'node:fs';
 import {join} from 'node:path';
 import test from 'node:test';
 import {spawnSync} from 'node:child_process';
-import {fixture,pack,run,seedCache,tree,globalPackageRoot,installedBin} from './helpers/package.js';
+import {fixture,pack,run,seedCache,tree,globalPackageRoot,installedBin,repo} from './helpers/package.js';
 
 test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_effects',async()=>{
   const f=fixture();try{
@@ -67,4 +67,24 @@ test('installed A to B upgrade synchronizes Skill explicitly and uninstall prese
   assert.equal(existsSync(bin),false);assert.equal(existsSync(shim),false);assert.equal(readFileSync(join(home,'campus/session-canary'),'utf8'),'SYNTHETIC_SESSION_ONLY');
   assert.equal(readFileSync(join(home,'codex/config.toml'),'utf8'),'UNRELATED_CLIENT_CONFIG');assert.equal(readFileSync(join(home,'codex/skills/other/SKILL.md'),'utf8'),'UNRELATED_SKILL');
  }finally{rmSync(a.root,{recursive:true,force:true});rmSync(b.root,{recursive:true,force:true});}
+});
+
+
+test('accepted alpha3 source upgrades to the M5 candidate without rewriting Skill or unresolved operations implicitly',async()=>{
+ const old=fixture(),next=fixture();try{
+  const archive=join(old.root,'accepted-alpha3.tar');run('git',['archive','--format=tar','--output',archive,'3be2d3b'],repo);
+  rmSync(old.checkout,{recursive:true,force:true});mkdirSync(old.checkout);run('tar',['-xf',archive,'-C',old.checkout],old.root);symlinkSync(join(repo,'node_modules'),join(old.checkout,'node_modules'),process.platform==='win32'?'junction':'dir');
+  const a=pack(old),b=pack(next);assert.equal(JSON.parse(readFileSync(join(a.packageRoot,'package.json'),'utf8')).version,'0.1.0-alpha.3');
+  const current=JSON.parse(readFileSync(join(b.packageRoot,'package.json'),'utf8')).version;assert.notEqual(current,'0.1.0-alpha.3','M5 must have its own version rather than replacing accepted alpha3');
+  await seedCache(next.cache);const home=join(next.root,'student'),prefix=join(next.root,'prefix');mkdirSync(home);
+  const env={...next.env,HOME:home,CODEX_HOME:join(home,'codex'),HKUSTGZ_CLI_HOME:join(home,'campus'),npm_config_userconfig:join(home,'npmrc'),npm_config_globalconfig:join(home,'global-npmrc')};
+  const install=(artifact:string)=>run('npm',['install','--global','--prefix',prefix,'--offline','--no-audit','--no-fund',artifact],home,env);
+  install(a.artifact);const bin=installedBin(prefix);run(bin,['skill','install'],home,env);const oldSkill=readFileSync(join(home,'codex/skills/hkustgz-cli/SKILL.md'),'utf8');
+  for(const file of ['operations/state.json','operations/key','profiles/chrome/session-canary']){const path=join(home,'campus',file);mkdirSync(join(path,'..'),{recursive:true});writeFileSync(path,'SYNTHETIC_UNRESOLVED_DO_NOT_RESET');}
+  install(b.artifact);assert.equal(run(bin,['--version'],home,env).trim(),current);assert.equal(readFileSync(join(home,'codex/skills/hkustgz-cli/SKILL.md'),'utf8'),oldSkill);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'outdated');
+  assert.match(run(bin,['booking','cancel','--help'],home,env),/--operation/);const caps=JSON.parse(run(bin,['capabilities'],home,env)).data.items;assert.equal(caps.length,24);assert.equal(caps.filter((x:any)=>x.state==='verified').length,17);
+  const pending=spawnSync(process.execPath,[bin,'booking','cancel-preview','--provider','library','--id','7'],{cwd:home,env,encoding:'utf8'});assert.equal(pending.status,8,pending.stdout);assert.equal(JSON.parse(pending.stdout).error.code,'CAPABILITY_PENDING');
+  run(bin,['skill','install','--dry-run'],home,env);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'outdated');run(bin,['skill','install'],home,env);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'current');
+  for(const file of ['operations/state.json','operations/key','profiles/chrome/session-canary'])assert.equal(readFileSync(join(home,'campus',file),'utf8'),'SYNTHETIC_UNRESOLVED_DO_NOT_RESET');
+ }finally{rmSync(old.root,{recursive:true,force:true});rmSync(next.root,{recursive:true,force:true});}
 });

@@ -19,8 +19,9 @@ test('skill_matches_installed_cli and every documented example parses as a real 
   const def=[...COMMANDS].sort((a,b)=>b.path.length-a.path.length).find(d=>d.path.split(' ').every((part,i)=>example.argv[i]===part));assert.ok(def,example.argv.join(' '));
   let calls=0;const control={ok:true as const,data:{},meta:{schemaVersion:'1' as const,command:def.path}};
   const query={ok:true as const,data:{items:[]},meta:{...queryMeta(),command:def.path,service:def.service!,recordsRead:0,returnedCount:0}};
+  const operation={ok:true as const,data:{operationId:'11111111-1111-4111-8111-111111111111',action:'create' as const,lifecycle:'resolved' as const,outcome:'not_applied' as const,eligibility:'ready' as const,reservationId:null,sourceStatusCode:null,approvalState:'unknown' as const,checks:[]},meta:{schemaVersion:'1' as const,kind:'operation' as const,command:def.path}};
   const key=def.capabilityId??def.path.replace(' ','.');
-  const result=await executeCommand(example.argv,{sessionRunner:async()=>{throw Error('no live browser');},handlers:{[key]:async()=>{calls++;return def.capabilityId?query:control;}}});
+  const result=await executeCommand(example.argv,{sessionRunner:async()=>{throw Error('no live browser');},handlers:{[key]:async()=>{calls++;return def.resultKind==='operation'?operation:def.capabilityId?query:control;}}});
   if(def.capabilityId&&DEFAULT_CAPABILITIES.find(c=>c.id===def.capabilityId)?.state==='pending'){assert.equal(result.exitCode,8);assert.equal(calls,0);}else{assert.equal(result.exitCode,0,example.argv.join(' ')+result.stdout);assert.equal(calls,def.path==='capabilities'?0:1);}
  }
 });

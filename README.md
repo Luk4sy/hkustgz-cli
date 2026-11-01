@@ -7,7 +7,7 @@
 <p align="center"><strong>把港科广校园信息带进终端与 Codex。</strong></p>
 
 <p align="center">
-  <a href="docs/installation.md"><img src="docs/assets/badges/version.svg" alt="版本 0.1.0-alpha.3"></a>
+  <a href="docs/installation.md"><img src="docs/assets/badges/version.svg" alt="版本 0.1.0-alpha.4"></a>
   <a href="LICENSE"><img src="docs/assets/badges/license.svg" alt="MIT 许可证"></a>
   <a href="docs/installation.md"><img src="docs/assets/badges/node.svg" alt="需要 Node.js 24"></a>
   <a href="#codex-集成"><img src="docs/assets/badges/codex.svg" alt="提供 Codex Skill"></a>
@@ -39,7 +39,7 @@ hkustgz-cli catalog search AIAA5032 --format table
 | **Booking / Library** | 查预约入口、图书馆房间、开放与占用、本人记录 | 只读；规则覆盖可能unknown，记录限来源状态筛选 |
 | **Codex** | 用自然语言调用上述 CLI 查询 | 提供随包 Skill，需显式安装并匹配版本 |
 
-当前本地alpha.3包含已验收的 **17项校园查询**，其中新增Booking入口、图书馆房间、开放与占用、本人预约记录。规则未知时不承诺可订，本人记录仅保留来源状态过滤8454。SIS课程历史与成绩2项暂缓并保留pending；其他预约供应商目前只列入口。详见[第八模块验收](docs/acceptance/booking-library.md)。CLI与Skill按同一版本交付；文件安装与客户端识别需分别验证。
+当前alpha.4候选包含已验收的 **17项校园查询**，其中新增Booking入口、图书馆房间、开放与占用、本人预约记录。规则未知时不承诺可订，本人记录仅保留来源状态过滤8454。SIS课程历史/成绩及图书馆detail/preview/create/cancel-preview/cancel共7项保持pending；其他预约供应商目前只列入口。详见[第八模块验收](docs/acceptance/booking-library.md)。CLI与Skill按同一版本交付；文件安装与客户端识别需分别验证。
 
 查看逐项能力状态：
 
@@ -51,10 +51,10 @@ hkustgz-cli capabilities --format table
 
 ### 1. 准备与安装
 
-需要 **Node.js 24.x、npm 和 Google Chrome**。取得维护者确认的 `0.1.0-alpha.3` 安装包及校验值后，核对文件，从本地绝对路径安装：
+需要 **Node.js 24.x、npm 和 Google Chrome**。在候选通过审查、维护者确认安装后，取得 `0.1.0-alpha.4` 安装包及校验值后，核对文件，从本地绝对路径安装：
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.3.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.4.tgz'
 hkustgz-cli --version
 hkustgz-cli doctor
 ```
@@ -126,7 +126,7 @@ $hkustgz-cli 看看我今天的课表
 
 **本机与认证。** 使用专用浏览器会话，不读取日常浏览器的 Cookie。登录由本人完成，无需在聊天中提供密码、验证码或 Token。会话默认保存在 `~/.hkustgz-cli`，同一会话目录的浏览器命令需串行运行。`hkustgz-cli auth logout` 清理本工具保存的登录会话，不代表学校所有设备全局退出。
 
-**只读校园业务。** 不选退课、不提交作业、不创建或取消预约，也不修改公告已读或 Planner 状态。Skill 安装与卸载属于显式的本地文件操作。
+**校园业务边界。** 当前可用路线为只读。alpha.4包含图书馆预览、创建、取消和结果核对实现，但规则/权限及真实CLI链路尚未验收，五项新增学校路线继续pending。未来逐项verified后，创建与取消各需独立ready预览和用户确认，unknown不得重发。不选退课、不提交作业、不修改公告已读或Planner状态。Skill 安装与卸载属于显式的本地文件操作。
 
 **按来源理解结果。**
 
@@ -179,3 +179,5 @@ npm pack
 受 [AwesomeHou/szu-cli](https://github.com/AwesomeHou/szu-cli) 启发，借鉴其命令行产品形式和分层适配思路，围绕港科广的实际系统独立开发。
 
 本项目采用 [MIT 许可证](LICENSE)，是非官方项目。
+
+M5的真实旧版升级回归使用已验收alpha.3提交`3be2d3b`的历史对象；浅克隆运行完整开发测试前需补齐该历史。测试仅在临时prefix离线安装，不更新日常CLI/Skill或访问学校。

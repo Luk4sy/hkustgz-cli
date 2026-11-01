@@ -30,7 +30,7 @@ export function confirmedCreationSnapshot(record:StoredOperation,proof:CreationE
 }
 export async function confirmCreation(store:OperationStore,record:StoredOperation,evidence:unknown,now:number){const matched=matchesCreation(record,evidence);if(!matched)return record;return store.finalizeCreation(record.operationId,{outcome:'confirmed',sourceStatusCode:matched.statusCode,approvalState:matched.approvalState},now);}
 export async function createReservation(store:OperationStore,session:OperationSession,id:string,digest:string,options:QueryOptions,now:()=>number=Date.now):Promise<OperationResult>{
- let record:StoredOperation|undefined;let observedReceipt:string|undefined;let observedProof:CreationEvidence|undefined;
+ let record:StoredOperation|undefined;let observedReceipt:string|undefined;let observedProof:CreationEvidence|undefined;let observedRefusal:StoredOperation|undefined;
  try{
   record=await store.read(id,now());record=await store.validateConfirmation(id,digest,now());
   if(record.lifecycle!=='prepared')return operationReceipt('booking create',record);
@@ -49,7 +49,9 @@ export async function createReservation(store:OperationStore,session:OperationSe
    if(o.deadlineMs-Date.now()<1000)throw new CliFailure('QUERY_TIMEOUT');
    record=await store.beginDispatch({id,digest,subject:record!.subject,intent,ruleVersion:assessment.ruleVersion},now());assertOperationLive(o);if(now()>=record.expiresAt)throw new CliFailure('PREVIEW_EXPIRED');
    // This is the only side-effect attempt. Source pacing must disable retries.
-   const submitted=CreateSubmissionSchema.safeParse(await source.submitCreate(intent,{...o,dispatchDeadlineMs:record!.expiresAt}));assertOperationLive(o);
+   const submitted=CreateSubmissionSchema.safeParse(await source.submitCreate(intent,{...o,dispatchDeadlineMs:record!.expiresAt}));
+   if(submitted.success&&submitted.data.kind==='rejected'){const {intent,preview,confirmationDigest,...minimal}=record!;observedRefusal={...minimal,lifecycle:'resolved',outcome:'not_applied',sourceStatusCode:null,approvalState:'unknown'};}
+   assertOperationLive(o);
    if(!submitted.success||submitted.data.kind==='unknown')return;
    if(submitted.data.kind==='rejected'){record=await store.finalizeCreation(id,{outcome:'not_applied',sourceStatusCode:null,approvalState:'unknown'},now());throw new CliFailure(submitted.data.code);}
    observedReceipt=submitted.data.reservationId;record=await store.noteCreateReceipt(id,observedReceipt,now());assertOperationLive(o);
@@ -64,6 +66,7 @@ export async function createReservation(store:OperationStore,session:OperationSe
   if(record){try{record=await store.read(id,now());}catch{/* Preserve last trustworthy in-memory receipt; never infer success. */}}
   if(record&&observedReceipt)record={...record,reservationId:observedReceipt};
   if(record&&observedProof)record=confirmedCreationSnapshot(record,observedProof);
+  if(observedRefusal)return operationFailure('booking create',error,operationData(observedRefusal));
   const signalCode=error instanceof CliFailure&&['INTERRUPTED','TERMINATED','CLEANUP_FAILED','OPERATION_STATE_UNAVAILABLE'].includes(error.code);
   if(record?.outcome==='unknown'&&!signalCode)return operationFailure('booking create',new CliFailure('OPERATION_UNCERTAIN'),operationData(record));
   return operationFailure('booking create',error,record?operationData(record):null);

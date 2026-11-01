@@ -1,8 +1,8 @@
 {
   "name": "hkustgz-cli",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "private": true,
-  "description": "Read-only campus service CLI for HKUST(GZ) students.",
+  "description": "Campus queries and explicitly confirmed library operations for HKUST(GZ) students; booking routes pending verification.",
   "type": "module",
   "bin": {
     "hkustgz-cli": "bin/hkustgz-cli.mjs"

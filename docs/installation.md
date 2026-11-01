@@ -7,7 +7,7 @@
 在维护者确认分发后，取得对应版本tgz及SHA256，从本机绝对路径安装：
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.3.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.4.tgz'
 hkustgz-cli --version
 hkustgz-cli doctor
 hkustgz-cli --help
@@ -80,3 +80,11 @@ CLI需已在当前终端PATH中，Skill与CLI版本精确一致；可用skill st
 Windows用户使用npm.cmd/hkustgz-cli.cmd入口，完整PowerShell与loopback检查见[Windows候选](windows.md)。不改变执行策略、不自动安装Chrome，不把Windows候选当作已完成独立学生验收。
 
 2026-11-01个人本地alpha.3同步：CLI与Skill精确同版本，包含已验收的17项只读路线及图书馆规则/状态限制指引。旧alpha.1/alpha.2候选保留；本次不是npm发布、Windows真机或第二位学生验收。
+
+## alpha.4 候选与操作状态
+
+alpha.4为本轮待审候选，真实已安装版本仍为alpha.3，用户验收后才同步安装。候选保留17项已验证查询；SIS历史/成绩及图书馆detail、preview、create、cancel-preview、cancel共7项pending。M0规则证据和CLI真实创建/取消验收尚未完成；不因有命令或Skill指引就启用业务写入。
+
+升级CLI不会自动升级Skill；版本精确匹配后才由Agent调用。显式skill install之前旧Skill应显示outdated，dry-run不改变它；刷新客户端后再检查实际识别。npm升级/卸载、auth logout均不删除operations未决状态，不删除key/state或未知锁“恢复重试”。本机防重只覆盖同一CLI_HOME，不提供跨设备全局exactly-once。
+
+未来路线verified时，从stdin生成创建预览，展示参数/规则/后果并取得该次确认后提交一次；取消另做独立预览/确认。操作命令输出meta.kind=operation，不套用查询分页语义。unknown只读booking operation <id> --refresh，不补发。完整协议和错误处理见cli-contract.md及errors.md。

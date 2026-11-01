@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { executeCommand } from '../src/cli/main.js';
@@ -18,7 +19,7 @@ test('help does not open browser or require a session', async () => {
 test('version works without starting a browser', async () => {
   const result = await executeCommand(['--version'], { sessionRunner: noSession });
   assert.equal(result.exitCode, 0);
-  assert.match(result.stdout, /^0\.1\.0-alpha\.3\n$/);
+  assert.equal(result.stdout,JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version+'\n');
 });
 
 test('unknown options and missing or invalid parameters exit 2', async () => {

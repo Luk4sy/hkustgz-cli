@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {executeCommand} from '../src/cli/main.js';import {DEFAULT_CAPABILITIES} from '../src/core/capabilities.js';import {createOperationHandlers} from '../src/booking-operations/handlers.js';import {CliFailure} from '../src/core/errors.js';
-const intent={roomId:'2',startsAt:'2026-11-03T09:00:00+08:00',endsAt:'2026-11-03T10:00:00+08:00',participantIds:['12'],purpose:'Study'};
+const date=new Date(Date.now()+2*86400000).toISOString().slice(0,10);
+const intent={roomId:'2',startsAt:date+'T09:00:00+08:00',endsAt:date+'T10:00:00+08:00',participantIds:['12'],purpose:'Study'};
 const a={eligibility:'ready',ruleVersion:'b'.repeat(64),checks:[{id:'full-source',state:'pass',reason:'Synthetic source evidence'}],preview:{rooms:[{id:'2',name:'Room',location:'Floor4'}],startsAt:intent.startsAt,endsAt:intent.endsAt,durationMinutes:60,participantIds:['12'],participantCount:1,purpose:'Study',approvalState:'not_required',effects:[],feeState:'none'}};
 const proof={kind:'creation_readback',reservationId:'7',isOwner:true,intentMatches:true,roomIds:['2'],startsAt:intent.startsAt,endsAt:intent.endsAt,statusCode:1027,approvalState:'approved'};
 const capabilities=DEFAULT_CAPABILITIES.map(c=>['booking.library.preview','booking.library.create'].includes(c.id)?{...c,state:'verified' as const,reason:null,evidenceId:'synthetic-only'}:c);

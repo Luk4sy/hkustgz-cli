@@ -2,7 +2,7 @@
 
 <!-- Generated from COMMANDS and DEFAULT_CAPABILITIES; edit source definitions, not rows. -->
 
-状态以本机运行hkustgz-cli capabilities为准；verified指已核实读取路线，不保证全量覆盖或任意账号权限。control不是校园查询能力，pending不能向用户承诺可用。
+状态以本机运行hkustgz-cli capabilities为准；verified指已核实的具体业务路线，不保证全量覆盖或任意账号权限。control不是学校业务能力，pending不能向用户承诺可用。
 
 | 命令 | 状态 | 参数与选项 |
 | --- | --- | --- |
