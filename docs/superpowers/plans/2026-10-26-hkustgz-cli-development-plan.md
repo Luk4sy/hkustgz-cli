@@ -157,7 +157,7 @@
 
 ### Task 8：Booking 分类与图书馆可用区间
 
-**状态：2026-11-01最终256项全量回归（含Chrome）通过，构建/类型/差异检查通过，四项CLI真实复验通过，待用户审查；规则覆盖仍unknown，本人记录保留8454状态筛选。见docs/acceptance/booking-library.md。**
+**状态：2026-11-01楼层绑定竞态修复后258项全量回归（含Chrome）通过，构建/类型/差异检查通过，四项CLI真实复验通过，待用户审查；规则覆盖仍unknown，本人记录保留8454状态筛选。见docs/acceptance/booking-library.md。**
 
 **Files:** Create `src/adapters/booking/{index,model,manifest}.ts`、`src/adapters/booking-library/{index,parser,model,manifest,intervals}.ts`、`tests/{booking,booking-intervals,booking-cli}.test.ts`、`tests/fixtures/booking-library/`。
 

@@ -15,9 +15,16 @@ export function createLibraryPageReader(page:Page,floors:Floor[]):LibraryReader{
   const hash='#/ic/researchSpace/2/'+floorId;if(new URL(page.url()).origin!==LIBRARY_ORIGIN)throw new CliFailure('LOGIN_REQUIRED');
   // Follow the normal floor route, then reuse its already-authenticated, GET-only query method.
   if(new URL(page.url()).hash!==hash){await page.goto(LIBRARY_ORIGIN+'/'+hash,{waitUntil:'domcontentloaded'});}
-  await page.waitForFunction(()=>typeof (document.querySelector('.tabBox') as any)?.__vue__?.getReserve==='function');signalCheck(signal);
+  signalCheck(signal);
   const waiting=page.waitForResponse(r=>{const u=new URL(r.url());return r.request().method()==='GET'&&u.origin===LIBRARY_ORIGIN&&u.pathname==='/ic-web/reserve'&&u.searchParams.get('sysKind')==='1'&&u.searchParams.get('labIds')===floorId&&u.searchParams.get('resvDates')===date.replaceAll('-','')&&u.searchParams.get('page')===String(p)&&u.searchParams.get('pageSize')==='10'&&u.searchParams.get('kindId')==='';});void waiting.catch(()=>{});
-  await page.evaluate(({date,p})=>{const v=(document.querySelector('.tabBox') as any).__vue__;v.activeName=date;v.formModel.value='';v.formModel.adddValues='';v.pageData={page:p,pageNum:10,pageSize:10};v.getReserve();},{date,p});
+  // Route changes can leave the old component mounted. Check the same bindings
+  // that getReserve uses to select labIds, then configure and invoke that instance
+  // in one browser turn so replacement cannot occur between checking and reading.
+  const ready=await page.waitForFunction(({floorId,date,p,hash})=>{
+   const v=(document.querySelector('.tabBox') as any)?.__vue__;
+   if(location.hash!==hash||typeof v?.getReserve!=='function'||String(v.kindId)!==floorId||String(v.sysKind)!=='1'||String(v.spaceListType)!=='2')return false;
+   v.activeName=date;v.formModel.value='';v.formModel.adddValues='';v.pageData={page:p,pageNum:10,pageSize:10};v.getReserve();return true;
+  },{floorId,date,p,hash});await ready.dispose();
   const response=await waiting;signalCheck(signal);return{scope:{floorId,date,page:p},body:await project(response)};
  }};
 }

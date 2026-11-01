@@ -51,3 +51,5 @@ GET /ic-web/roomMenu，code=0、data 数组，每项 id/name/spanDay；实测4�
 正常个人中心 #/ic/userinfo 发出 GET /ic-web/reserve/resvInfo。页面 initTable 调用 searchDate；参数 beginDate、endDate（UI含当天）、needStatus、page、pageNum、orderKey、orderModel。默认勾选值为2、4、256、8192，总和8454；状态表显示未开始、已开始、待审核、待同意。因此保留 needStatus=8454，不能把查询称为全部历史。CLI 的 [from,to) 转成源 beginDate=from、endDate=to前一天；pageNum=10、gmt_create/desc，不更改学校状态。
 
 已观察非空 code=0、count=1、data 一项。字段 resvId 为编号、resvBeginTime/resvEndTime 为毫秒时间、resvStatus 为位掩码，resvDevInfoList 含 devId/devName。只输出编号、设备列表、起止与原始 statusCode；不解读未知组合，不输出 appAccNo、成员、姓名、备注。count=0/data=[] 仅在同样认证/范围成功判据下为已确认空；页面 reserve/count 并非本次列表总量，不使用它判断为空。合成测试覆盖多页、空、鉴权失败；真实仅证明当前角色及已有一项，未取得真实多页本人记录。
+
+2026-11-01 就绪判据补充：页面路由变化不证明组件已更新。读取前核对组件kindId与目标楼层一致，并核对getReserve生成请求所依赖的sysKind=1、spaceListType=2；检查与方法调用在同一浏览器执行中完成。仍将响应绑定到请求labIds/resvDates/page/pageSize，避免使用旧组件请求或旧批次结果。两种300ms异步切换的合成Chrome回归验证该边界；真实字段取自前述正常页面getReserve实现，未读取身份或凭据。
