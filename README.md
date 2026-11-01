@@ -20,7 +20,7 @@
   <a href="#文档导航">文档</a>
 </p>
 
-面向香港科技大学（广州）学生的非官方校园命令行工具。查询课程、课表、公告和作业，在终端查看表格，或把 JSON 结果交给脚本与 Agent。
+面向香港科技大学（广州）学生的非官方校园命令行工具。查询课程、课表、公告、作业和图书馆房间，在终端查看表格，或把 JSON 结果交给脚本与 Agent。
 
 ```bash
 hkustgz-cli catalog search AIAA5032 --format table
@@ -36,13 +36,12 @@ hkustgz-cli catalog search AIAA5032 --format table
 | **SIS** | 查看学期、本人计划课表和今日课程 | 计划安排，临时调整未核实 |
 | **Portal** | 查应用入口、公告、校内正文和日程 | 公告来源覆盖有限，外部正文不支持 |
 | **Canvas** | 查当前课程、课程公告、作业和 Planner 日程 | 个人截止时间、提交状态可能无法确认 |
-| **Booking / Library** | 查预约入口、图书馆房间、开放与占用、本人记录 | 只读；规则覆盖可能unknown，记录限来源状态筛选 |
-| **图书馆预约闭环** | 详情、创建与取消预览、单次创建/取消、操作结果核对 | 实现已验收，新增五项学校路线仍 pending，尚未开放真实预约 |
-| **Codex** | 用自然语言调用 CLI，解释查询及操作结果 | 随包 Skill 与 CLI 同为 alpha.4，需显式安装并匹配版本 |
+| **Booking / Library** | 查预约入口、图书馆房间、指定日开放与占用、本人预约记录 | 可查询，不保证可订；本人记录仅覆盖来源默认状态 |
+| **Codex** | 用自然语言调用 CLI，解释结果与查询范围 | 提供随包 Skill，需显式安装并匹配版本 |
 
-当前版本封装 **37 个命令入口**，包括查询、认证、环境检查、Skill管理和预约操作。业务能力共24项：**17项 verified、7项 pending**；pending包括暂缓的SIS课程历史/成绩，以及已实现但未通过真实路线验收的图书馆detail/preview/create/cancel-preview/cancel。其他预约供应商目前只列入口。
+目前 **17 项校园查询已有验证记录**。另有 7 项能力尚未开放：SIS 课程历史与成绩暂缓开发；图书馆预约详情、创建预览、创建、取消预览和取消已完成实现，但规则、权限和真实 CLI 路线尚未通过验证，仍为 `pending`。
 
-CLI与Skill均为 `0.1.0-alpha.4`，本地同步已完成。Skill文件安装与客户端识别分别验证；具体命令支持以capabilities输出为准。
+其他预约供应商目前只提供入口信息。已验证表示读取路线有验证记录，不保证所有账号权限或来源覆盖都相同。
 
 查看逐项能力状态：
 
@@ -102,6 +101,21 @@ hkustgz-cli canvas courses --format table
 hkustgz-cli canvas assignments --course '<课程ID>' --format table
 ```
 
+### 5. 查询图书馆房间
+
+先查看房间目录，使用返回的房间 ID 查询指定日期的开放与占用情况：
+
+```bash
+hkustgz-cli booking providers --format table
+hkustgz-cli booking rooms --provider library --format table
+hkustgz-cli booking availability --provider library --room '<房间ID>' --date YYYY-MM-DD --format table
+hkustgz-cli booking mine --provider library --format table
+```
+
+将 `YYYY-MM-DD` 换成实际查询日期。图书馆查询沿用专用会话中的学校 SSO；若提示需要登录，先执行 `hkustgz-cli auth login portal`，由本人完成认证后再查。当前不支持单独执行 `auth login booking-library`。
+
+开放、未占用不等于符合预约条件；可订时段为空也不代表没有空闲，具体限制见[查询边界](#隐私与查询边界)。
+
 **输出方式**：默认 JSON，便于脚本和 Agent 读取；`--format table` 用于终端阅读，两者保留相同的数据与查询范围。更多命令及参数见 `hkustgz-cli --help` 和各子命令的 `--help`。
 
 ## Codex 集成
@@ -121,6 +135,7 @@ hkustgz-cli skill status
 ```text
 $hkustgz-cli 查一下 AIAA5032 的课程信息
 $hkustgz-cli 看看我今天的课表
+$hkustgz-cli 列出图书馆的房间
 ```
 
 私人查询仍需本人在学校认证窗口登录。**CLI 与 Skill 版本必须精确一致**；升级 CLI 后，再运行 `skill install --target codex` 同步。`skill status` 检查安装文件状态，不代表当前 Codex 会话已经发现 Skill；浏览器执行还取决于客户端权限，不能以安装成功代替实际调用验证。
@@ -129,7 +144,7 @@ $hkustgz-cli 看看我今天的课表
 
 **本机与认证。** 使用专用浏览器会话，不读取日常浏览器的 Cookie。登录由本人完成，无需在聊天中提供密码、验证码或 Token。会话默认保存在 `~/.hkustgz-cli`，同一会话目录的浏览器命令需串行运行。`hkustgz-cli auth logout` 清理本工具保存的登录会话，不代表学校所有设备全局退出。
 
-**校园业务边界。** 当前可用路线为只读。alpha.4包含图书馆预览、创建、取消和结果核对实现，但规则/权限及真实CLI链路尚未验收，五项新增学校路线继续pending。未来逐项verified后，创建与取消各需独立ready预览和用户确认，unknown不得重发。不选退课、不提交作业、不修改公告已读或Planner状态。Skill 安装与卸载属于显式的本地文件操作。
+**校园业务边界。** 当前可用的学校业务均为只读。图书馆创建和取消尚未开放，不能将实现完成当成已经可用；后续启用也需分别展示预览、取得对该次操作的明确确认，结果未知时不能重复发送。不选退课、不提交作业、不修改公告已读或 Planner 状态。Skill 安装与卸载属于显式的本地文件操作。
 
 **按来源理解结果。**
 
@@ -137,11 +152,13 @@ $hkustgz-cli 看看我今天的课表
 - **Portal**：当前公告扫描只保留前两个已确认来源的 8 条，返回 `partial`，不代表全校公告。外部链接正文需在官方入口查看。
 - **Canvas**：无法确认个人有效截止时间或提交证据时保留 `unknown`，不能据此判断已交、未交或无截止日期。Planner 仅代表所选时间窗口的可见项，不是全部作业；“标记完成”不等于“已提交”。
 
+- **图书馆**：`availability` 提供开放与占用信息；`rulesCoverage=unknown` 时，`availableIntervals=[]` 只表示尚不能确认可订。`mine` 仅覆盖来源默认的 `8454` 状态筛选，不是全部预约历史。图书馆通用认证状态仍可能显示 `unknown`，应以实际查询结果判断是否需要登录。
+
 | 状态 | 如何理解 |
 | --- | --- |
 | `partial` / 退出码 `7` | 只取得部分结果；保留可信数据，同时查看覆盖范围和截断原因 |
 | `unknown` / `null` | 该字段尚无法确认，不能当成否定或空记录 |
-| `CAPABILITY_PENDING` / 退出码 `8` | 查询能力尚未接通，不是查询结果为空 |
+| `CAPABILITY_PENDING` / 退出码 `8` | 该能力尚未开放，不表示查询结果为空或操作已经执行 |
 
 完整字段语义见 [CLI 输出协议](docs/cli-contract.md)，登录、限流和会话占用等问题见[错误处理](docs/errors.md)。
 
@@ -164,9 +181,11 @@ HKUSTGZ_TEST_BROWSER=1 npm test
 npm pack
 ```
 
-M5的真实旧版升级回归使用已验收alpha.3提交`3be2d3b`的历史对象；浅克隆运行完整开发测试前需补齐该历史。测试仅在临时prefix离线安装，不更新日常CLI/Skill或访问学校。
+升级回归测试会读取 alpha.3 提交 `3be2d3b`，浅克隆需先补齐 Git 历史。安装与升级测试使用临时目录，不更新日常 CLI / Skill，也不访问学校。
 
-本地tgz与校验文件位于artifacts目录，由维护者提供；该目录不纳入Git仓库。GitHub源码更新不等于npm发布。
+[CI 配置](.github/workflows/ci.yml)包含 macOS 的 Chrome 合成测试、Windows 的命令契约与安装升级检查，以及本机回环页面测试；这些检查不替代学校账号的实测。
+
+本地安装包和校验文件由维护者提供，`artifacts/` 不纳入 Git；GitHub 源码更新不等于 npm 发布。
 
 ## 文档导航
 
@@ -177,7 +196,7 @@ M5的真实旧版升级回归使用已验收alpha.3提交`3be2d3b`的历史对�
 | Codex 与隐私 | [随包 Skill 指引](skills/hkustgz-cli/SKILL.md) · [隐私说明](skills/hkustgz-cli/references/privacy.md) |
 | 开发与设计 | [技术方案](docs/superpowers/specs/2026-10-26-hkustgz-cli-design.md) · [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md) · [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md) |
 | 第二阶段 | [图书馆预约 Spec](docs/superpowers/specs/2026-11-01-library-booking-phase-2-spec.md) · [M5 实现验收](docs/acceptance/library-booking-phase-2-m5.md) · [alpha.4 本地同步](docs/acceptance/alpha4-local-sync.md) |
-| 查询验收 | [Catalog](docs/acceptance/catalog.md) · [SIS](docs/acceptance/sis.md) · [Portal](docs/acceptance/portal.md) · [Canvas](docs/acceptance/canvas.md) |
+| 查询验收 | [Catalog](docs/acceptance/catalog.md) · [SIS](docs/acceptance/sis.md) · [Portal](docs/acceptance/portal.md) · [Canvas](docs/acceptance/canvas.md) · [Booking / Library](docs/acceptance/booking-library.md) |
 | Alpha 与平台验证 | [交付准备](docs/acceptance/alpha-release.md) · [独立学生验收](docs/acceptance/alpha-students.md) · [Codex 调用记录](docs/acceptance/alpha-agent.md) · [Windows 验证记录](docs/acceptance/windows-alpha.md) |
 
 验收记录保留各阶段的版本与验证环境；当前功能以本版本的 `capabilities` 输出和上述范围说明为准。
