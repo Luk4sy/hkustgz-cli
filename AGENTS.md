@@ -43,3 +43,5 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 2026-11-01用户复审9e68004通过后继续M0权威来源续查：通过正常帮助页找到广州校区图书馆正式服务/政策页，补强人员、用途、房型与取消政策子项，见docs/research/library-booking-phase-2-authorities.md。三个缺口组仍未整体关闭，M0不通过；未实现M1或重做业务写入。管理方/ITDID联系点和核实问题仅本地准备，没有授权发送消息或工单。交付后停下来等审查。
 
 2026-11-01最新用户调整：在邮件发送方式确认中回复“继续开发吧，不管了”，据此允许不等待官方答复而有限推进M1只读实现，覆盖上文“M0未通过不进入M1”的原开发门槛；不发送邮件，不把M0或未知规则视为通过。实现纯规则判定（整体blocked/unknown）、内存主体绑定及跨可见状态/日期窗口的本人详情，见docs/acceptance/library-booking-phase-2-m1.md。detail能力源码pending，尚不对真实用户启用；原mine8454不变，实际CLI/Skill/候选包未更新。M1完成后停下交用户审查，不能进入M2或进行创建/取消。
+
+2026-11-01最新授权：M1基线5105fcc已获用户复审通过并验收；用户明确要求按Spec开发L2-M2，完成后停下审查，不进入M3。M2覆盖只读创建/取消预览、本地操作凭据/状态锁/防重/恢复框架；M0缺口不关闭，学校业务发送仍pending。计划及验收见docs/superpowers/plans/2026-11-01-library-booking-phase-2-m2-plan.md与docs/acceptance/library-booking-phase-2-m2.md。保持实际CLI/Skill/候选不变，不访问真实账号或进行学校写入测试。

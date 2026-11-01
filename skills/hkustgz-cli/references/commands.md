@@ -38,5 +38,10 @@
 | `booking availability` | verified | `--provider <provider> --room <id> --date <date> --headed --format <json/table>` |
 | `booking mine` | verified | `--provider <provider> --from <date> --to <date> --limit <n> --headed --format <json/table>` |
 | `booking detail` | pending | `--provider <provider> --id <id> --from <date> --to <date> --headed --format <json/table>` |
+| `booking preview` | pending | `--provider <provider> --input <path> --headed --format <json/table>` |
+| `booking cancel-preview` | pending | `--provider <provider> --id <id> --from <date> --to <date> --headed --format <json/table>` |
+| `booking create` | pending | `--provider <provider> --operation <id> --confirm <digest> --headed --format <json/table>` |
+| `booking cancel` | pending | `--provider <provider> --operation <id> --confirm <digest> --headed --format <json/table>` |
+| `booking operation` | control | `<id> --refresh --headed --format <json/table>` |
 
 命令参数使用上一条结果返回的ID。Canvas课程来自canvas courses；SIS学期来自sis terms；公告详情使用source:id。不传任意URL，不猜接口。每次只运行一个浏览器命令。

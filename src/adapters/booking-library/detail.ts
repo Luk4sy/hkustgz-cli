@@ -8,6 +8,7 @@ import {LibraryIdentityReadError} from './identity.js';
 export interface LibraryInspectionReader {
  /** False throughout an internal refresh, and until fresh identity has been verified. */
  readonly identityVerified:boolean;
+ fingerprint(secret:Uint8Array):string;
  assertIdentity(signal:AbortSignal):Promise<void>;
  page(range:DateRange,page:number,signal:AbortSignal):Promise<unknown>;
 }

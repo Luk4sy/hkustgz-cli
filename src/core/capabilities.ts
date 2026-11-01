@@ -13,7 +13,7 @@ export const DEFAULT_CAPABILITIES: Capability[] = [
   ...['search', 'course'].map((action) => ({id: `catalog.${action}`, service: 'catalog' as const})),
   ...['courses', 'announcements', 'assignments', 'agenda'].map((action) => ({id: `canvas.${action}`, service: 'canvas' as const})),
   {id: 'booking.providers', service: 'booking' as const},
-  ...['rooms', 'availability', 'mine','detail'].map((action) => ({id: `booking.library.${action}`, service: 'booking-library' as const})),
+  ...['rooms', 'availability', 'mine','detail','preview','cancel-preview','create','cancel'].map((action) => ({id: `booking.library.${action}`, service: 'booking-library' as const})),
 ].map((item) => [...CATALOG_CAPABILITIES,...SIS_CAPABILITIES,...PORTAL_CAPABILITIES,...CANVAS_CAPABILITIES,...BOOKING_CAPABILITIES,...LIBRARY_CAPABILITIES].find(cap=>cap.id===item.id)??({...item, state: 'pending', reason: 'Adapter implementation and real-system verification are pending.', evidenceId: null}));
 export function requireCapability(items: Capability[], id: string): Capability {
   const matches = items.filter((item) => item.id === id);

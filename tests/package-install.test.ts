@@ -25,9 +25,9 @@ test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_
     assert.equal(run(bin,['--version'],cwd,env).trim(),JSON.parse(readFileSync(join(f.checkout,'package.json'),'utf8')).version);
     assert.match(run(bin,['--help'],cwd,env),/catalog/);
     const result=JSON.parse(run(bin,['capabilities'],cwd,env));
-    assert.equal(result.data.items.length,20);
+    assert.equal(result.data.items.length,24);
     assert.equal(result.data.items.filter((v:{state:string})=>v.state==='verified').length,17);
-    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='pending').length,3);
+    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='pending').length,7);
     assert.equal(existsSync(events),false);
     assert.deepEqual(tree(home),before);
     assert.equal(realpathSync(JSON.parse(run(bin,['skill','path'],cwd,env)).data.path),realpathSync(join(installed,'skills/hkustgz-cli')));

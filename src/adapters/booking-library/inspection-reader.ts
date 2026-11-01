@@ -26,7 +26,7 @@ export function createLibraryInspectionReader(page:Page):LibraryInspectionReader
   identityVerified=true;
   }catch(failure){throw new LibraryIdentityReadError(failure);}
  };
- return{get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal)=>{
+ return{fingerprint(secret){if(!identityVerified||!binding)throw new CliFailure('LOGIN_REQUIRED');return binding.fingerprint(secret);},get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal)=>{
   check(signal);if(!binding)throw new CliFailure('LOGIN_REQUIRED');
   if(new URL(page.url()).hash!=='#/ic/userinfo')await page.goto(LIBRARY_ORIGIN+'/#/ic/userinfo',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>[...document.querySelectorAll('*')].some(e=>typeof (e as any).__vue__?.initTable==='function'&&(e as any).__vue__?.search?.date&&Array.isArray((e as any).__vue__?.statusOption)));

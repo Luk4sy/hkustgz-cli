@@ -1,3 +1,5 @@
+import {OperationResultSchema} from '../booking-operations/contract.js';
+import {operationFailure} from '../booking-operations/workflow.js';
 import {readFileSync} from 'node:fs';
 import {Argument, Command, CommanderError, InvalidArgumentError, Option} from 'commander';
 import {CapabilitySchema, ControlResultSchema, QueryResultSchema, ServiceSchema} from '../core/contracts.js';
@@ -28,10 +30,16 @@ function validateArguments(definition: CommandDefinition, args: Record<string, u
   if (definition.path === 'auth status' && Boolean(args.service) === Boolean(args.all)) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser use' && !['chrome', 'edge', 'chromium'].includes(String(args.browser))) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser install' && args.browser !== 'chromium') throw new CliFailure('INVALID_ARGUMENT');
-  if(definition.path==='booking detail'&&!/^[1-9]\d*$/.test(String(args.id)))throw new CliFailure('INVALID_ARGUMENT');
+  if(['booking detail','booking cancel-preview'].includes(definition.path)&&(!/^[1-9]\d*$/.test(String(args.id))||!Number.isSafeInteger(Number(args.id))))throw new CliFailure('INVALID_ARGUMENT');
+  const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+  if(definition.path==='booking operation'&&!uuid.test(String(args.id)))throw new CliFailure('INVALID_ARGUMENT');
+  if(['booking create','booking cancel'].includes(definition.path)&&(!uuid.test(String(args.operation))||!/^[a-f0-9]{64}$/.test(String(args.confirm))))throw new CliFailure('INVALID_ARGUMENT');
+  if(definition.path==='booking preview'&&args.input!=='-')throw new CliFailure('INVALID_ARGUMENT');
   const required = ['canvas announcements', 'canvas assignments'].includes(definition.path) ? ['course']
     : definition.path === 'booking availability' ? ['provider', 'room', 'date']
-    : definition.path==='booking detail'?['provider','id']
+    : ['booking detail','booking cancel-preview'].includes(definition.path)?['provider','id']
+    : definition.path==='booking preview'?['provider','input']
+    : ['booking create','booking cancel'].includes(definition.path)?['provider','operation','confirm']
     : ['booking rooms', 'booking mine'].includes(definition.path) ? ['provider'] : [];
   if (required.some((key) => !args[key])) throw new CliFailure('INVALID_ARGUMENT');
 }
@@ -50,6 +58,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
     .configureOutput({writeOut: (text) => {stdout += text;}, writeErr: () => {}});
   const groups = new Map<string, Command>();
   const identities = new Map<Command, string>();
+  const kinds=new Map<Command,string>();
   let activeCommand = program;
   const trackCommand = (_parent: Command, child: Command): void => {
     activeCommand = child;
@@ -71,7 +80,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
       }
       const command = parent.command(parts.at(-1)!).description(definition.description)
         .addOption(new Option('--format <format>', 'Output format').choices(['json', 'table']));
-      identities.set(command, definition.path);
+      identities.set(command, definition.path);if(definition.resultKind)kinds.set(command,definition.resultKind);
       for (const argument of definition.args ?? []) {
         const arg = new Argument(argument.syntax);
         if (argument.kind === 'service') arg.choices(ServiceSchema.options);
@@ -97,9 +106,9 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
           if (value !== undefined) args[argument.key] = value;
         }
         validateArguments(definition, args);
-        if(definition.capabilityId){
+        if(definition.capabilityId||definition.resultKind==='operation'){
           const now=deps.now();args.deadlineMs=now+90000;
-          if(['portal agenda','canvas agenda','booking mine','booking detail'].includes(definition.path)){
+          if(['portal agenda','canvas agenda','booking mine','booking detail','booking cancel-preview'].includes(definition.path)){
             const range=resolveDateRange({...typeof args.from==='string'?{from:args.from}:{},...typeof args.to==='string'?{to:args.to}:{}},now);
             args.from=range.from;args.to=range.to;
           }
@@ -113,6 +122,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         if (definition.capabilityId && requireCapability(deps.capabilities, definition.capabilityId).service !== definition.service) throw new CliFailure('ADAPTER_CHANGED');
         const id = definition.capabilityId ?? definition.path.replace(' ', '.');
         let handler = Object.hasOwn(deps.handlers, id) ? deps.handlers[id] : undefined;
+        if(!handler&&definition.resultKind==='operation')handler=(await import('../booking-operations/handlers.js')).createOperationHandlers()[id];
         if(!handler&&definition.service==='portal')handler=(await import('../adapters/portal/index.js')).createPortalHandlers()[id];
         if(!handler&&definition.service==='canvas')handler=(await import('../adapters/canvas/index.js')).createCanvasHandlers()[id];
         if(!handler&&definition.service==='sis')handler=(await import('../adapters/sis/index.js')).createSisHandlers()[id];
@@ -123,10 +133,10 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         if(!handler&&definition.path.startsWith('skill '))handler=(await import('./skill/handlers.js')).createSkillHandlers()[id];
         if(!handler&&!definition.capabilityId&&definition.path!=='doctor')handler=(await import('../session/auth.js')).createControlHandlers()[id];
         if (!handler) throw new CliFailure(definition.capabilityId ? 'ADAPTER_CHANGED' : 'CAPABILITY_PENDING');
-        const parsed = (definition.capabilityId ? QueryResultSchema : ControlResultSchema).safeParse(await handler(args, deps));
+        const parsed = (definition.resultKind==='operation'?OperationResultSchema:definition.capabilityId ? QueryResultSchema : ControlResultSchema).safeParse(await handler(args, deps));
         if (!parsed.success || parsed.data.meta.command !== commandName) throw new CliFailure('ADAPTER_CHANGED');
         if ('service' in parsed.data.meta && parsed.data.meta.service !== definition.service) throw new CliFailure('ADAPTER_CHANGED');
-        exitCode = parsed.data.ok ? 0 : 7;
+        exitCode = parsed.data.ok ? 0 : definition.resultKind==='operation'?classifyError(new CliFailure(parsed.data.error.code)).exitCode:7;
         stdout += renderOutput(parsed.data as Output, args.format as 'json' | 'table');
       });
     }
@@ -141,7 +151,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
       : cause);
     exitCode = failedCode;
     const failure: Failure = {ok: false, error, meta: {schemaVersion: '1', command: commandName}};
-    stdout = renderOutput(failure, outputFormat);
+    stdout = renderOutput(kinds.get(activeCommand)==='operation'?operationFailure(commandName,new CliFailure(error.code,error.remediation)):failure, outputFormat);
   }
   return {exitCode, stdout, stderr};
 }
