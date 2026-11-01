@@ -61,3 +61,5 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 2026-11-01 M4用户复审两项P2修复待复审：拒绝页UUID先私有暂存，完整详情页校验通过后才发布；重复ID/总数变化页不能污染已接受句柄。精确取消目标比较纳入memberCount，人数不一致的提交前已取消核对及unknown刷新均不确认、不解除创建防重。新增4项RED→GREEN回归，最终438/438、0跳过，构建/类型/差异/19文档链接通过。M3 not_applied保存失败风险仍未修改；无真实账号访问/预约/取消，不进入M5，不更新安装CLI/Skill/候选，不推送。
 
 2026-11-01最新授权：M4 d82e697已获用户复审通过并验收，用户获知M5规划后要求继续。当前按M5计划修复M3 not_applied保存失败风险、整合生命周期、更新随包Skill/公开说明及alpha.4候选，完成后停下审查。日常安装CLI/Skill不变，无真实账号访问/预约/取消，不push/merge/publish；学校7项pending/M0缺口不放宽。见docs/superpowers/plans/2026-11-01-library-booking-phase-2-m5-plan.md及docs/acceptance/library-booking-phase-2-m5.md。
+
+2026-11-01 M5交付待审：M3 not_applied保存/信号回执风险已修复，生命周期整合、alpha.4 CLI/Skill及候选完成。原并发2全量445/445、0失败/取消/跳过；构建/类型/差异/44文档链接与Skill语法检查通过。一次独立终审无Critical/Important，两项Minor保留：生命周期取消未直接消费创建回执ID、Skill下节引用方向。实际CLI/归属Skill仍alpha.3，旧候选未覆盖；新包SHA与证据见docs/acceptance/library-booking-phase-2-m5.md。M0缺口和真实学校7项pending不变，无真实账号访问/预约/取消，不安装/推送/合并/发布，停下等待用户审查。
