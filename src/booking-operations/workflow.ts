@@ -4,7 +4,7 @@ import {CliFailure,classifyError} from '../core/errors.js';
 import {normalizeIntent,SourceId,type LibraryBookingIntent} from './intent.js';
 import {resolveDateRange} from '../core/policy.js';
 import {PreviewSchema,CheckSchema,type OperationData,type OperationResult} from './contract.js';
-import {OperationStore,type StoredOperation} from './store.js';
+import {OperationStore,DuplicateOperationFailure,type StoredOperation} from './store.js';
 const AssessmentSchema=z.strictObject({eligibility:z.enum(['ready','blocked','unknown']),ruleVersion:z.string().regex(/^[a-f0-9]{64}$/),checks:z.array(CheckSchema).min(1),preview:PreviewSchema,reservationId:SourceId.nullable().optional(),sourceStatusCode:z.number().int().nonnegative().nullable().optional()}).refine(a=>a.eligibility!=='ready'||(a.checks.every(c=>c.state==='pass')&&a.preview.feeState==='none'&&a.preview.approvalState!=='unknown'&&a.preview.rooms.length>0&&!!a.preview.startsAt&&!!a.preview.endsAt&&a.preview.durationMinutes!==null&&a.preview.durationMinutes>0));
 export type Assessment=z.infer<typeof AssessmentSchema>;
 export interface OperationSource {
@@ -52,8 +52,9 @@ export async function preparePreview(store:OperationStore,session:OperationSessi
   return{subject,assessment:parsed.data};
  }));
  // Persist only after the source session (including cleanup) has successfully returned.
- live(options);if(request.action==='create')normalizeIntent(intent,now());const r=await store.prepare({action:request.action,intent,...evidence.assessment,reservationId:evidence.assessment.reservationId??null,sourceStatusCode:evidence.assessment.sourceStatusCode??null,subject:evidence.subject},now());
- return receipt(request.action==='create'?'booking preview':'booking cancel-preview',r,true);
+ live(options);if(request.action==='create')normalizeIntent(intent,now());const command=request.action==='create'?'booking preview':'booking cancel-preview';
+ try{const r=await store.prepare({action:request.action,intent,...evidence.assessment,reservationId:evidence.assessment.reservationId??null,sourceStatusCode:evidence.assessment.sourceStatusCode??null,subject:evidence.subject},now());return receipt(command,r,true);}
+ catch(error){if(error instanceof DuplicateOperationFailure){const value=data(error.operation);delete value.preview;return operationFailure(command,error,value);}throw error;}
 }
 export async function inspectOperation(store:OperationStore,id:string,session:OperationSession|undefined,options:QueryOptions,now:()=>number=Date.now):Promise<OperationResult>{
  let r=await store.read(id,now());

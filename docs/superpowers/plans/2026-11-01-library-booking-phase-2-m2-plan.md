@@ -52,10 +52,12 @@
   Run: `node --import tsx --test tests/booking-operation-cli.test.ts`
   Expected: CLI按operation协议校验输出，损坏返回1，摘要/过期/防重返回2，规则blocked4/unknown6，pending8，unknown10；旧查询仍原协议。
 - [x] Step4：运行全量`HKUSTGZ_TEST_BROWSER=1 npm test`、`npm run typecheck`、`git diff --check`；记录真实输出、文档及能力状态，不访问真实账号或进行写入。
-- [ ] Step5：独立最终代码审阅（执行计划技能要求），Important/Critical用回归RED→GREEN修复并全量验证。集中本地提交，停M2等用户审查。
+- [x] Step5：独立最终代码审阅（执行计划技能要求），Important/Critical用回归RED→GREEN修复并全量验证。集中本地提交，停M2等用户审查。
 
 ## Self-review / decisions
 
 本计划仅实现Spec的M2范围；M3/M4服务端发送、权威成功/取消确认不实现。pending预览命令不进入学校，真实读取适配器仍实现并可用合成输入验证，待真实正向证据后另行提升状态；本地operation状态读取是本机能力，无学校verified声明。Spec中的实际参与人资格未有完整来源，不自行补本人或验证任意账号ID。既有M1规则报告保持保守；框架可处理未来来源ready，但当前生产适配器不能产出ready。用户已经明确授权按Spec开发，沿用既有inline方式，不重复索取计划批准。
 
 当前记录：M2针对性37项通过；全量323/323、0跳过，构建/类型/差异通过。独立最终审阅尚未结束。全部测试使用合成数据，无真实业务访问或写入。
+
+最终交付：独立审阅3项P2（已有存储丢文件重置、加载后损坏被覆盖、重复意图缺回执）全部以回归RED→GREEN修复；针对性40/40，全量326/326、0跳过，构建/类型/差异检查通过。没有延后轻微问题。停M2待用户审查，不进入M3；真实资格及Windows现场未验，相关能力不升级。

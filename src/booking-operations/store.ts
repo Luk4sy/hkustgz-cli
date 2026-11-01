@@ -15,6 +15,9 @@ const RecordSchema=z.strictObject({operationId:z.uuid(),action:z.enum(['create',
 const PayloadSchema=z.strictObject({schemaVersion:z.literal(1),records:z.array(RecordSchema).max(10000)}).refine(x=>new Set(x.records.map(r=>r.operationId)).size===x.records.length);
 const EnvelopeSchema=z.strictObject({payload:PayloadSchema,mac:hex});
 export type StoredOperation=z.infer<typeof RecordSchema>&{confirmationDigest?:string};
+export class DuplicateOperationFailure extends CliFailure {
+ constructor(public readonly operation:StoredOperation){super('DUPLICATE_INTENT',`Run hkustgz-cli booking operation ${operation.operationId} --refresh for read-only reconciliation; do not repeat a possibly sent request.`);}
+}
 export interface PrepareInput {action:'create'|'cancel';subject:string;intent:z.infer<typeof IntentSchema>|z.infer<typeof CancelIntentSchema>;ruleVersion:string;eligibility:'ready'|'blocked'|'unknown';checks:z.infer<typeof CheckSchema>[];preview:z.infer<typeof PreviewSchema>;reservationId?:string|null;sourceStatusCode?:number|null}
 const unavailable=()=>new CliFailure('OPERATION_STATE_UNAVAILABLE');
 const sign=(secret:Buffer,value:unknown)=>createHmac('sha256',secret).update(JSON.stringify(value)).digest('hex');
@@ -24,7 +27,7 @@ async function safeFile(path:string):Promise<Buffer>{
  const f=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0));try{const actual=await f.stat();if(actual.ino!==info.ino||actual.dev!==info.dev)throw unavailable();return await f.readFile();}finally{await f.close();}
 }
 async function writePrivate(path:string,data:string|Buffer){const f=await open(path,'wx',0o600);try{await f.writeFile(data);await f.sync();}finally{await f.close();}}
-async function atomic(path:string,value:unknown){const temp=path+'.'+randomUUID()+'.tmp';try{await writePrivate(temp,JSON.stringify(value));await rename(temp,path);const dir=await open(join(path,'..'),'r');try{await dir.sync();}catch(e){if(process.platform!=='win32')throw e;}finally{await dir.close();}}finally{await unlink(temp).catch(e=>{if(e.code!=='ENOENT')throw e;});}}
+async function atomic(path:string,value:unknown,beforeRename?:()=>Promise<void>){const temp=path+'.'+randomUUID()+'.tmp';try{await writePrivate(temp,JSON.stringify(value));await beforeRename?.();await rename(temp,path);const dir=await open(join(path,'..'),'r');try{await dir.sync();}catch(e){if(process.platform!=='win32')throw e;}finally{await dir.close();}}finally{await unlink(temp).catch(e=>{if(e.code!=='ENOENT')throw e;});}}
 const OwnerSchema=z.strictObject({tool:z.literal('hkustgz-cli'),schemaVersion:z.literal(1),pid:z.number().int().positive(),host:z.string().min(1),token:z.uuid()});
 async function takeLock(dir:string):Promise<{lock:string;owner:string;token:string}>{
  const lock=join(dir,'.lock');
@@ -53,15 +56,19 @@ async function takeLock(dir:string):Promise<{lock:string;owner:string;token:stri
 }
 /** Instances exist only under withOperationStore's cross-process lock. No school writes live here. */
 export class OperationStore {
- constructor(private readonly dir:string,private readonly key:Buffer,private records:z.infer<typeof RecordSchema>[]){ }
+ constructor(private readonly dir:string,private readonly key:Buffer,private records:z.infer<typeof RecordSchema>[],private expectedState:Buffer,private readonly directoryIdentity:{ino:number;dev:number}){ }
  get secret(){return Buffer.from(this.key);}
  private checkTime(now:number){if(!Number.isSafeInteger(now)||now<0)throw new CliFailure('INVALID_ARGUMENT');}
  private materialize(r:z.infer<typeof RecordSchema>):StoredOperation{return{...structuredClone(r),...(r.lifecycle==='prepared'&&r.eligibility==='ready'?{confirmationDigest:sign(this.key,{kind:'confirmation',record:r})}:{})};}
- private async save(records:z.infer<typeof RecordSchema>[]){try{const payload=PayloadSchema.parse({schemaVersion:1,records});await atomic(join(this.dir,'state.json'),{payload,mac:sign(this.key,payload)});this.records=payload.records;}catch{throw unavailable();}}
- private async sweep(now:number){this.checkTime(now);const records=this.records.flatMap(r=>{if(r.outcome==='unknown'||r.lifecycle==='dispatching')return[r];if((r.lifecycle==='resolved'||r.lifecycle==='expired')&&now-r.updatedAt>=7*86400000)return[];if(r.lifecycle==='prepared'&&now>=r.expiresAt){const {intent,preview,...minimal}=r;return[{...minimal,lifecycle:'expired' as const,updatedAt:now}];}return[r];});if(JSON.stringify(records)!==JSON.stringify(this.records))await this.save(records);}
+ private async verify(){try{
+  canonicalDirectoryPath(this.dir,'INVALID_DATA_HOME');await assertOwned(this.dir);const info=await lstat(this.dir);
+  if(info.ino!==this.directoryIdentity.ino||info.dev!==this.directoryIdentity.dev||!(await safeFile(join(this.dir,'key'))).equals(this.key)||!(await safeFile(join(this.dir,'state.json'))).equals(this.expectedState))throw unavailable();
+ }catch{throw unavailable();}}
+ private async save(records:z.infer<typeof RecordSchema>[]){try{await this.verify();const payload=PayloadSchema.parse({schemaVersion:1,records}),envelope={payload,mac:sign(this.key,payload)};await atomic(join(this.dir,'state.json'),envelope,()=>this.verify());this.records=payload.records;this.expectedState=Buffer.from(JSON.stringify(envelope));}catch{throw unavailable();}}
+ private async sweep(now:number){this.checkTime(now);await this.verify();const records=this.records.flatMap(r=>{if(r.outcome==='unknown'||r.lifecycle==='dispatching')return[r];if((r.lifecycle==='resolved'||r.lifecycle==='expired')&&now-r.updatedAt>=7*86400000)return[];if(r.lifecycle==='prepared'&&now>=r.expiresAt){const {intent,preview,...minimal}=r;return[{...minimal,lifecycle:'expired' as const,updatedAt:now}];}return[r];});if(JSON.stringify(records)!==JSON.stringify(this.records))await this.save(records);}
  async prepare(input:PrepareInput,now:number):Promise<StoredOperation>{
   await this.sweep(now);const canonicalIntent=canonical(input.intent);const intentHash=sign(this.key,intentKey(input.action,canonicalIntent));
-  if(this.records.some(r=>r.subject===input.subject&&r.action===input.action&&r.intentHash===intentHash&&(r.lifecycle==='prepared'||r.lifecycle==='dispatching'||r.outcome==='unknown')))throw new CliFailure('DUPLICATE_INTENT');
+  const duplicate=this.records.find(r=>r.subject===input.subject&&r.action===input.action&&r.intentHash===intentHash&&(r.lifecycle==='prepared'||r.lifecycle==='dispatching'||r.outcome==='unknown'));if(duplicate)throw new DuplicateOperationFailure(structuredClone(duplicate));
   const parsed=RecordSchema.safeParse({operationId:randomUUID(),action:input.action,subject:input.subject,intentHash,ruleVersion:input.ruleVersion,createdAt:now,updatedAt:now,expiresAt:now+300000,lifecycle:'prepared',outcome:'not_attempted',eligibility:input.eligibility,checks:input.checks,reservationId:input.reservationId??null,sourceStatusCode:input.sourceStatusCode??null,approvalState:input.preview.approvalState,intent:canonicalIntent,preview:input.preview});
   if(!parsed.success)throw new CliFailure('ADAPTER_CHANGED');await this.save([...this.records,parsed.data]);return this.materialize(parsed.data);
  }
@@ -77,14 +84,14 @@ function canonical(intent:PrepareInput['intent']):PrepareInput['intent']{if('roo
 export async function withOperationStore<T>(home:string,run:(store:OperationStore)=>Promise<T>):Promise<T>{
  let lock:string|undefined;let owner:string|undefined;let token:string|undefined;let callbackStarted=false;
  try{
-  home=canonicalDirectoryPath(home,'INVALID_DATA_HOME');await claimDirectory(home);const dir=canonicalDirectoryPath(join(home,'operations'),'INVALID_DATA_HOME');await claimDirectory(dir);await assertOwned(dir);
+  home=canonicalDirectoryPath(home,'INVALID_DATA_HOME');await claimDirectory(home);const dir=canonicalDirectoryPath(join(home,'operations'),'INVALID_DATA_HOME');let fresh=false;try{await mkdir(dir,{mode:0o700});fresh=true;}catch(e){if((e as NodeJS.ErrnoException).code!=='EEXIST')throw e;}await claimDirectory(dir);await assertOwned(dir);
   const info=await lstat(dir);if(process.getuid&&info.uid!==process.getuid())throw unavailable();
   if((await readdir(dir)).some(f=>!['.hkustgz-cli-owner.json','key','state.json','.lock'].includes(f)))throw unavailable();
   ({lock,owner,token}=await takeLock(dir));
-  const entries=await readdir(dir);const hasKey=entries.includes('key'),hasState=entries.includes('state.json');if(hasKey!==hasState)throw unavailable();
+  const entries=await readdir(dir);const hasKey=entries.includes('key'),hasState=entries.includes('state.json');if(hasKey!==hasState||(!hasKey&&!fresh))throw unavailable();
   if(!hasKey){const key=randomBytes(32);await writePrivate(join(dir,'key'),key);const payload={schemaVersion:1,records:[]};await atomic(join(dir,'state.json'),{payload,mac:sign(key,payload)});}
-  const key=await safeFile(join(dir,'key'));if(key.byteLength!==32)throw unavailable();const parsed=EnvelopeSchema.safeParse(JSON.parse((await safeFile(join(dir,'state.json'))).toString('utf8')));if(!parsed.success||!equal(parsed.data.mac,sign(key,parsed.data.payload)))throw unavailable();
-  callbackStarted=true;return await run(new OperationStore(dir,key,parsed.data.payload.records));
+  const key=await safeFile(join(dir,'key'));if(key.byteLength!==32)throw unavailable();const rawState=await safeFile(join(dir,'state.json'));const parsed=EnvelopeSchema.safeParse(JSON.parse(rawState.toString('utf8')));if(!parsed.success||!equal(parsed.data.mac,sign(key,parsed.data.payload)))throw unavailable();
+  callbackStarted=true;return await run(new OperationStore(dir,key,parsed.data.payload.records,rawState,{ino:info.ino,dev:info.dev}));
  }catch(e){if(callbackStarted)throw e;if(e instanceof CliFailure&&e.code!=='INVALID_DATA_HOME')throw e;throw unavailable();}
  finally{if(lock){try{if(!owner||!token||(await safeFile(owner)).toString()!==token||(await readdir(lock)).length!==1||(await lstat(lock)).isSymbolicLink())throw unavailable();await unlink(owner);await rmdir(lock);}catch{throw unavailable();}}}
 }

@@ -30,3 +30,12 @@ test('state lock cleanup failure retains the prepared operation receipt',async()
   const r=await executeCommand(['booking','preview','--provider','library','--input','-'],{capabilities,handlers,env:{HKUSTGZ_CLI_HOME:home},readInput:async()=>JSON.stringify(intent)});assert.equal(r.exitCode,1,r.stdout);const body=JSON.parse(r.stdout);assert.equal(body.error.code,'OPERATION_STATE_UNAVAILABLE');assert.ok(body.data?.operationId,'the prepared receipt must survive lock cleanup failure');assert.equal(body.data.outcome,'not_attempted');assert.equal(body.data.confirmationDigest,undefined);
  }finally{await rm(home,{recursive:true,force:true});}
 });
+
+test('duplicate uncertain intent retains the existing minimal receipt and exact next step',async()=>{
+ const m=await load(),{withOperationStore}=await import('../src/booking-operations/store.js');const home=await mkdtemp(join(tmpdir(),'hkustgz-duplicate-cli-'));try{
+  const ready={...evidence,eligibility:'ready',checks:[{id:'full-source',state:'pass',reason:'Synthetic verified checks'}],preview:{...evidence.preview,approvalState:'not_required',feeState:'none'}};
+  const handlers=m.createOperationHandlers({session:async(_k:any,_o:any,run:any)=>run({identity:async()=> 'a'.repeat(64),createAssessment:async()=>ready})});const deps={capabilities,handlers,env:{HKUSTGZ_CLI_HOME:home},readInput:async()=>JSON.stringify(intent)};
+  const p=await executeCommand(['booking','preview','--provider','library','--input','-'],deps);assert.equal(p.exitCode,0,p.stdout);const known=JSON.parse(p.stdout).data;await withOperationStore(home,async s=>{const r=await s.read(known.operationId,Date.now());await s.beginDispatch({id:r.operationId,digest:known.confirmationDigest,subject:r.subject,intent:r.intent!,ruleVersion:r.ruleVersion},Date.now());});
+  for(const format of ['json','table']){const r=await executeCommand(['booking','preview','--provider','library','--input','-','--format',format],deps);assert.equal(r.exitCode,2,r.stdout);assert.match(r.stdout,new RegExp(known.operationId));assert.match(r.stdout,/dispatching/);assert.match(r.stdout,/unknown/);assert.match(r.stdout,new RegExp('booking operation '+known.operationId+' --refresh'));assert.doesNotMatch(r.stdout,/confirmationDigest|participantIds|"preview"/);if(format==='json')assert.equal(JSON.parse(r.stdout).error.code,'DUPLICATE_INTENT');}
+ }finally{await rm(home,{recursive:true,force:true});}
+});
