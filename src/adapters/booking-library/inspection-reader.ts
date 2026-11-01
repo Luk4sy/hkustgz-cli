@@ -10,10 +10,11 @@ async function json(response:Response):Promise<any>{
  if(body?.code===300)throw new CliFailure('LOGIN_REQUIRED');if(body?.code!==0)throw new CliFailure('ADAPTER_CHANGED');return body;
 }
 export function createLibraryInspectionReader(page:Page):LibraryInspectionReader {
- let binding:LibraryIdentity|undefined;let lastRequest=0;
+ let binding:LibraryIdentity|undefined;let lastRequest=0;let identityVerified=false;
  const check=(signal:AbortSignal)=>{if(signal.aborted)throw signal.reason;if(new URL(page.url()).origin!==LIBRARY_ORIGIN)throw new CliFailure('LOGIN_REQUIRED');};
  const pace=async(signal:AbortSignal)=>{check(signal);const minimum=lastRequest+500;while(Date.now()<minimum){await page.waitForTimeout(Math.max(1,minimum-Date.now()));check(signal);}check(signal);lastRequest=Date.now();};
  const assertIdentity=async(signal:AbortSignal)=>{
+  identityVerified=false;
   try{
   check(signal);await page.waitForFunction(()=>[...document.querySelectorAll('*')].some(e=>(e as any).__vue__?.$store?._actions?.disCaseUserInfo));
   await pace(signal);
@@ -22,9 +23,10 @@ export function createLibraryInspectionReader(page:Page):LibraryInspectionReader
   await page.evaluate(()=>{const store=[...document.querySelectorAll('*')].map(e=>(e as any).__vue__?.$store).find(s=>s?._actions?.disCaseUserInfo);void store.dispatch('disCaseUserInfo').catch(()=>{});});
   const body=await json(await waiting);lastRequest=Date.now();check(signal);
   if(binding)binding.assertFresh(body);else binding=bindLibraryIdentity(body);
+  identityVerified=true;
   }catch(failure){throw new LibraryIdentityReadError(failure);}
  };
- return{assertIdentity,page:async(range,p,signal)=>{
+ return{get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal)=>{
   check(signal);if(!binding)throw new CliFailure('LOGIN_REQUIRED');
   if(new URL(page.url()).hash!=='#/ic/userinfo')await page.goto(LIBRARY_ORIGIN+'/#/ic/userinfo',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>[...document.querySelectorAll('*')].some(e=>typeof (e as any).__vue__?.initTable==='function'&&(e as any).__vue__?.search?.date&&Array.isArray((e as any).__vue__?.statusOption)));

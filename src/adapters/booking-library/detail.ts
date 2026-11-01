@@ -6,6 +6,8 @@ import {resolveDateRange} from '../../core/policy.js';
 import {LIBRARY_ORIGIN,LIBRARY_URL} from './manifest.js';
 import {LibraryIdentityReadError} from './identity.js';
 export interface LibraryInspectionReader {
+ /** False throughout an internal refresh, and until fresh identity has been verified. */
+ readonly identityVerified:boolean;
  assertIdentity(signal:AbortSignal):Promise<void>;
  page(range:DateRange,page:number,signal:AbortSignal):Promise<unknown>;
 }
@@ -13,9 +15,9 @@ const positive=z.number().int().positive().safe();
 const record=z.object({resvId:positive,resvBeginTime:z.number().finite(),resvEndTime:z.number().finite(),resvStatus:z.number().int().nonnegative(),ownerMatches:z.boolean(),memberCount:z.number().int().nonnegative(),resvDevInfoList:z.array(z.object({devId:positive,devName:z.string().trim().min(1)})).min(1)});
 export async function queryLibraryDetail(input:{id:string;range:DateRange},options:QueryOptions,reader:LibraryInspectionReader){
  if(!/^[1-9]\d*$/.test(input.id)||!Number.isSafeInteger(Number(input.id)))throw new CliFailure('INVALID_ARGUMENT');
- const range=resolveDateRange(input.range,Date.now());const seen=new Set<number>();let total:number|undefined;let filter:number|undefined;let identityFailure:unknown;let identityFailed=false;
+ const range=resolveDateRange(input.range,Date.now());const seen=new Set<number>();let total:number|undefined;let filter:number|undefined;let identityFailure:unknown;let identityFailed=false;let boundaryIdentityVerified=false;
  const failIdentity=(error:unknown)=>{identityFailed=true;identityFailure=error instanceof LibraryIdentityReadError?error.failure:error;return identityFailure;};
- const assertIdentity=async(signal:AbortSignal)=>{try{await reader.assertIdentity(signal);}catch(e){throw failIdentity(e);}};
+ const assertIdentity=async(signal:AbortSignal)=>{try{boundaryIdentityVerified=false;await reader.assertIdentity(signal);boundaryIdentityVerified=true;}catch(e){throw failIdentity(e);}};
  const start=Date.parse(range.from+'T00:00:00+08:00'),end=Date.parse(range.to+'T00:00:00+08:00');
  const collected=await collectPages({origin:LIBRARY_ORIGIN,readOnly:true,readPage:async(cursor,signal)=>{
   const p=cursor===null?1:Number(cursor);await assertIdentity(signal);
@@ -33,6 +35,9 @@ export async function queryLibraryDetail(input:{id:string;range:DateRange},optio
   });ids.forEach(id=>seen.add(id));const done=p*10>=body.count;return{items,next:done?null:String(p+1),exhausted:done,emptyConfirmed:body.count===0};
  }}, {...options,limit:2000});
  if(identityFailed)throw identityFailure instanceof CliFailure?identityFailure:new CliFailure(collected.failure?.code??'ADAPTER_CHANGED');
+ // A timed-out refresh may still be awaiting its response after collectPages returns.
+ // Only ordinary list failures may retain previously verified records.
+ if(!boundaryIdentityVerified||!reader.identityVerified)throw new CliFailure(collected.failure?.code??'ADAPTER_CHANGED');
  const match=collected.items.find(x=>x.id===input.id)??null;
  const result=buildQueryResult({...collected,items:match?[match]:[]},{schemaVersion:'1',command:'booking detail',service:'booking-library',sourceUrl:LIBRARY_URL,fetchedAt:new Date().toISOString(),timezone:'Asia/Shanghai',readMethod:'response',cache:{hit:false,storedAt:null},warnings:[{code:'SCOPED_DETAIL',message:'Only the requested date window and normal visible status options were searched. Absence does not prove cancellation or nonexistence.'},{code:'BOOKING_RULES_UNKNOWN',message:'Current cancellation permission is not established; no write action is enabled.'}]});
  return{...result,data:{id:input.id,from:range.from,to:range.to,sourceStatusScope:'visible_options',statusFilter:filter??null,record:match,absence:match?null:collected.coverage==='complete'?'not_found_in_scope':'unknown'}};
