@@ -114,6 +114,8 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         if(!handler&&definition.service==='portal')handler=(await import('../adapters/portal/index.js')).createPortalHandlers()[id];
         if(!handler&&definition.service==='canvas')handler=(await import('../adapters/canvas/index.js')).createCanvasHandlers()[id];
         if(!handler&&definition.service==='sis')handler=(await import('../adapters/sis/index.js')).createSisHandlers()[id];
+        if(!handler&&definition.service==='booking')handler=(await import('../adapters/booking/index.js')).createBookingHandlers()[id];
+        if(!handler&&definition.service==='booking-library')handler=(await import('../adapters/booking-library/index.js')).createLibraryHandlers()[id];
         if(!handler&&definition.service==='catalog')handler=(await import('../adapters/catalog/index.js')).createCatalogHandlers()[id];
         if(!handler&&definition.path==='doctor')handler=(await import('./doctor.js')).createDoctorHandler();
         if(!handler&&definition.path.startsWith('skill '))handler=(await import('./skill/handlers.js')).createSkillHandlers()[id];

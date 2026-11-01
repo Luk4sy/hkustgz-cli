@@ -38,7 +38,9 @@ hkustgz-cli catalog search AIAA5032 --format table
 | **Canvas** | 查当前课程、课程公告、作业和 Planner 日程 | 个人截止时间、提交状态可能无法确认 |
 | **Codex** | 用自然语言调用上述 CLI 查询 | 提供随包 Skill，需显式安装并匹配版本 |
 
-四个校园系统共 **13 项查询已有验证记录**。SIS 课程历史、成绩，以及 Booking 的供应系统、房间、可用时段、本人预约记录，共 6 项能力尚未接通。验证通过不代表所有账号权限或来源覆盖都相同。
+**开发分支补充（2026-10-30，待审）**：新增 `booking providers`、`booking rooms --provider library`、`booking availability --provider library --room <id> --date YYYY-MM-DD` 和 `booking mine --provider library`，源码已验证17项。availability规则未知，不承诺时段可订；mine保留源状态过滤8454。候选包和已安装Skill尚未同步这些新增功能，待本模块验收后集中封装。详见[第八模块验收](docs/acceptance/booking-library.md)。
+
+既有封装候选四个校园系统共 **13 项查询已有验证记录**。SIS 课程历史、成绩，以及 Booking 的供应系统、房间、可用时段、本人预约记录，共 6 项能力尚未接通。验证通过不代表所有账号权限或来源覆盖都相同。
 
 查看逐项能力状态：
 

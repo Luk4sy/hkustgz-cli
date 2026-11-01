@@ -26,8 +26,8 @@ test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_
     assert.match(run(bin,['--help'],cwd,env),/catalog/);
     const result=JSON.parse(run(bin,['capabilities'],cwd,env));
     assert.equal(result.data.items.length,19);
-    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='verified').length,13);
-    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='pending').length,6);
+    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='verified').length,17);
+    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='pending').length,2);
     assert.equal(existsSync(events),false);
     assert.deepEqual(tree(home),before);
     assert.equal(realpathSync(JSON.parse(run(bin,['skill','path'],cwd,env)).data.path),realpathSync(join(installed,'skills/hkustgz-cli')));
@@ -39,7 +39,7 @@ test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_
     assert.equal(existsSync(join(home,'codex/config.toml')),false);
     assert.equal(existsSync(events),false);
     const diagnostic=spawnSync(process.execPath,[bin,'doctor'],{cwd,env,encoding:'utf8'});assert.ok(diagnostic.status===0||diagnostic.status===8,diagnostic.stdout);assert.equal(diagnostic.stderr,'');const doctor=JSON.parse(diagnostic.stdout);
-    assert.equal((doctor.data??doctor.error.details).capabilities.verified,13);assert.equal(existsSync(join(home,'campus')),false);assert.equal(existsSync(events),false);assert.equal(existsSync(join(home,'codex/config.toml')),false);
+    assert.equal((doctor.data??doctor.error.details).capabilities.verified,17);assert.equal(existsSync(join(home,'campus')),false);assert.equal(existsSync(events),false);assert.equal(existsSync(join(home,'codex/config.toml')),false);
     const pkg=JSON.parse(readFileSync(join(installed,'package.json'),'utf8'));
     for(const hook of ['preinstall','install','postinstall','prepare'])assert.equal(pkg.scripts?.[hook],undefined);
   }finally{rmSync(f.root,{recursive:true,force:true});}

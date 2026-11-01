@@ -33,9 +33,9 @@
 | `canvas announcements` | verified | `--course <id> --limit <n> --headed --format <json/table>` |
 | `canvas assignments` | verified | `--course <id> --limit <n> --headed --format <json/table>` |
 | `canvas agenda` | verified | `--from <date> --to <date> --headed --format <json/table>` |
-| `booking providers` | pending | `--headed --format <json/table>` |
-| `booking rooms` | pending | `--provider <provider> --floor <id> --limit <n> --headed --format <json/table>` |
-| `booking availability` | pending | `--provider <provider> --room <id> --date <date> --headed --format <json/table>` |
-| `booking mine` | pending | `--provider <provider> --from <date> --to <date> --limit <n> --headed --format <json/table>` |
+| `booking providers` | verified | `--headed --format <json/table>` |
+| `booking rooms` | verified | `--provider <provider> --floor <id> --limit <n> --headed --format <json/table>` |
+| `booking availability` | verified | `--provider <provider> --room <id> --date <date> --headed --format <json/table>` |
+| `booking mine` | verified | `--provider <provider> --from <date> --to <date> --limit <n> --headed --format <json/table>` |
 
 命令参数使用上一条结果返回的ID。Canvas课程来自canvas courses；SIS学期来自sis terms；公告详情使用source:id。不传任意URL，不猜接口。每次只运行一个浏览器命令。

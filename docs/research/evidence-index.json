@@ -2,7 +2,7 @@
   "schemaVersion": "1",
   "observedAt": "2026-10-26",
   "status": "in_progress",
-  "note": "Task7 local-personal-browser Canvas reads verified; awaiting user review. Assignment personal due provenance/submission unknown where unproved; Planner scope only. Portal partial limitations retained.",
+  "note": "Task7 accepted. Task8 local-personal-browser reads implemented pending review; availability rules unknown, own records filtered to source status 8454. Portal limitations retained.",
   "entries": [
     {
       "capabilityId": "portal.apps",
@@ -142,40 +142,40 @@
     {
       "capabilityId": "booking.providers",
       "service": "booking",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R8-LIBRARY-20261030",
+      "readMethod": "dom",
       "documentPath": "docs/research/booking-library.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "booking.library.rooms",
       "service": "booking-library",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R8-LIBRARY-20261030",
+      "readMethod": "response",
       "documentPath": "docs/research/booking-library.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "booking.library.availability",
       "service": "booking-library",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R8-LIBRARY-20261030",
+      "readMethod": "response",
       "documentPath": "docs/research/booking-library.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     },
     {
       "capabilityId": "booking.library.mine",
       "service": "booking-library",
-      "state": "pending",
-      "evidenceId": null,
-      "readMethod": null,
+      "state": "verified",
+      "evidenceId": "R8-LIBRARY-20261030",
+      "readMethod": "response",
       "documentPath": "docs/research/booking-library.md",
-      "reason": "Source observations are incomplete; authentication, completeness, implementation and real CLI acceptance remain pending."
+      "reason": null
     }
   ],
-  "updatedAt": "2026-10-29",
+  "updatedAt": "2026-11-01",
   "authenticationAcceptance": "docs/acceptance/session-auth.md"
 }

@@ -44,14 +44,14 @@ test('pending capability cannot invoke even an injected read handler', async () 
   assert.equal(result.stderr, '');
 });
 
-test('capabilities reports verified Catalog SIS calendar and Portal and leaves other modules pending', async () => {
+test('capabilities reports all verified routes and keeps academic records pending', async () => {
   const result = await executeCommand(['capabilities'], { sessionRunner: noSession });
   const payload = JSON.parse(result.stdout);
   assert.equal(result.exitCode, 0);
   assert.equal(payload.ok, true);
   const services = new Set(payload.data.items.map((item: { service: string }) => item.service));
   for (const service of ['portal', 'sis', 'catalog', 'canvas', 'booking-library']) assert.equal(services.has(service), true);
-  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['portal.apps','portal.notices','portal.notice','portal.agenda','sis.terms','sis.timetable','sis.today','catalog.search','catalog.course','canvas.courses','canvas.announcements','canvas.assignments','canvas.agenda']);
+  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['portal.apps','portal.notices','portal.notice','portal.agenda','sis.terms','sis.timetable','sis.today','catalog.search','catalog.course','canvas.courses','canvas.announcements','canvas.assignments','canvas.agenda','booking.providers','booking.library.rooms','booking.library.availability','booking.library.mine']);
 });
 
 test('one JSON document on stdout preserves a verified read and strips temporary source tokens', async () => {

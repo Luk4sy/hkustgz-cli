@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收，Task8–9尚未开始，发布未获授权。
+- 用户已授权按模块实施；每个模块完成后必须等待用户审查通过再继续。Task 1（3681ae2）已获用户复审通过并授权继续；Task 0 的认证子集补证后，用户于2026-10-27明确批准按无人工输入SSO恢复边界开发 Task 2；Task 2（c3bafa6）已获用户复审验收；Task 3（32f0bab）已获用户验收，Task 4（7b5c559）已获用户验收，Task 5（d708ac5）已验收；Task6已交付并实测，用户于2026-10-28授权Task7；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收，Task8四项只读查询实现待审；Task9封装候选由独立批次推进，新增功能封装须等待验收，发布未获授权。
 - Node.js 24 LTS + TypeScript strict；发布编译后的 ESM，普通用户不需要 TypeScript 或 tsx。
 - 第一阶段只做查询；不选退课、不加入购物车、不提交作业、不创建或取消预约、不支付、不修改校内日程或已读状态。
 - 查询默认总预算 90 秒、单次页面/请求等待最多 30 秒，均受总预算限制；交互登录预算 10 分钟。
@@ -143,7 +143,7 @@
 
 ### Task 7：Canvas 学习信息读取
 
-**状态：本人已完成专用窗口认证及9课程冷启动复验，四命令已于2026-10-29随34eb9e3获用户复审通过并验收；个人截止日期/提交未证实时unknown，Planner只覆盖可见窗口。见docs/acceptance/canvas.md；不得进入Task8。**
+**状态：本人已完成专用窗口认证及9课程冷启动复验，四命令已于2026-10-29随34eb9e3获用户复审通过并验收；个人截止日期/提交未证实时unknown，Planner只覆盖可见窗口。见docs/acceptance/canvas.md；已于2026-10-30获准继续Task8。**
 
 **Files:** Create `src/adapters/canvas/{index,parser,model,manifest}.ts`、`tests/{canvas,canvas-cli}.test.ts`、`tests/fixtures/canvas/`、`docs/acceptance/canvas-auth.md`。
 
@@ -157,15 +157,17 @@
 
 ### Task 8：Booking 分类与图书馆可用区间
 
+**状态：2026-11-01最终256项全量回归（含Chrome）通过，构建/类型/差异检查通过，四项CLI真实复验通过，待用户审查；规则覆盖仍unknown，本人记录保留8454状态筛选。见docs/acceptance/booking-library.md。**
+
 **Files:** Create `src/adapters/booking/{index,model,manifest}.ts`、`src/adapters/booking-library/{index,parser,model,manifest,intervals}.ts`、`tests/{booking,booking-intervals,booking-cli}.test.ts`、`tests/fixtures/booking-library/`。
 
 **Interfaces:** Produces `listBookingProviders(options:QueryOptions):Promise<QueryResult<{items:BookingProvider[]}>>`、`listLibraryRooms(input:{floorId?:string},options:QueryOptions):Promise<QueryResult<{items:Room[]}>>`、`readLibraryAvailability(input:{roomId:string;date:string},options:QueryOptions):Promise<QueryResult<RoomAvailability>>`；条件能力 `listOwnLibraryBookings(input:DateRange,options:QueryOptions):Promise<QueryResult<{items:OwnBooking[]}>>`。`Interval={start:string;end:string}`，值为含时区偏移的 ISO 时间；`computeAvailability(input:{target:Interval;open:Interval[];busy:Interval[];coverage:'complete'|'partial'|'unknown'}):{available:Interval[];unknown:Interval[]}` 使用 [start,end) 和 Spec BOOK-02/03。target 为请求日期的当地整天，缺少完整开放/占用证明时保守返回该目标区间 unknown，不从空open数组推导“全天关闭”。
 
-- [ ] Step 1：写 `nineteen_rooms_require_second_page`、`empty_grid_is_not_available`、`adjacent_intervals_do_not_overlap`、`overlapping_busy_blocks_merge`、`other_users_details_are_removed`。合成 open=[08:00,12:00)、busy=[09:00,10:00) 时断言 available=[08:00,09:00)、[10:00,12:00)；coverage=unknown 时 available=[]，unknown 包含尚不能判断的目标区间。
-- [ ] Step 2：运行 `node --import tsx --test tests/booking.test.ts tests/booking-intervals.test.ts tests/booking-cli.test.ts` 确认失败。
-- [ ] Step 3：实现分类发现、图书馆分页、日期选择及经证据确定的时间区间读取；归一化占用后求差集，保留规则未知/不可订状态。不得通过点击时段创建草稿来验证。
-- [ ] Step 4：测试与真实时间表至少两页、一个完整日期对照；本人记录若有证据再实现；其他供应商明确 pending/unsupported，测试拒绝任意 provider/URL。
-- [ ] Step 5：运行 build并更新逐能力验收，提交 `feat: query library rooms and availability`。
+- [x] Step 1：写 `nineteen_rooms_require_second_page`、`empty_grid_is_not_available`、`adjacent_intervals_do_not_overlap`、`overlapping_busy_blocks_merge`、`other_users_details_are_removed`。合成 open=[08:00,12:00)、busy=[09:00,10:00) 时断言 available=[08:00,09:00)、[10:00,12:00)；coverage=unknown 时 available=[]，unknown 包含尚不能判断的目标区间。
+- [x] Step 2：运行 `node --import tsx --test tests/booking.test.ts tests/booking-intervals.test.ts tests/booking-cli.test.ts` 确认失败。
+- [x] Step 3：实现分类发现、图书馆分页、日期选择及经证据确定的时间区间读取；归一化占用后求差集，保留规则未知/不可订状态。不得通过点击时段创建草稿来验证。
+- [x] Step 4：测试与真实时间表至少两页、一个完整日期对照；本人记录若有证据再实现；其他供应商明确 pending/unsupported，测试拒绝任意 provider/URL。
+- [x] Step 5：运行 build并更新逐能力验收，提交 `feat: query library rooms and availability`。
 
 ### Task 9：打包、Skill、诊断和发布验收
 
