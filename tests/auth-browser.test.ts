@@ -8,10 +8,11 @@ import {resolveDataPaths} from '../src/session/paths.js';
 import {checkAuth,visitService} from '../src/session/auth.js';
 const enabled=process.env.HKUSTGZ_TEST_BROWSER==='1';
 
-test('real browser follows SIS Login once, restores cold sessions, and never submits credentials',{skip:!enabled,timeout:30000},async t=>{
+test('real browser follows SIS Login once, restores cold sessions, and never submits credentials',{skip:!enabled,timeout:90000},async t=>{
  const root=await mkdtemp(join(tmpdir(),'hkust-browser-'));t.after(()=>rm(root,{recursive:true,force:true}));
  const runner=createSessionRunner(resolveDataPaths({HKUSTGZ_CLI_HOME:root}));let clicks=0;
- for(let cold=0;cold<2;cold++)await runner('sis',{browser:'chrome',headless:true,purpose:'query',deadlineMs:Date.now()+10000},async session=>{
+ // Hosted CI needs room for two real cold Chrome launches; the recovery observation stays at 7 seconds.
+ for(let cold=0;cold<2;cold++)await runner('sis',{browser:'chrome',headless:true,purpose:'query',deadlineMs:Date.now()+30000},async session=>{
   await session.context.route('https://sisn.hkust-gz.edu.cn/**',async route=>{
    const pathname=new URL(route.request().url()).pathname;
    if(pathname==='/auth-sign'){

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type {OperationResult} from '../booking-operations/contract.js';
 import type { BrowserContext, Page } from 'playwright';
 
 export type ServiceId = 'portal' | 'sis' | 'catalog' | 'canvas' | 'booking' | 'booking-library';
@@ -6,7 +7,8 @@ export type ReadMethod = 'api' | 'response' | 'dom';
 export type Coverage = 'complete' | 'partial';
 export type CapabilityState = 'pending' | 'verified' | 'unsupported' | 'disabled';
 export interface Capability { id: string; service: ServiceId; state: CapabilityState; reason: string | null; evidenceId: string | null }
-export interface QueryOptions { limit?: number; refresh: boolean; deadlineMs: number; signal?: AbortSignal }
+/** dispatchDeadlineMs limits write admission only; receipt/readback retain the command budget. */
+export interface QueryOptions { dispatchDeadlineMs?:number; limit?: number; refresh: boolean; deadlineMs: number; signal?: AbortSignal }
 export interface PageBatch<T> { items:T[]; next:string|null; exhausted:boolean; emptyConfirmed:boolean }
 export interface PageSource<T> {
   readPage:(cursor:string|null,signal:AbortSignal)=>Promise<PageBatch<T>>;
@@ -47,8 +49,8 @@ export interface DataPaths { root: string; profile: string; cache: string; logs:
 export interface Session { service: ServiceId; page: Page; context: BrowserContext; signal?: AbortSignal }
 export interface SessionOptions { browser: 'chrome' | 'edge' | 'chromium'; headless: boolean; deadlineMs: number; purpose: 'query' | 'login' }
 export type SessionRunner = <T>(service: ServiceId, options: SessionOptions, run: (session: Session) => Promise<T>) => Promise<T>;
-export type CommandHandler = (args: Readonly<Record<string, unknown>>, deps: CliDependencies) => Promise<QueryResult<unknown> | ControlResult<unknown>>;
-export interface CliDependencies { now: () => number; capabilities: Capability[]; sessionRunner: SessionRunner; handlers: Record<string, CommandHandler>; env?: NodeJS.ProcessEnv; doctorProbes?:DoctorProbes }
+export type CommandHandler = (args: Readonly<Record<string, unknown>>, deps: CliDependencies) => Promise<QueryResult<unknown> | ControlResult<unknown> | OperationResult>;
+export interface CliDependencies { now: () => number; capabilities: Capability[]; sessionRunner: SessionRunner; handlers: Record<string, CommandHandler>; env?: NodeJS.ProcessEnv; doctorProbes?:DoctorProbes; readInput?:(maxBytes:number)=>Promise<string> }
 
 export const ServiceSchema = z.enum(['portal', 'sis', 'catalog', 'canvas', 'booking', 'booking-library']);
 export const CapabilitySchema = z.strictObject({

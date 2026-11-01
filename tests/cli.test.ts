@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { executeCommand } from '../src/cli/main.js';
@@ -18,7 +19,7 @@ test('help does not open browser or require a session', async () => {
 test('version works without starting a browser', async () => {
   const result = await executeCommand(['--version'], { sessionRunner: noSession });
   assert.equal(result.exitCode, 0);
-  assert.match(result.stdout, /^0\.1\.0-alpha\.2\n$/);
+  assert.equal(result.stdout,JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8')).version+'\n');
 });
 
 test('unknown options and missing or invalid parameters exit 2', async () => {
@@ -44,14 +45,14 @@ test('pending capability cannot invoke even an injected read handler', async () 
   assert.equal(result.stderr, '');
 });
 
-test('capabilities reports verified Catalog SIS calendar and Portal and leaves other modules pending', async () => {
+test('capabilities reports all verified routes and keeps academic records pending', async () => {
   const result = await executeCommand(['capabilities'], { sessionRunner: noSession });
   const payload = JSON.parse(result.stdout);
   assert.equal(result.exitCode, 0);
   assert.equal(payload.ok, true);
   const services = new Set(payload.data.items.map((item: { service: string }) => item.service));
   for (const service of ['portal', 'sis', 'catalog', 'canvas', 'booking-library']) assert.equal(services.has(service), true);
-  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['portal.apps','portal.notices','portal.notice','portal.agenda','sis.terms','sis.timetable','sis.today','catalog.search','catalog.course','canvas.courses','canvas.announcements','canvas.assignments','canvas.agenda']);
+  assert.deepEqual(payload.data.items.filter((item: { state: string }) => item.state === 'verified').map((item:{id:string})=>item.id),['portal.apps','portal.notices','portal.notice','portal.agenda','sis.terms','sis.timetable','sis.today','catalog.search','catalog.course','canvas.courses','canvas.announcements','canvas.assignments','canvas.agenda','booking.providers','booking.library.rooms','booking.library.availability','booking.library.mine']);
 });
 
 test('one JSON document on stdout preserves a verified read and strips temporary source tokens', async () => {

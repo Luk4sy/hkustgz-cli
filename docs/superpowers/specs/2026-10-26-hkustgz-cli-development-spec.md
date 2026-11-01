@@ -1,7 +1,7 @@
 # hkustgz-cli 开发 Spec v0.1
 
 日期：2026-10-26（Asia/Shanghai）  
-状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；Task 5 SIS（d708ac5）已验收；Task6 Portal已交付并实测，用户于2026-10-28授权继续Task7；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收，未进入Task8；其余业务取证仍进行中，发布未获授权。
+状态：用户已授权按模块开发；Task 1 已验收，2026-10-27 已批准已验证SSO恢复边界及 Task 2 认证模块开发；Task 2（c3bafa6）已验收，Task 3（32f0bab）已验收，Task 4 Catalog（7b5c559）已验收；Task 5 SIS（d708ac5）已验收；Task6 Portal已交付并实测，用户于2026-10-28授权继续Task7；Task7 Canvas（34eb9e3）已于2026-10-29获用户复审通过并验收；Task8（62685a9）已于2026-11-01获用户复审通过并验收；其余业务取证仍进行中，发布未获授权。
 上位设计：[技术方案](2026-10-26-hkustgz-cli-design.md)  
 执行配套：[分阶段开发计划](../plans/2026-10-26-hkustgz-cli-development-plan.md)
 
@@ -283,3 +283,7 @@ EVID-01：没有网络证据就不实现猜测请求；EVID-02：mock/fixture �
 本 Spec 文档完成不等于软件完成。软件完成必须同时满足需求、正常/失败路径、真实能力和目标平台验收；任何未实现能力在能力表中明确标示。
 
 进入开发前先完成证据任务和经同意的专用 profile 实验；不能把用户要求“创建 Spec”解释为安装依赖、创建仓库、登录或发布的授权。规格字段如因真实学校结构而必须变化，先记录冲突、建议修订和影响，再更新设计与 Spec，不在适配器内部偷偷改变 JSON 语义。
+
+2026-10-30 Task8实证细化（待审）：房间按devId、楼层全集及count分页读取；availability只确认开放与有效占用，rulesCoverage=unknown、availableIntervals=[]，未知覆盖目标整天；mine保留正常本人页面needStatus=8454过滤及[from,to)，不称全状态历史。其余供应商仅目录入口、pending。业务查询复验fresh auth/userInfo，认证控制状态仍unknown；人工认证使用现有portal SSO。详见docs/acceptance/booking-library.md。尚未更新封装候选与已安装Skill。
+
+2026-11-01 用户调整优先级：sis history与sis grades暂缓开发，保留pending，不删除既有命令；下一阶段优先预约相关功能。具体供应系统及查询/预约操作范围待本轮设计明确，继续沿用按模块审查的交付方式。

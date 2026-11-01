@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+const load=async()=>{const m=await import('../src/booking-operations/intent.js').catch(()=>null);assert.equal(typeof m?.normalizeIntent,'function','intent normalizer exists');return m!;};
+export const now=Date.parse('2026-11-01T00:00:00Z');
+export const intent={roomId:'2',startsAt:'2026-11-02T09:00:00+08:00',endsAt:'2026-11-02T10:00:00+08:00',participantIds:['12','3'],purpose:'Study'};
+test('booking intent canonicalizes offsets and participant ordering without adding participants',async()=>{const m=await load();const r=m.normalizeIntent({...intent,startsAt:'2026-11-02T01:00:00Z',participantIds:['3','12']},now);assert.deepEqual(r,{...intent,participantIds:['3','12']});});
+test('booking intent rejects unknown credentials, malformed times, duplicate members and cross-day input',async()=>{const m=await load();for(const patch of [{token:'private-marker'},{url:'https://example.org'},{startsAt:'2026-11-02T09:00:00'},{startsAt:'2026-02-30T09:00:00+08:00'},{startsAt:'2026-11-02T09:00:01+08:00'},{participantIds:['3','3']},{participantIds:['https://example.org']},{endsAt:'2026-11-03T01:00:00+08:00'},{purpose:'token=private-marker'},{roomId:'../2'},{startsAt:'2026-10-30T09:00:00+08:00'}])assert.throws(()=>m.normalizeIntent({...intent,...patch},now),{code:'INVALID_ARGUMENT'});});

@@ -1,6 +1,8 @@
-# Windows 11 候选试用（alpha.2）
+# Windows 使用与验证（alpha.4）
 
-范围：Windows11＋Google Chrome稳定版＋Node24＋Codex。代码适配已提供，Windows真机结果尚未取得；不是已验证Windows稳定支持。Windows10/Server、WSL、Edge和其他Agent不在本次范围。macOS已有旧版本实测证据，本次Mac回归不替代Windows验收。
+本指南面向Windows11＋Google Chrome稳定版＋Node24＋Codex。用户已确认上一版本alpha.3完成Windows验证；当前alpha.4的Windows升级与回归验证尚未记录。上一版本的具体系统版本及命令覆盖待补，不自动扩展为alpha.4全部功能已通过。
+
+Windows10/Server、WSL、Edge和其他Agent不在本次支持目标内。详细版本记录见[Windows验收记录](acceptance/windows-alpha.md)。
 
 ## 安装前与校验
 
@@ -11,7 +13,7 @@
 (Get-CimInstance Win32_OperatingSystem).Version
 node --version
 npm.cmd --version
-$Tgz = (Resolve-Path '.\hkustgz-cli-0.1.0-alpha.2.tgz').Path
+$Tgz = (Resolve-Path '.\hkustgz-cli-0.1.0-alpha.4.tgz').Path
 Get-FileHash $Tgz -Algorithm SHA256
 ```
 

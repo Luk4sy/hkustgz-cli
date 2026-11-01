@@ -4,6 +4,13 @@ export class CliFailure extends Error {
   constructor(public readonly code: string, public readonly remediation?: string, public readonly details?:unknown) { super(code); }
 }
 const errors: Record<string, {exitCode: number; message: string; remediation: string; retryable?: boolean}> = {
+  BOOKING_CONFLICT:{exitCode:4,message:'The requested reservation conflicts with current availability.',remediation:'Read availability and prepare a new preview.'},
+  BOOKING_RULE_BLOCKED:{exitCode:4,message:'Reservation rules block this operation.',remediation:'Inspect the preview checks; no school write was sent.'},
+  CONFIRMATION_REQUIRED:{exitCode:2,message:'A matching live preview confirmation is required.',remediation:'Review a new preview and explicitly confirm its exact parameters.'},
+  PREVIEW_EXPIRED:{exitCode:2,message:'The reservation preview has expired.',remediation:'Prepare and review a new preview.'},
+  DUPLICATE_INTENT:{exitCode:2,message:'An active or unresolved operation already exists for this intent.',remediation:'Inspect the existing operation; do not repeat a possibly sent request.'},
+  OPERATION_UNCERTAIN:{exitCode:10,message:'The operation result remains uncertain.',remediation:'Use booking operation <id> --refresh for read-only reconciliation; do not resubmit.'},
+  OPERATION_STATE_UNAVAILABLE:{exitCode:1,message:'Private operation state could not be verified or accessed.',remediation:'Inspect the owned operation directory and lock; preserve unresolved state and do not reset it.'},
   ENVIRONMENT_NOT_READY: {exitCode:8,message:'The runtime environment is not ready.',remediation:'Run doctor and resolve the failing requirements before querying.'},
   SKILL_CONFLICT: {exitCode:8,message:'The Skill has user changes or is not owned by this CLI.',remediation:'Back up and move conflicting files manually; no user changes were overwritten.'},
   UNSAFE_SKILL_TARGET: {exitCode:2,message:'The Skill destination is unsafe.',remediation:'Use an absolute skills root without symbolic links or traversal.'},

@@ -12,7 +12,7 @@
 | 7 | PARTIAL_RESULT | 保留data，说明coverage/范围和truncationReason |
 | 8 | CAPABILITY_PENDING、UNSUPPORTED_CAPABILITY、BROWSER_UNAVAILABLE、SKILL_CONFLICT、ENVIRONMENT_NOT_READY | capabilities/browser status核实；需要Chrome时人工安装 |
 | 9 | PROFILE_BUSY | 等待已有CLI/浏览器正常退出，不直接删锁 |
-| 130/143 | INTERRUPTED/TERMINATED | 中断清理完成后按需重新执行 |
+| 130/143 | INTERRUPTED/TERMINATED | 等原进程清理，操作先读data及原operation状态，不重发写入 |
 
 认证unknown不代表成功或失败；数据unknown不代表否定；未经确认的空白不代表无记录。retryable不是要求Agent外层自动重试，CLI已承担有限只读重试。
 
@@ -23,3 +23,11 @@ doctor健康退出0；缺Chrome、不支持的平台/Node或未验证浏览器�
 完整校园Skill按实际capabilities判断；成绩/历史/预约仍pending时直接说明不可用。版本不匹配停止Agent校园调用并显式同步随包Skill。登录状态unknown可尝试一次verified只读查询；明确LOGIN_REQUIRED后由本人正常认证，再按授权重查。实际客户端的沙箱若阻止浏览器，记录BROWSER_UNAVAILABLE为未验证，不改变安全配置或循环重启。
 
 Windows11候选在doctor中显示WINDOWS_CANDIDATE/warn；这不证明SKU或真机通过。Windows10/未知NT build继续ENVIRONMENT_NOT_READY。Chrome候选与实际启动共用解析；UNC/device/非本地盘符路径拒绝。Windows.cmd入口与本机smoke详见windows.md，不修改系统执行策略。
+
+## 图书馆操作错误
+
+操作结果meta.kind=operation。CONFIRMATION_REQUIRED/PREVIEW_EXPIRED/DUPLICATE_INTENT退出2，BOOKING_CONFLICT/BOOKING_RULE_BLOCKED退出4，OPERATION_UNCERTAIN退出10，OPERATION_STATE_UNAVAILABLE退出1。精确语义见cli-contract.md。
+
+任何非零回执都先读data.outcome：confirmed或already_cancelled仍是来源确认的结果；not_applied表示来源已明确证明未生效；unknown才表示业务结果不能确定。OPERATION_STATE_UNAVAILABLE/CLEANUP_FAILED/信号可与这些已知结果同时出现：保留来源事实，说明本地保存或清理失败，不把已知not_applied降级为业务未知，也不误报保存成功。保存失败时磁盘可继续unknown并阻止重发。
+
+已有operationId时只读booking operation <id>，必要时--refresh；不要重跑create/cancel、重建同意图、删除私有状态或未知锁。没有可信操作ID时保留现场，不生成虚假ID。退出码5/130/143对只读查询可由用户决定重查，对业务写入不代表可以再提交。当前学校新增路线仍pending，不通过网页绕过。

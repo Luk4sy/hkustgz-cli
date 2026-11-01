@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS / Node 24 / full Chrome suite
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      HKUSTGZ_TEST_BROWSER: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0 # The alpha.3 upgrade test rebuilds accepted history.
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Prime production metadata for offline installation tests
+        run: |
+          node --import tsx --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {run,repo} from './tests/helpers/package.ts';
+          const lock=JSON.parse(readFileSync('package-lock.json','utf8'));
+          const names=['commander','playwright','playwright-core','zod','fsevents'];
+          run('npm',['cache','add',...names.map(n=>`${n}@${lock.packages['node_modules/'+n].version}`)],repo);
+          JS
+      - run: npm run typecheck
+      - run: npm test
+      - name: Check tracked whitespace
+        run: git diff --check
+
+  windows:
+    name: Windows / Node 24 / contracts and installation
+    runs-on: windows-2025
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Prime production metadata for offline installation tests
+        run: |
+          node --import tsx --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {run,repo} from './tests/helpers/package.ts';
+          const lock=JSON.parse(readFileSync('package-lock.json','utf8'));
+          const names=['commander','playwright','playwright-core','zod','fsevents'];
+          run('npm',['cache','add',...names.map(n=>`${n}@${lock.packages['node_modules/'+n].version}`)],repo);
+          JS
+      - run: npm run build
+      - run: npm run typecheck
+      - name: Windows contracts, packaging and upgrade
+        run: node --import tsx --test tests/windows.test.ts tests/cli.test.ts tests/skill-contract.test.ts tests/package.test.ts tests/package-install.test.ts
+      - name: Windows Chrome loopback smoke (no school access)
+        run: node bin/windows-smoke.mjs

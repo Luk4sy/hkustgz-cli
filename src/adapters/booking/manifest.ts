@@ -1,0 +1,1 @@
+import type {Capability} from '../../core/contracts.js';export const BOOKING_URL='https://booking.hkust-gz.edu.cn/front_page';export const BOOKING_ORIGIN='https://booking.hkust-gz.edu.cn';export const BOOKING_CAPABILITIES:Capability[]=[{id:'booking.providers',service:'booking',state:'verified',reason:null,evidenceId:'R8-LIBRARY-20261030'}];

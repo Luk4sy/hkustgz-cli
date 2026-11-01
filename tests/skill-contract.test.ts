@@ -14,13 +14,14 @@ const read=(path:string)=>fs.readFileSync(new URL('../skills/hkustgz-cli/'+path,
 test('skill_matches_installed_cli and every documented example parses as a real command',async()=>{
  const bundle=await readBundleInfo(),skill=read('SKILL.md');assert.equal(skill.match(/^  version: (.+)$/m)?.[1],bundle.version);assert.equal(skill.match(/^  compatible_cli: (.+)$/m)?.[1],bundle.version);assert.match(skill,/^  schemaVersion: '1'$/m);
  assert.ok(fs.existsSync(new URL('../skills/hkustgz-cli/references/examples.md',import.meta.url)),'missing examples reference');
- const examples=JSON.parse(read('references/examples.md').match(/```json\n([\s\S]*?)\n```/)![1]!) as Array<{argv:string[];kind:string}>;
+ const examples=JSON.parse(read('references/examples.md').match(/```json\r?\n([\s\S]*?)\r?\n```/)![1]!) as Array<{argv:string[];kind:string}>;
  for(const example of examples){
   const def=[...COMMANDS].sort((a,b)=>b.path.length-a.path.length).find(d=>d.path.split(' ').every((part,i)=>example.argv[i]===part));assert.ok(def,example.argv.join(' '));
   let calls=0;const control={ok:true as const,data:{},meta:{schemaVersion:'1' as const,command:def.path}};
   const query={ok:true as const,data:{items:[]},meta:{...queryMeta(),command:def.path,service:def.service!,recordsRead:0,returnedCount:0}};
+  const operation={ok:true as const,data:{operationId:'11111111-1111-4111-8111-111111111111',action:'create' as const,lifecycle:'resolved' as const,outcome:'not_applied' as const,eligibility:'ready' as const,reservationId:null,sourceStatusCode:null,approvalState:'unknown' as const,checks:[]},meta:{schemaVersion:'1' as const,kind:'operation' as const,command:def.path}};
   const key=def.capabilityId??def.path.replace(' ','.');
-  const result=await executeCommand(example.argv,{sessionRunner:async()=>{throw Error('no live browser');},handlers:{[key]:async()=>{calls++;return def.capabilityId?query:control;}}});
+  const result=await executeCommand(example.argv,{sessionRunner:async()=>{throw Error('no live browser');},handlers:{[key]:async()=>{calls++;return def.resultKind==='operation'?operation:def.capabilityId?query:control;}}});
   if(def.capabilityId&&DEFAULT_CAPABILITIES.find(c=>c.id===def.capabilityId)?.state==='pending'){assert.equal(result.exitCode,8);assert.equal(calls,0);}else{assert.equal(result.exitCode,0,example.argv.join(' ')+result.stdout);assert.equal(calls,def.path==='capabilities'?0:1);}
  }
 });
@@ -29,7 +30,7 @@ test('pending_commands_are_not_promoted and generated reference matches runtime 
  const rows=read('references/commands.md').split('\n').filter(line=>line.startsWith('| `')).map(line=>line.split('|').slice(1,-1).map(v=>v.trim()));
  assert.equal(rows.length,COMMANDS.length);
  for(const def of COMMANDS){const row=rows.find(r=>r[0]===`\`${def.path}\``);assert.ok(row,def.path);if(def.capabilityId)assert.equal(row[1],DEFAULT_CAPABILITIES.find(c=>c.id===def.capabilityId)!.state);}
- assert.equal(rows.filter(r=>r[1]==='verified').length,13);assert.equal(rows.filter(r=>r[1]==='pending'&&r[0]?.startsWith('`browser')===false).length,6);
+ assert.equal(rows.filter(r=>r[1]==='verified').length,17);assert.equal(rows.filter(r=>r[1]==='pending'&&r[0]?.startsWith('`browser')===false).length,7);
 });
 test('references_ship_in_same_bundle and owned installation includes every reference',async()=>{
  const bundle=await readBundleInfo();for(const file of ['SKILL.md','references/commands.md','references/errors.md','references/examples.md','references/privacy.md'])assert.ok(bundle.files.includes(file),file);
@@ -38,4 +39,9 @@ test('references_ship_in_same_bundle and owned installation includes every refer
 test('synthetic planner partial and unknown survive CLI boundary without a live school request',async()=>{
  const result=await executeCommand(['canvas','agenda'],{handlers:{'canvas.agenda':async()=>({ok:false,data:{scope:'planner',items:[{id:'synthetic',markedComplete:true,submissionStatus:'unknown',dueAt:null}]},error:{code:'PARTIAL_RESULT',message:'Incomplete',retryable:false,remediation:'Inspect coverage'},meta:{...queryMeta(),command:'canvas agenda',service:'canvas',coverage:'partial',truncationReason:'page_cap'}})}});
  assert.equal(result.exitCode,7);const value=JSON.parse(result.stdout);assert.equal(value.data.scope,'planner');assert.equal(value.data.items[0].submissionStatus,'unknown');assert.equal(value.data.items[0].markedComplete,true);assert.equal(value.meta.truncationReason,'page_cap');
+});
+test('booking workflows describe verified commands and preserve eligibility and status limits',()=>{
+ const skill=read('SKILL.md'),examples=JSON.parse(read('references/examples.md').match(/```json\r?\n([\s\S]*?)\r?\n```/)![1]!) as Array<{argv:string[]}>;
+ for(const command of ['providers','rooms','availability','mine'])assert.ok(examples.some(e=>e.argv[0]==='booking'&&e.argv[1]===command),'missing booking '+command+' example');
+ assert.match(skill,/rulesCoverage/);assert.match(skill,/8454/);assert.match(skill,/预约.*参观|参观.*预约/);
 });

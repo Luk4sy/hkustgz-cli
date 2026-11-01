@@ -11,7 +11,7 @@ test('tarball_is_allowlisted and builds from source without preexisting dist',()
     const p=pack(f);
     assert.ok(p.files.includes('dist/cli/main.js'),'pack must build runtime');
     for(const path of ['docs/installation.md','docs/cli-contract.md','docs/errors.md','skills/hkustgz-cli/SKILL.md','LICENSE','docs/windows.md','bin/windows-smoke.mjs'])assert.ok(p.files.includes(path),`missing ${path}`);
-    for(const path of p.files)assert.match(path,/^(package\.json|README\.md|LICENSE|skills\/hkustgz-cli\/(SKILL\.md|references\/(commands|errors|examples|privacy)\.md)|bin\/(hkustgz-cli|windows-smoke)\.mjs|docs\/(installation|cli-contract|errors|windows)\.md|dist\/(cli|core|session|adapters)\/[\w/.-]+\.(js|d\.ts))$/);
+    for(const path of p.files)assert.match(path,/^(package\.json|README\.md|LICENSE|skills\/hkustgz-cli\/(SKILL\.md|references\/(commands|errors|examples|privacy)\.md)|bin\/(hkustgz-cli|windows-smoke)\.mjs|docs\/(installation|cli-contract|errors|windows)\.md|dist\/(cli|core|session|adapters|booking-operations)\/[\w/.-]+\.(js|d\.ts))$/);
     assert.ok(!p.files.includes('dist/stale-secret.js'));
     assert.equal(JSON.parse(readFileSync(join(p.packageRoot,'package.json'),'utf8')).license,'MIT');
     assert.match(readFileSync(join(p.packageRoot,'LICENSE'),'utf8'),/Permission is hereby granted/);
@@ -19,7 +19,7 @@ test('tarball_is_allowlisted and builds from source without preexisting dist',()
 });
 test('private_markers_excluded from archive contents',()=>{
   const f=fixture();try{
-    for(const path of ['.hkustgz-cli/profile/Cookies','.superpowers/raw.log','tests/secret.ts','research/raw.har','dist/cli/leak.har','dist/cli/leak.js.map']){
+    for(const path of ['.hkustgz-cli/operations/state.json','operations/key','operations/state.json','.hkustgz-cli/profile/Cookies','.superpowers/raw.log','tests/secret.ts','research/raw.har','dist/cli/leak.har','dist/cli/leak.js.map']){
       const full=join(f.checkout,path);mkdirSync(join(full,'..'),{recursive:true});writeFileSync(full,'PRIVATE_PACKAGE_CANARY');
     }
     const p=pack(f);

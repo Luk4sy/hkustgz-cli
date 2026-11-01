@@ -2,7 +2,7 @@
 
 <!-- Generated from COMMANDS and DEFAULT_CAPABILITIES; edit source definitions, not rows. -->
 
-状态以本机运行hkustgz-cli capabilities为准；verified指已核实读取路线，不保证全量覆盖或任意账号权限。control不是校园查询能力，pending不能向用户承诺可用。
+状态以本机运行hkustgz-cli capabilities为准；verified指已核实的具体业务路线，不保证全量覆盖或任意账号权限。control不是学校业务能力，pending不能向用户承诺可用。
 
 | 命令 | 状态 | 参数与选项 |
 | --- | --- | --- |
@@ -33,9 +33,15 @@
 | `canvas announcements` | verified | `--course <id> --limit <n> --headed --format <json/table>` |
 | `canvas assignments` | verified | `--course <id> --limit <n> --headed --format <json/table>` |
 | `canvas agenda` | verified | `--from <date> --to <date> --headed --format <json/table>` |
-| `booking providers` | pending | `--headed --format <json/table>` |
-| `booking rooms` | pending | `--provider <provider> --floor <id> --limit <n> --headed --format <json/table>` |
-| `booking availability` | pending | `--provider <provider> --room <id> --date <date> --headed --format <json/table>` |
-| `booking mine` | pending | `--provider <provider> --from <date> --to <date> --limit <n> --headed --format <json/table>` |
+| `booking providers` | verified | `--headed --format <json/table>` |
+| `booking rooms` | verified | `--provider <provider> --floor <id> --limit <n> --headed --format <json/table>` |
+| `booking availability` | verified | `--provider <provider> --room <id> --date <date> --headed --format <json/table>` |
+| `booking mine` | verified | `--provider <provider> --from <date> --to <date> --limit <n> --headed --format <json/table>` |
+| `booking detail` | pending | `--provider <provider> --id <id> --from <date> --to <date> --headed --format <json/table>` |
+| `booking preview` | pending | `--provider <provider> --input <path> --headed --format <json/table>` |
+| `booking cancel-preview` | pending | `--provider <provider> --id <id> --from <date> --to <date> --headed --format <json/table>` |
+| `booking create` | pending | `--provider <provider> --operation <id> --confirm <digest> --headed --format <json/table>` |
+| `booking cancel` | pending | `--provider <provider> --operation <id> --confirm <digest> --headed --format <json/table>` |
+| `booking operation` | control | `<id> --refresh --headed --format <json/table>` |
 
 命令参数使用上一条结果返回的ID。Canvas课程来自canvas courses；SIS学期来自sis terms；公告详情使用source:id。不传任意URL，不猜接口。每次只运行一个浏览器命令。

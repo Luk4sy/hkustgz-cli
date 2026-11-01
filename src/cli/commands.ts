@@ -1,7 +1,7 @@
 import type { ServiceId } from '../core/contracts.js';
 
 export interface CommandDefinition {
-  path: string; description: string; capabilityId?: string; service?: ServiceId;
+  resultKind?:'operation'; path: string; description: string; capabilityId?: string; service?: ServiceId;
   args?: Array<{syntax: string; key: string; kind: 'text' | 'id' | 'service'}>;
   options?: Array<{flags: string; description: string; kind?: 'provider' | 'id'}>;
   headed?: boolean; refresh?: boolean; limit?: boolean;
@@ -41,4 +41,7 @@ export const COMMANDS: CommandDefinition[] = [
   {path: 'booking rooms', description: 'List library rooms', capabilityId: 'booking.library.rooms', service: 'booking-library', headed: true, limit: true, options: [provider, {flags: '--floor <id>', description: 'Floor identifier', kind: 'id'}]},
   {path: 'booking availability', description: 'Read room availability without creating a booking', capabilityId: 'booking.library.availability', service: 'booking-library', headed: true, options: [provider, {flags: '--room <id>', description: 'Room identifier (required)', kind: 'id'}, {flags: '--date <date>', description: 'School date, YYYY-MM-DD (required)'}]},
   {path: 'booking mine', description: 'Read personal library bookings', capabilityId: 'booking.library.mine', service: 'booking-library', headed: true, limit: true, options: [provider, ...range]},
+  {path: 'booking detail', description: 'Inspect a personal reservation in a date window (pending real-system verification)', capabilityId: 'booking.library.detail', service: 'booking-library', headed: true, options: [provider, {flags:'--id <id>',description:'Source reservation ID (required)',kind:'id'}, ...range]},
+  ...['preview','cancel-preview','create','cancel'].map(action=>({path:'booking '+action,description:action==='preview'?'Preview a library reservation from stdin (pending source verification)':action==='cancel-preview'?'Preview cancellation of an exact source ID (pending source verification)':action==='create'?'Create once from explicit preview confirmation (pending real-system verification)':'Cancel once from explicit exact-target confirmation (pending real-system verification)',resultKind:'operation' as const,capabilityId:'booking.library.'+action,service:'booking-library' as const,headed:true,options:[provider,...action==='preview'?[{flags:'--input <path>',description:'Read intent JSON from stdin; only - is supported'}]:action==='cancel-preview'?[{flags:'--id <id>',description:'Exact source reservation ID',kind:'id' as const},...range]:[{flags:'--operation <id>',description:'Local preview operation ID',kind:'id' as const},{flags:'--confirm <digest>',description:'Matching preview confirmation digest'}]]})),
+  {path:'booking operation',description:'Read local operation state; --refresh performs read-only verification',resultKind:'operation',args:[idArg],headed:true,options:[{flags:'--refresh',description:'Read-only school verification; never resubmit'}]},
 ];

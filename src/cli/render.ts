@@ -1,6 +1,7 @@
 import type { ControlResult, Failure, QueryResult } from '../core/contracts.js';
+import type {OperationResult} from '../booking-operations/contract.js';
 import {sanitizeValue} from '../core/sanitize.js';
-export type Output = ControlResult<unknown> | QueryResult<unknown> | Failure;
+export type Output = ControlResult<unknown> | QueryResult<unknown> | Failure | OperationResult;
 function cell(value: unknown): string {
   return (typeof value === 'string' ? value : JSON.stringify(value) ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ');
 }
@@ -9,7 +10,7 @@ export function renderOutput(value: Output, format: 'json' | 'table'): string {
   if (format === 'json') return `${JSON.stringify(safe)}\n`;
   const lines: string[] = [];
   if (!safe.ok) lines.push(`${safe.error.code}: ${safe.error.message}`, safe.error.remediation);
-  if(!safe.ok&&safe.error.details)lines.push(JSON.stringify(safe.error.details,null,2));
+  if(!safe.ok&&'details'in safe.error&&safe.error.details)lines.push(JSON.stringify(safe.error.details,null,2));
   if ('data' in safe) {
     const data = safe.data;
     const items = data && typeof data === 'object' && 'items' in data ? data.items : null;
