@@ -47,7 +47,7 @@
   Run: `HKUSTGZ_TEST_BROWSER=1 node --import tsx --test tests/booking-cancel-transport.test.ts tests/booking-detail-browser.test.ts`
 - [x] Step3: RED actualCLI JSON/table, pending gate, precise confirmation and error exits; integrate handlers. Extend refresh only for authoritative cancellation evidence; test failed persistence/cleanup still retains verified results and guard safety.
   Run: `node --import tsx --test tests/booking-cancel-cli.test.ts`
-- [ ] Step4: Full Chrome suite/build/type/diff/doc-link checks, coherent local commit. One fresh independent final review per executing-plans; important fixes RED→GREEN/full-suite; record rulings and stop M4.
+- [x] Step4: Full Chrome suite/build/type/diff/doc-link checks, coherent local commit. One fresh independent final review per executing-plans; important fixes RED→GREEN/full-suite; record rulings and stop M4.
 
 ## Decisions
 

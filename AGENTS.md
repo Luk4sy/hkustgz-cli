@@ -55,3 +55,5 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 2026-11-01 M3用户复审P2修复待复审：只读operation refresh在清理或保存失败时保留已验证confirmed、来源ID和审批状态；错误仍非零，保存失败磁盘保持unknown、防重不解除。新增4项回归，针对性51项及全量380项全部通过、0跳过，构建/类型/差异/文档链接通过。仍停M3，学校pending/M0缺口及安装状态不变，不进入M4。
 
 2026-11-01最新授权：M3 df5b0aa已获用户复审通过，用户要求继续。当前按Spec开发M4精确取消与取消结果核对，完成停下交审，不进入M5。M0缺口、生产blocked/unknown及学校pending不变；不访问真实账号，不实际预约或取消，不更新CLI/Skill/候选，不推送/发布。见docs/superpowers/plans/2026-11-01-library-booking-phase-2-m4-plan.md及docs/acceptance/library-booking-phase-2-m4.md。
+
+2026-11-01 M4交付待审：精确取消预览/一次取消/可信取消凭据与already_cancelled/只读核对及同主体精确创建防重解除实现完成。独立审阅4项P2均有RED→GREEN覆盖，最终434/434、0跳过，构建/类型/差异/19文档链接通过。真实学校路线仍pending，M0缺口保留，无真实账号访问/预约/取消；安装CLI/Skill/候选不变。不进入M5，停下等用户审查。M3既有创建拒绝保存失败同类回执路径留后续专项复核，本轮未改create.ts。见docs/acceptance/library-booking-phase-2-m4.md。

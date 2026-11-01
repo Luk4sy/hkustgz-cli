@@ -55,7 +55,7 @@ export async function cancelReservation(store:OperationStore,session:OperationSe
  let r:StoredOperation|undefined,observed:StoredOperation|undefined;
  try{
   r=await store.read(id,now());r=await store.validateConfirmation(id,digest,now(),'cancel');const localProof=matchesCancellation(r,undefined);
-  if(r.outcome==='unknown'&&!localProof)return operationReceipt('booking cancel',r);
+  if(r.lifecycle!=='prepared'&&!localProof)return operationReceipt('booking cancel',r);
   if(!r.cancellationTarget||(!r.intent&&r.lifecycle==='prepared'))throw new CliFailure('ADAPTER_CHANGED');
   const range=r.intent&&'from'in r.intent?{from:r.intent.from,to:r.intent.to,timezone:'Asia/Shanghai' as const}:undefined;
   await withOperationDeadline(options,outer=>session(store.secret,outer,async(base,inner)=>{const o=sessionOperationOptions(outer,inner),source=base as CancelSource;
@@ -70,7 +70,12 @@ export async function cancelReservation(store:OperationStore,session:OperationSe
    if(a.eligibility!=='ready'||!target||!matchingTarget(target,r!.cancellationTarget!)||JSON.stringify(a.preview)!==JSON.stringify(r!.preview)||a.ruleVersion!==r!.ruleVersion||a.validUntil!==r!.permissionUntil){r=await store.invalidate(id,a.eligibility==='blocked'?'blocked':'unknown',a.checks,now());throw new CliFailure(a.eligibility==='blocked'?'BOOKING_RULE_BLOCKED':'CONFIRMATION_REQUIRED');}
    if(o.deadlineMs-Date.now()<1000)throw new CliFailure('QUERY_TIMEOUT');r=await store.beginDispatch({id,digest,subject:r!.subject,intent:r!.intent!,ruleVersion:a.ruleVersion},now());assertOperationLive(o);
    const dispatchDeadlineMs=Math.min(r.expiresAt,a.validUntil!);if(now()>=dispatchDeadlineMs)throw new CliFailure('PREVIEW_EXPIRED');
-   const submitted=CancelSubmissionSchema.safeParse(await source.submitCancel(target,{...o,dispatchDeadlineMs}));assertOperationLive(o);if(!submitted.success||submitted.data.kind==='unknown')return;
+   const submitted=CancelSubmissionSchema.safeParse(await source.submitCancel(target,{...o,dispatchDeadlineMs}));
+   // Capture verified business evidence before checking a signal/deadline or saving.
+   // It can explain an error receipt even when durable state must stay unknown.
+   if(submitted.success&&submitted.data.kind==='cancel_ack'&&submitted.data.reservationId===r!.reservationId)observed=cancelledSnapshot(r!,{reservationId:r!.reservationId!,target,evidence:'cancel_success',sourceStatusCode:r!.sourceStatusCode,approvalState:r!.approvalState});
+   else if(submitted.success&&submitted.data.kind==='rejected'){const {intent,preview,confirmationDigest,...minimal}=r!;observed={...minimal,lifecycle:'resolved',outcome:'not_applied'};}
+   assertOperationLive(o);if(!submitted.success||submitted.data.kind==='unknown')return;
    if(submitted.data.kind==='rejected'){r=await store.finalizeCancellation(id,{outcome:'not_applied',sourceStatusCode:r!.sourceStatusCode,approvalState:r!.approvalState},now());throw new CliFailure(submitted.data.code);}
    if(submitted.data.reservationId!==r!.reservationId)return;
    const ack:CancelProof={reservationId:r!.reservationId!,target,evidence:'cancel_success',sourceStatusCode:r!.sourceStatusCode,approvalState:r!.approvalState};observed=cancelledSnapshot(r!,ack);r=await store.noteCancelReceipt(id,ack.reservationId,now());assertOperationLive(o);if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);r=await confirmCancellation(store,r,ack,now());
