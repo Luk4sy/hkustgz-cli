@@ -27,7 +27,7 @@ export function createPortalPageReader(page:Page,templates:ReadonlyMap<string,st
    aborted(signal);if(!notice.url)return{status:200,unsupported:true};let u=new URL(notice.url);if(u.origin!==PORTAL_ORIGIN||!u.pathname.startsWith('/mnews/'))return{status:200,unsupported:true};
    const visited=new Set<string>();for(let hop=0;hop<6;hop++){
     aborted(signal);
-    if(hop>0)await new Promise<void>((resolve,reject)=>{const finish=()=>{signal.removeEventListener('abort',cancel);resolve();};const timer=setTimeout(finish,500);const cancel=()=>{clearTimeout(timer);signal.removeEventListener('abort',cancel);reject(signal.reason);};signal.addEventListener('abort',cancel,{once:true});});
+    if(hop>0){const minimum=Date.now()+500;while(Date.now()<minimum){aborted(signal);await new Promise<void>((resolve,reject)=>{const finish=()=>{signal.removeEventListener('abort',cancel);resolve();};const timer=setTimeout(finish,Math.max(1,minimum-Date.now()));const cancel=()=>{clearTimeout(timer);signal.removeEventListener('abort',cancel);reject(signal.reason);};signal.addEventListener('abort',cancel,{once:true});});}}
     aborted(signal);if(u.origin!==PORTAL_ORIGIN||!u.pathname.startsWith('/mnews/')||u.username||u.password||visited.has(u.toString()))throw new CliFailure('ADAPTER_CHANGED');visited.add(u.toString());
     if(u.pathname==='/mnews/_redirect'&&u.searchParams.get('articleId')!==notice.sourceId)throw new CliFailure('ADAPTER_CHANGED');
     const response=await page.request.get(u.toString(),{maxRedirects:0,timeout:30000});

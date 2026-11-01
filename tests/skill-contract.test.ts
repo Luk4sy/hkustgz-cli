@@ -29,7 +29,7 @@ test('pending_commands_are_not_promoted and generated reference matches runtime 
  const rows=read('references/commands.md').split('\n').filter(line=>line.startsWith('| `')).map(line=>line.split('|').slice(1,-1).map(v=>v.trim()));
  assert.equal(rows.length,COMMANDS.length);
  for(const def of COMMANDS){const row=rows.find(r=>r[0]===`\`${def.path}\``);assert.ok(row,def.path);if(def.capabilityId)assert.equal(row[1],DEFAULT_CAPABILITIES.find(c=>c.id===def.capabilityId)!.state);}
- assert.equal(rows.filter(r=>r[1]==='verified').length,17);assert.equal(rows.filter(r=>r[1]==='pending'&&r[0]?.startsWith('`browser')===false).length,2);
+ assert.equal(rows.filter(r=>r[1]==='verified').length,17);assert.equal(rows.filter(r=>r[1]==='pending'&&r[0]?.startsWith('`browser')===false).length,3);
 });
 test('references_ship_in_same_bundle and owned installation includes every reference',async()=>{
  const bundle=await readBundleInfo();for(const file of ['SKILL.md','references/commands.md','references/errors.md','references/examples.md','references/privacy.md'])assert.ok(bundle.files.includes(file),file);

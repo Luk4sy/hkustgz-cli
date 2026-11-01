@@ -28,8 +28,10 @@ function validateArguments(definition: CommandDefinition, args: Record<string, u
   if (definition.path === 'auth status' && Boolean(args.service) === Boolean(args.all)) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser use' && !['chrome', 'edge', 'chromium'].includes(String(args.browser))) throw new CliFailure('INVALID_ARGUMENT');
   if (definition.path === 'browser install' && args.browser !== 'chromium') throw new CliFailure('INVALID_ARGUMENT');
+  if(definition.path==='booking detail'&&!/^[1-9]\d*$/.test(String(args.id)))throw new CliFailure('INVALID_ARGUMENT');
   const required = ['canvas announcements', 'canvas assignments'].includes(definition.path) ? ['course']
     : definition.path === 'booking availability' ? ['provider', 'room', 'date']
+    : definition.path==='booking detail'?['provider','id']
     : ['booking rooms', 'booking mine'].includes(definition.path) ? ['provider'] : [];
   if (required.some((key) => !args[key])) throw new CliFailure('INVALID_ARGUMENT');
 }
@@ -97,7 +99,7 @@ export async function executeCommand(argv: string[], overrides: Partial<CliDepen
         validateArguments(definition, args);
         if(definition.capabilityId){
           const now=deps.now();args.deadlineMs=now+90000;
-          if(['portal agenda','canvas agenda','booking mine'].includes(definition.path)){
+          if(['portal agenda','canvas agenda','booking mine','booking detail'].includes(definition.path)){
             const range=resolveDateRange({...typeof args.from==='string'?{from:args.from}:{},...typeof args.to==='string'?{to:args.to}:{}},now);
             args.from=range.from;args.to=range.to;
           }

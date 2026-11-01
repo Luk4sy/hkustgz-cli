@@ -41,4 +41,5 @@ export const COMMANDS: CommandDefinition[] = [
   {path: 'booking rooms', description: 'List library rooms', capabilityId: 'booking.library.rooms', service: 'booking-library', headed: true, limit: true, options: [provider, {flags: '--floor <id>', description: 'Floor identifier', kind: 'id'}]},
   {path: 'booking availability', description: 'Read room availability without creating a booking', capabilityId: 'booking.library.availability', service: 'booking-library', headed: true, options: [provider, {flags: '--room <id>', description: 'Room identifier (required)', kind: 'id'}, {flags: '--date <date>', description: 'School date, YYYY-MM-DD (required)'}]},
   {path: 'booking mine', description: 'Read personal library bookings', capabilityId: 'booking.library.mine', service: 'booking-library', headed: true, limit: true, options: [provider, ...range]},
+  {path: 'booking detail', description: 'Inspect a personal reservation in a date window (pending real-system verification)', capabilityId: 'booking.library.detail', service: 'booking-library', headed: true, options: [provider, {flags:'--id <id>',description:'Source reservation ID (required)',kind:'id'}, ...range]},
 ];

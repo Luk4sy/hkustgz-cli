@@ -15,7 +15,7 @@ test('compiled executable works outside the repository without writing a browser
       const result = spawnSync(process.execPath, [bin, ...args], { cwd: temp, env: { ...process.env, HKUSTGZ_CLI_HOME: dataRoot }, encoding: 'utf8' });
       assert.equal(result.status, exitCode, result.stderr);
       assert.equal(result.stderr, '');
-      if (args[0] === 'capabilities') assert.equal(JSON.parse(result.stdout).data.items.length, 19);
+      if (args[0] === 'capabilities') assert.equal(JSON.parse(result.stdout).data.items.length, 20);
       if (args[0] === 'sis') assert.equal(JSON.parse(result.stdout).error.code, 'CAPABILITY_PENDING');
     }
     assert.equal(existsSync(dataRoot), false);

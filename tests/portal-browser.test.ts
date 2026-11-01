@@ -21,6 +21,14 @@ test('Portal detail redirect hops wait 500ms after the previous response complet
  assert.equal(parseDetail(await reader.detail(n,new AbortController().signal),n).bodyText,'Complete body');assert.equal(starts.length,2);assert.ok(starts[1]!-disposedAt>=500,'redirect request started before the source pacing interval elapsed');
 }));
 
+test('Portal redirect minimum pacing survives an early timer callback',{skip},async t=>fixture(async(page,templates)=>{
+ const starts:number[]=[];let disposedAt=0;const original=setTimeout;
+ t.mock.method(globalThis,'setTimeout',((callback:any,ms?:number,...args:any[])=>original(callback,ms===500?450:ms,...args)) as typeof setTimeout);
+ Object.defineProperty(page,'request',{value:{get:async()=>{starts.push(Date.now());const first=starts.length===1;return{status:()=>first?302:200,headers:()=>first?{location:'/mnews/_s2/01/62/c16a354/page.psp'}:{},text:async()=>'<div class="wp_articlecontent">Complete body</div>',dispose:async()=>{if(first)disposedAt=Date.now();}};}}});
+ const reader=createPortalPageReader(page,templates),n=parseNoticePage(notices,parseColumns(columns)[1]!,1).items[0]!;
+ await reader.detail(n,new AbortController().signal);assert.ok(starts[1]!-disposedAt>=500,`actual redirect gap: ${starts[1]!-disposedAt}ms`);
+}));
+
 
 test('Portal list Retry-After beyond the query budget prevents a second request',{skip},async()=>fixture(async(page,templates)=>{
  let calls=0;page.on('request',r=>{if(new URL(r.url()).pathname===PORTAL_PATHS.apps)calls++;});
