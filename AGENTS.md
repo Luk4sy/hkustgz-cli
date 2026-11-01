@@ -34,4 +34,4 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 
 2026-11-01 用户授权本地同步：CLI与Codex归属Skill已安装为0.1.0-alpha.3，status=current，doctor全部通过。已验收17项业务及新增Booking指引进入新候选，旧候选保留。版本/安装升级/隐私相关23项通过，构建/类型/差异检查通过；本批未改业务读取代码，也未重复完整Chrome套件。另按用户明确授权进行了独立浏览器预约目录盘点，未新增其他供应商CLI能力、未提交预约、未保存私人盘点数据。详见docs/acceptance/alpha3-local-sync.md；不推送或发布。
 
-2026-11-01 第二阶段范围：用户指定先做图书馆预约与取消闭环，先交付Spec并等待确认。草案见docs/superpowers/specs/2026-11-01-library-booking-phase-2-spec.md，尚未批准实施。确认后另写实施计划，按L2-M0至L2-M5逐模块交付，每模块必须停下等待用户审查与继续指令；不得提前写业务实现、更新安装版本或执行真实预约。Spec确认与具体真实预约/取消授权分别处理。
+2026-11-01 第二阶段范围：用户指定图书馆预约与取消闭环，并在Spec交付后授权继续。Spec见docs/superpowers/specs/2026-11-01-library-booking-phase-2-spec.md；当前仅开展L2-M0，计划见docs/superpowers/plans/2026-11-01-library-booking-phase-2-m0-plan.md。每模块必须停下等待用户审查与继续指令，不更新安装版本或提前进入M1。用户已就具体参数和信用规则明确授权一次正常网页创建，已提交且独立回查成功；取消预览已展示，尚待具体取消确认，真实预约仍保留。不得为了清理测试自动取消。M0未通过，详见docs/acceptance/library-booking-phase-2-m0.md；账户预约ID不入仓库，后续只按本对话明确目标处理，不猜最近一条。Spec确认与具体业务写入授权分别处理。
