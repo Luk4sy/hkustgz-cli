@@ -28,7 +28,7 @@
 | 创建载荷 | sysKind、appAccNo、memberKind、resvBeginTime、resvEndTime、testName、resvKind、resvProperty、appUrl、resvMember、resvDev、memo、captcha、addServices | 不猜固定值适用全部资源；appAccNo取当前主体，resvMember包含本人 |
 | 本人记录 | GET `reserve/resvInfo`，记录含resvId及uuid | 默认8454仅部分状态；全状态覆盖与分页须另证 |
 | 详情 | handleDetail仅展开本人表格中的记录 | 未发现该函数单独获取权威详情；不能捏造GET-by-ID接口 |
-| 取消 | POST `/ic-web/reserve/delete`，handleDelete传`{uuid:记录.uuid}` | 正常网页真实取消：HTTP200/code0/message“删除成功”、data=null；uuid不是resvId |
+| 取消 | POST `/ic-web/reserve/delete`，handleDelete传`params.uuid=记录.uuid`，包装函数将uuid作为查询参数，空请求体（M4公开代码补证） | 正常网页真实取消：HTTP200/code0/message“删除成功”、data=null；uuid不是resvId |
 | UI取消按钮 | 排除状态位4、128，且记录logonName等于当前主体 | 仅前端展示判据；不是服务器权限或取消窗口的完整证明 |
 | 参与人 | GET `account/getMembers`，使用accNo，禁用部分localstatus/status | 只核对本人样本，不枚举或保存联系人名册 |
 | 批量创建 | POST `reserve/bulkAdd`，逐项successfullyInserted | 不用于本期单资源单连续时段路线；外层code=0不能代表每项成功 |
@@ -73,3 +73,7 @@
 剩余关键缺口已收敛为G-R1隐藏规则位、G-R2额度/完整资格、G-R3维护与取消临界。字段存在或一次成功不能关闭它们，M0不自动通过。后续实现默认unknown/阻止提交是约束，不是缺口已被解决的证据。
 
 用户复审9e68004通过后继续要求查权威来源：已从正常帮助页定位正式Study Rooms服务页及使用政策页，补强G-R2/G-R3政策部分；当前ITDID3页手册适用其他房型，不解释这三个图书馆缺口。具体URL、页面修改日期、正文摘要、排除结论及未发送的核实问题见[权威来源续查](library-booking-phase-2-authorities.md)。M0仍未通过，不进入M1。
+
+## M4公开包装函数补证（2026-11-01）
+
+同一公开分块chunk-0a13ab7b_1685603939570.js的模块581a中，取消包装配置`method:"post",url:"reserve/delete",params:t.params`；配合handleDelete传入的params.uuid，证明POST使用uuid查询参数、空请求体。SHA-256仍为`7fd5f94a2c62a58bccfb66319f92dcdf0db841fe2c0238292a828471bae262eb`。这是公开代码证据补充，不是新的账号操作或服务端边界实验；原真实应答结论和M0规则缺口不变。详见[M4验收](../acceptance/library-booking-phase-2-m4.md)。

@@ -11,17 +11,20 @@ import {evaluateLibraryRules} from './rules.js';
 import {queryLibraryDetail} from './detail.js';
 import {LibraryIdentityReadError} from './identity.js';
 import type {CreateSource,CreationEvidence} from '../../booking-operations/create.js';
+import type {CancelSource} from '../../booking-operations/cancel.js';
+import {cancellationTarget} from '../../booking-operations/cancel.js';
 import type {LibraryBookingIntent} from '../../booking-operations/intent.js';
 import {LIBRARY_ORIGIN} from './manifest.js';
 const hash=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const school=(s:string)=>new Date(Date.parse(s)+8*3600000).toISOString().slice(0,19)+'+08:00';
 const emptyPreview=():Preview=>({rooms:[],startsAt:null,endsAt:null,durationMinutes:null,participantIds:[],participantCount:null,purpose:null,approvalState:'unknown',effects:[],feeState:'unknown'});
 /** Current source evidence is deliberately insufficient for a ready preview. GETs only. */
-export function createLibraryOperationSource(reader:LibraryReader,now:()=>number=Date.now):CreateSource{
+export function createLibraryOperationSource(reader:LibraryReader,now:()=>number=Date.now):CreateSource&CancelSource{
+ let subjectSecret:Buffer|undefined;
  const identity=async(secret:Buffer,o:QueryOptions)=>{
   if(!reader.inspection)throw new CliFailure('CAPABILITY_PENDING');
   try{await createQueryPolicy(o.deadlineMs).run(LIBRARY_ORIGIN,s=>reader.inspection!.assertIdentity(s),{readOnly:true,...o.signal?{signal:o.signal}:{}});}catch(e){throw e instanceof LibraryIdentityReadError?e.failure:e;}
-  return reader.inspection.fingerprint(secret);
+  const subject=reader.inspection.fingerprint(secret);subjectSecret=Buffer.from(secret);return subject;
  };
  const readCreated=async(id:string,intent:LibraryBookingIntent,o:QueryOptions):Promise<CreationEvidence|undefined>=>{
   if(!reader.inspection)throw new CliFailure('CAPABILITY_PENDING');
@@ -30,7 +33,7 @@ export function createLibraryOperationSource(reader:LibraryReader,now:()=>number
   if(!r)return;const bits=[256,512,1024].filter(b=>(r.statusCode&b)!==0);const approvalState=bits.length!==1?'unknown':bits[0]===256?'pending_review':bits[0]===512?'rejected':'approved';
   return{kind:'creation_readback',reservationId:r.id,isOwner:r.isOwner,intentMatches:r.intentMatches===true,roomIds:r.rooms.map(x=>x.id),startsAt:r.startsAt,endsAt:r.endsAt,statusCode:r.statusCode,approvalState};
  };
- return{identity,readCreated,submitCreate:async(intent,o)=>{if(!reader.submitCreate)throw new CliFailure('CAPABILITY_PENDING');return createQueryPolicy(o.deadlineMs).run(LIBRARY_ORIGIN,signal=>{if(o.dispatchDeadlineMs!==undefined&&Date.now()>=o.dispatchDeadlineMs)throw new CliFailure('PREVIEW_EXPIRED');return reader.submitCreate!(intent,{...o,signal});},{readOnly:false,...o.signal?{signal:o.signal}:{}});},createAssessment:async(intent,o)=>{
+ return{identity,readCreated,readCancelled:async(id,range,o)=>{if(!reader.inspection)throw new CliFailure('CAPABILITY_PENDING');await queryLibraryDetail({id,range},o,reader.inspection);return undefined;},submitCancel:async(target,o)=>{if(!reader.inspection?.submitCancel)throw new CliFailure('CAPABILITY_PENDING');return createQueryPolicy(o.deadlineMs).run(LIBRARY_ORIGIN,signal=>{if(o.dispatchDeadlineMs!==undefined&&Date.now()>=o.dispatchDeadlineMs)throw new CliFailure('PREVIEW_EXPIRED');return reader.inspection!.submitCancel!(target,{...o,signal});},{readOnly:false,...o.signal?{signal:o.signal}:{}});},submitCreate:async(intent,o)=>{if(!reader.submitCreate)throw new CliFailure('CAPABILITY_PENDING');return createQueryPolicy(o.deadlineMs).run(LIBRARY_ORIGIN,signal=>{if(o.dispatchDeadlineMs!==undefined&&Date.now()>=o.dispatchDeadlineMs)throw new CliFailure('PREVIEW_EXPIRED');return reader.submitCreate!(intent,{...o,signal});},{readOnly:false,...o.signal?{signal:o.signal}:{}});},createAssessment:async(intent,o)=>{
   const date=intent.startsAt.slice(0,10);const scanned=await scanRooms({date},o,reader);const room=scanned.collected.items.find(x=>x.id===intent.roomId);const raw=scanned.raw.get(intent.roomId);
   if(!room||!raw){if(scanned.collected.coverage==='partial')throw new CliFailure('ADAPTER_CHANGED');throw new CliFailure('INVALID_ARGUMENT');}
   const availability=parseAvailability(raw,room.id,date);
@@ -40,12 +43,14 @@ export function createLibraryOperationSource(reader:LibraryReader,now:()=>number
   return{eligibility:report.eligibility,checks,preview,ruleVersion:hash({checks,availability,capacity:room.capacity})};
  },cancelAssessment:async(id,range,o)=>{
   if(!reader.inspection)throw new CliFailure('CAPABILITY_PENDING');const result=await queryLibraryDetail({id,range},o,reader.inspection);const r=result.data.record;
-  const checks=[{id:'target',state:r?'pass' as const:'unknown' as const,reason:r?'Exact source ID observed.':'Absence in a date/status window does not prove cancellation.'},{id:'cancelPermission',state:r?.cancellationEligibility==='blocked'?'fail' as const:'unknown' as const,reason:r?.cancellationReason??'No authoritative target was found.'},{id:'cancelWindow',state:'unknown' as const,reason:'Maintenance and cancellation boundary evidence is incomplete.'}];
+  const checks:Assessment['checks']=[{id:'target',state:r?'pass' as const:'unknown' as const,reason:r?'Exact source ID observed.':'Absence in a date/status window does not prove cancellation.'},{id:'cancelPermission',state:r?.cancellationEligibility==='blocked'?'fail' as const:'unknown' as const,reason:r?.cancellationReason??'No authoritative target was found.'},{id:'cancelWindow',state:'unknown' as const,reason:'Maintenance and cancellation boundary evidence is incomplete.'}];
   const preview:Preview=r?{...emptyPreview(),rooms:r.rooms.map(x=>({...x,location:null})),startsAt:school(r.startsAt),endsAt:school(r.endsAt),durationMinutes:(Date.parse(r.endsAt)-Date.parse(r.startsAt))/60000,participantCount:r.memberCount,effects:['Cancellation releases this exact reservation; current credit consequences remain unverified.']}:emptyPreview();
-  return{eligibility:checks.some(x=>x.state==='fail')?'blocked':'unknown',checks,preview,ruleVersion:hash({checks,preview,status:r?.statusCode??null}),reservationId:id,sourceStatusCode:r?.statusCode??null};
+  const target=cancellationTarget(id,preview),binding=target&&subjectSecret?reader.inspection.cancellationBinding?.(target,subjectSecret):undefined;checks.push({id:'cancelHandle',state:binding?'pass':'unknown',reason:'A fresh owned exact-target cancellation handle must be bound without exporting its UUID.'});
+  return{eligibility:checks.some(x=>x.state==='fail')?'blocked':'unknown',checks,preview,ruleVersion:hash({checks,preview,status:r?.statusCode??null,binding:binding??null}),reservationId:id,sourceStatusCode:r?.statusCode??null};
  },reconcile:async(record,o)=>{
   if(record.action==='create'&&record.receiptEvidence==='create_success'&&record.reservationId&&record.intent&&'roomId'in record.intent)return readCreated(record.reservationId,record.intent,o);
-  // No cancellation or lost-response similar-record inference.
+  if(record.action==='cancel'&&record.reservationId&&record.intent&&'from'in record.intent){if(!reader.inspection)throw new CliFailure('CAPABILITY_PENDING');await queryLibraryDetail({id:record.reservationId,range:{from:record.intent.from,to:record.intent.to,timezone:'Asia/Shanghai'}},o,reader.inspection);return undefined;}
+  // No cancellation inference from absence/128, or lost-response similar-record inference.
   if(!record.reservationId||!record.intent||!reader.inspection)return;
   const range='from'in record.intent?{from:record.intent.from,to:record.intent.to,timezone:'Asia/Shanghai' as const}:{from:record.intent.startsAt.slice(0,10),to:new Date(Date.parse(record.intent.startsAt.slice(0,10)+'T00:00:00Z')+86400000).toISOString().slice(0,10),timezone:'Asia/Shanghai' as const};
   await queryLibraryDetail({id:record.reservationId,range},o,reader.inspection);

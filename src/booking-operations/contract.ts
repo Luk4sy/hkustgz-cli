@@ -7,5 +7,5 @@ export const OperationDataSchema=z.strictObject({operationId:z.uuid().nullable()
 export type OperationData=z.infer<typeof OperationDataSchema>;
 const meta=z.strictObject({schemaVersion:z.literal('1'),kind:z.literal('operation'),command:z.string().min(1)});
 const error=z.strictObject({code:z.string().min(1),message:z.string().min(1),remediation:z.string().min(1),retryable:z.literal(false)});
-export const OperationResultSchema=z.discriminatedUnion('ok',[z.strictObject({ok:z.literal(true),data:OperationDataSchema,meta}).refine(r=>r.data.outcome!=='unknown'&&r.data.lifecycle!=='dispatching'&&(!['booking preview','booking cancel-preview'].includes(r.meta.command)||r.data.eligibility==='ready')),z.strictObject({ok:z.literal(false),data:OperationDataSchema.nullable(),error,meta})]);
+export const OperationResultSchema=z.discriminatedUnion('ok',[z.strictObject({ok:z.literal(true),data:OperationDataSchema,meta}).refine(r=>r.data.outcome!=='unknown'&&r.data.lifecycle!=='dispatching'&&(!['booking preview','booking cancel-preview'].includes(r.meta.command)||r.data.eligibility==='ready'||r.data.outcome==='already_cancelled')),z.strictObject({ok:z.literal(false),data:OperationDataSchema.nullable(),error,meta})]);
 export type OperationResult=z.infer<typeof OperationResultSchema>;

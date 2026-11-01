@@ -1,3 +1,4 @@
+import {cancelReservation} from './cancel.js';
 import {createReservation} from './create.js';
 import type {OperationResult} from './contract.js';
 import type {CommandHandler,QueryOptions} from '../core/contracts.js';
@@ -13,8 +14,6 @@ export async function readStdin(maxBytes:number):Promise<string>{
 }
 export function createOperationHandlers(config:{session?:OperationSession}={}):Record<string,CommandHandler>{
  return Object.fromEntries(['preview','cancel-preview','operation','create','cancel'].map(action=>[action==='operation'?'booking.operation':'booking.library.'+action,async(args,deps)=>{
-  // Cancellation is a separate M4 module and remains unimplemented.
-  if(action==='cancel')throw new CliFailure('CAPABILITY_PENDING');
   let intent:unknown;
   if(action==='preview'){
    if(args.input!=='-')throw new CliFailure('INVALID_ARGUMENT');const text=await(deps.readInput??readStdin)(65536);
@@ -29,7 +28,7 @@ export function createOperationHandlers(config:{session?:OperationSession}={}):R
   });
   let receipt:OperationResult|undefined;
   try{return await withOperationStore(paths.root,async store=>{
-   receipt=await(action==='create'?createReservation(store,session,String(args.operation),String(args.confirm),options,deps.now):action==='operation'?inspectOperation(store,String(args.id),args.refresh===true?session:undefined,options,deps.now):preparePreview(store,session,action==='preview'?{action:'create',intent}:{action:'cancel',id:String(args.id),range:{from:String(args.from),to:String(args.to),timezone:'Asia/Shanghai'}},options,deps.now));return receipt;
+   receipt=await(action==='cancel'?cancelReservation(store,session,String(args.operation),String(args.confirm),options,deps.now):action==='create'?createReservation(store,session,String(args.operation),String(args.confirm),options,deps.now):action==='operation'?inspectOperation(store,String(args.id),args.refresh===true?session:undefined,options,deps.now):preparePreview(store,session,action==='preview'?{action:'create',intent}:{action:'cancel',id:String(args.id),range:{from:String(args.from),to:String(args.to),timezone:'Asia/Shanghai'}},options,deps.now));return receipt;
   });}catch(error){
    if(!receipt)throw error;
    const value=receipt.data?{...receipt.data}:null;if(value)delete value.confirmationDigest;

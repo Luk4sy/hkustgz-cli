@@ -9,6 +9,7 @@ function parse(payload:unknown){
 export interface LibraryIdentity {
  assertFresh(payload:unknown):void;
  owns(account:unknown):boolean;
+ ownsLogin(value:unknown):boolean;
  fingerprint(secret:Uint8Array):string;
 }
 /** Marks failed identity evidence independently of an ordinary page-read error. */
@@ -21,6 +22,7 @@ export function bindLibraryIdentity(payload:unknown):LibraryIdentity {
  return Object.freeze({
   assertFresh(value:unknown){const current=parse(value);if(current.accNo!==original.accNo||current.logonName!==original.logonName)throw new CliFailure('LOGIN_REQUIRED','The school account changed. Start a new query after authenticating the intended account.');},
   owns(account:unknown){return account===original.accNo;},
+  ownsLogin(value:unknown){return value===original.logonName;},
   fingerprint(secret:Uint8Array){if(!(secret instanceof Uint8Array)||secret.byteLength<32)throw new CliFailure('INVALID_ARGUMENT');return createHmac('sha256',secret).update(JSON.stringify([original.accNo,original.logonName])).digest('hex');}
  });
 }

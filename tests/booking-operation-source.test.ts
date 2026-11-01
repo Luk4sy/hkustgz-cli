@@ -15,3 +15,7 @@ test('create sender is scheduled after the last identity read without enabling r
 test('preview expiry during source pacing prevents any sender admission',async()=>{
  const r=reader();let sends=0;const source=createLibraryOperationSource({...r,submitCreate:async()=>{sends++;return{kind:'unknown' as const};}},()=>now);const o={refresh:false,deadlineMs:Date.now()+10000};await source.identity(Buffer.alloc(32,1),o);await assert.rejects(source.submitCreate!(intent,{...o,dispatchDeadlineMs:Date.now()+50} as any),{code:'PREVIEW_EXPIRED'});assert.equal(sends,0);
 });
+
+test('cancel permission expiry during source pacing blocks the native cancellation sender',async()=>{
+ const base=reader();let sends=0;const source=createLibraryOperationSource({...base,inspection:{...base.inspection,submitCancel:async()=>{sends++;return{kind:'unknown' as const};}}},()=>now);const o={refresh:false,deadlineMs:Date.now()+10000};await source.identity(Buffer.alloc(32,1),o);await assert.rejects(source.submitCancel!({reservationId:'7',roomIds:['2'],startsAt:'2026-11-02T09:00:00+08:00',endsAt:'2026-11-02T10:00:00+08:00',memberCount:1},{...o,dispatchDeadlineMs:Date.now()+50}),{code:'PREVIEW_EXPIRED'});assert.equal(sends,0);
+});

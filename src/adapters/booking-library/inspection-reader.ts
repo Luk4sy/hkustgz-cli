@@ -1,3 +1,6 @@
+import {createHmac} from 'node:crypto';
+import type {CancelTarget} from '../../booking-operations/cancel-model.js';
+import {createLibraryCancelTransport} from './cancel-transport.js';
 import type {Page,Response} from 'playwright';
 import {CliFailure} from '../../core/errors.js';
 import {HttpReadError} from '../../core/policy.js';
@@ -10,7 +13,9 @@ async function json(response:Response):Promise<any>{
  if(body?.code===300)throw new CliFailure('LOGIN_REQUIRED');if(body?.code!==0)throw new CliFailure('ADAPTER_CHANGED');return body;
 }
 export function createLibraryInspectionReader(page:Page):LibraryInspectionReader {
- let binding:LibraryIdentity|undefined;let lastRequest=0;let identityVerified=false;
+ let binding:LibraryIdentity|undefined;let lastRequest=0;let identityVerified=false;const targets=new Map<string,{target:CancelTarget;uuid:string;account:number}>();
+ const lookup=(target:CancelTarget)=>{if(!identityVerified||!binding||new URL(page.url()).origin!==LIBRARY_ORIGIN)return;const entry=targets.get(target.reservationId);if(!entry||!binding.owns(entry.account)||JSON.stringify(entry.target.roomIds)!==JSON.stringify(target.roomIds)||Date.parse(entry.target.startsAt)!==Date.parse(target.startsAt)||Date.parse(entry.target.endsAt)!==Date.parse(target.endsAt)||entry.target.memberCount!==target.memberCount)return;return entry;};
+ const submitCancel=createLibraryCancelTransport(page,lookup);
  const check=(signal:AbortSignal)=>{if(signal.aborted)throw signal.reason;if(new URL(page.url()).origin!==LIBRARY_ORIGIN)throw new CliFailure('LOGIN_REQUIRED');};
  const pace=async(signal:AbortSignal)=>{check(signal);const minimum=lastRequest+500;while(Date.now()<minimum){await page.waitForTimeout(Math.max(1,minimum-Date.now()));check(signal);}check(signal);lastRequest=Date.now();};
  const assertIdentity=async(signal:AbortSignal)=>{
@@ -24,10 +29,10 @@ export function createLibraryInspectionReader(page:Page):LibraryInspectionReader
   const body=await json(await waiting);lastRequest=Date.now();check(signal);
   if(binding)binding.assertFresh(body);else binding=bindLibraryIdentity(body);
   identityVerified=true;
-  }catch(failure){throw new LibraryIdentityReadError(failure);}
+  }catch(failure){targets.clear();throw new LibraryIdentityReadError(failure);}
  };
- return{fingerprint(secret){if(!identityVerified||!binding)throw new CliFailure('LOGIN_REQUIRED');return binding.fingerprint(secret);},get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal,expectation)=>{
-  check(signal);if(!binding)throw new CliFailure('LOGIN_REQUIRED');
+ return{submitCancel,cancellationBinding(target,secret){const entry=lookup(target);if(!entry||secret.byteLength<32)return;return createHmac('sha256',secret).update(JSON.stringify({uuid:entry.uuid,target:entry.target})).digest('hex');},fingerprint(secret){if(!identityVerified||!binding)throw new CliFailure('LOGIN_REQUIRED');return binding.fingerprint(secret);},get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal,expectation)=>{
+  if(p===1)targets.clear();check(signal);if(!binding)throw new CliFailure('LOGIN_REQUIRED');
   if(new URL(page.url()).hash!=='#/ic/userinfo')await page.goto(LIBRARY_ORIGIN+'/#/ic/userinfo',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>[...document.querySelectorAll('*')].some(e=>typeof (e as any).__vue__?.initTable==='function'&&(e as any).__vue__?.search?.date&&Array.isArray((e as any).__vue__?.statusOption)));
   const status=await page.evaluate(()=>{const v=[...document.querySelectorAll('*')].map(e=>(e as any).__vue__).find(v=>v?.initTable&&v?.search?.date&&Array.isArray(v.statusOption));return v.statusOption.map((x:any)=>x.value) as unknown[];});
@@ -44,6 +49,10 @@ export function createLibraryInspectionReader(page:Page):LibraryInspectionReader
   },{from:range.from,endDate,p,values,filter});
   const body=await json(await waiting);lastRequest=Date.now();check(signal);await assertIdentity(signal);
   if(!Array.isArray(body.data))throw new CliFailure('ADAPTER_CHANGED');
+  for(const r of body.data){
+   if(!Number.isSafeInteger(r.resvId)||r.resvId<1||typeof r.uuid!=='string'||!/^[A-Za-z0-9_-]{1,256}$/.test(r.uuid)||!binding.owns(r.appAccNo)||!binding.ownsLogin(r.logonName)||(r.resvStatus&4)!==0||(r.resvStatus&128)!==0||!Number.isFinite(r.resvBeginTime)||!Number.isFinite(r.resvEndTime)||r.resvBeginTime>=r.resvEndTime||!Array.isArray(r.resvDevInfoList)||r.resvDevInfoList.length!==1||!Number.isSafeInteger(r.resvDevInfoList[0].devId)||r.resvDevInfoList[0].devId<1||!Array.isArray(r.resvMemberInfoList))continue;
+   const target:CancelTarget={reservationId:String(r.resvId),roomIds:[String(r.resvDevInfoList[0].devId)],startsAt:new Date(r.resvBeginTime).toISOString(),endsAt:new Date(r.resvEndTime).toISOString(),memberCount:r.resvMemberInfoList.length};targets.set(target.reservationId,{target,uuid:r.uuid,account:r.appAccNo});
+  }
   return{scope:{...range,page:p,needStatus:filter},body:{code:0,count:body.count,data:body.data.map((r:any)=>({resvId:r.resvId,resvBeginTime:r.resvBeginTime,resvEndTime:r.resvEndTime,resvStatus:r.resvStatus,...expectation?{intentMatches:Array.isArray(r.resvMemberInfoList)&&r.resvMemberInfoList.length===expectation.participantIds.length&&r.resvMemberInfoList.every((m:any)=>Number.isSafeInteger(m.accNo)&&m.accNo>0)&&new Set(r.resvMemberInfoList.map((m:any)=>String(m.accNo))).size===expectation.participantIds.length&&r.resvMemberInfoList.every((m:any)=>expectation.participantIds.includes(String(m.accNo)))&&(typeof r.testName==='string'?r.testName:'')===(expectation.purpose??'')}:{},ownerMatches:binding!.owns(r.appAccNo),memberCount:Array.isArray(r.resvMemberInfoList)?r.resvMemberInfoList.length:null,resvDevInfoList:Array.isArray(r.resvDevInfoList)?r.resvDevInfoList.map((d:any)=>({devId:d.devId,devName:d.devName})):null}))}};
  }};
 }

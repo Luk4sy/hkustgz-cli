@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import type {CancelTarget,CancelSubmission} from '../../booking-operations/cancel-model.js';
 import type {DateRange,QueryOptions} from '../../core/contracts.js';
 import {CliFailure} from '../../core/errors.js';
 import {collectPages,buildQueryResult} from '../../core/query.js';
@@ -7,6 +8,8 @@ import {LIBRARY_ORIGIN,LIBRARY_URL} from './manifest.js';
 import {LibraryIdentityReadError} from './identity.js';
 export interface CreationExpectation {participantIds:readonly string[];purpose:string|null}
 export interface LibraryInspectionReader {
+ cancellationBinding?:(target:CancelTarget,secret:Uint8Array)=>string|undefined;
+ submitCancel?:(target:CancelTarget,options:QueryOptions)=>Promise<CancelSubmission>;
  /** False throughout an internal refresh, and until fresh identity has been verified. */
  readonly identityVerified:boolean;
  fingerprint(secret:Uint8Array):string;

@@ -5,13 +5,13 @@ import {normalizeIntent,SourceId,type LibraryBookingIntent} from './intent.js';
 import {resolveDateRange} from '../core/policy.js';
 import {PreviewSchema,CheckSchema,type OperationData,type OperationResult} from './contract.js';
 import {OperationStore,DuplicateOperationFailure,type StoredOperation} from './store.js';
-export const AssessmentSchema=z.strictObject({eligibility:z.enum(['ready','blocked','unknown']),ruleVersion:z.string().regex(/^[a-f0-9]{64}$/),checks:z.array(CheckSchema).min(1),preview:PreviewSchema,reservationId:SourceId.nullable().optional(),sourceStatusCode:z.number().int().nonnegative().nullable().optional()}).refine(a=>a.eligibility!=='ready'||(a.checks.every(c=>c.state==='pass')&&a.preview.feeState==='none'&&a.preview.approvalState!=='unknown'&&a.preview.rooms.length>0&&!!a.preview.startsAt&&!!a.preview.endsAt&&a.preview.durationMinutes!==null&&a.preview.durationMinutes>0));
+export const AssessmentSchema=z.strictObject({eligibility:z.enum(['ready','blocked','unknown']),ruleVersion:z.string().regex(/^[a-f0-9]{64}$/),checks:z.array(CheckSchema).min(1),preview:PreviewSchema,reservationId:SourceId.nullable().optional(),sourceStatusCode:z.number().int().nonnegative().nullable().optional(),validUntil:z.number().int().positive().safe().optional()}).refine(a=>a.eligibility!=='ready'||(a.checks.every(c=>c.state==='pass')&&a.preview.feeState==='none'&&a.preview.approvalState!=='unknown'&&a.preview.rooms.length>0&&!!a.preview.startsAt&&!!a.preview.endsAt&&a.preview.durationMinutes!==null&&a.preview.durationMinutes>0));
 export type Assessment=z.infer<typeof AssessmentSchema>;
 export interface OperationSource {
  identity(secret:Buffer,options:QueryOptions):Promise<string>;
  createAssessment(intent:LibraryBookingIntent,options:QueryOptions):Promise<Assessment>;
  cancelAssessment(id:string,range:DateRange,options:QueryOptions):Promise<Assessment>;
- /** M2 may observe candidates only. No result here can resolve a possibly sent operation. */
+ /** Only validated exact creation/cancellation evidence can resolve an unknown operation; candidates alone cannot. */
  reconcile(record:StoredOperation,options:QueryOptions):Promise<unknown>;
 }
 export type OperationSession=<T>(secret:Buffer,options:QueryOptions,run:(source:OperationSource,options?:QueryOptions)=>Promise<T>)=>Promise<T>;
@@ -47,14 +47,14 @@ export function sessionOperationOptions(outer:QueryOptions,inner?:QueryOptions):
  return{...outer,deadlineMs:Math.min(outer.deadlineMs,inner?.deadlineMs??Infinity),...signals.length?{signal:AbortSignal.any(signals)}:{},...dispatch.length?{dispatchDeadlineMs:Math.min(...dispatch)}:{}};
 }
 export async function preparePreview(store:OperationStore,session:OperationSession,request:PreviewRequest,options:QueryOptions,now:()=>number=Date.now):Promise<OperationResult>{
- const intent=request.action==='create'?normalizeIntent(request.intent,now()):{reservationId:SourceId.parse(request.id),...(({from,to})=>({from,to}))(resolveDateRange(request.range,now()))};
+ if(request.action==='cancel'){const {prepareCancellationPreview}=await import('./cancel.js');return prepareCancellationPreview(store,session,request.id,request.range,options,now);}
+ const intent=normalizeIntent(request.intent,now());
  const evidence=await withOperationDeadline(options,outer=>session(store.secret,outer,async(source,inner)=>{const o=sessionOperationOptions(outer,inner);
   const subject=actor(await source.identity(store.secret,o));assertOperationLive(o);
-  const value=request.action==='create'?await source.createAssessment(intent as LibraryBookingIntent,o):await source.cancelAssessment(request.id,request.range,o);assertOperationLive(o);
+  const value=await source.createAssessment(intent as LibraryBookingIntent,o);assertOperationLive(o);
   const parsed=AssessmentSchema.safeParse(value);if(!parsed.success)throw new CliFailure('ADAPTER_CHANGED');
-  const assessment=request.action==='create'?validateCreateAssessment(intent as LibraryBookingIntent,value):parsed.data;
+  const assessment=validateCreateAssessment(intent as LibraryBookingIntent,value);
   const fresh=actor(await source.identity(store.secret,o));assertOperationLive(o);if(subject!==fresh)throw new CliFailure('LOGIN_REQUIRED');
-  if(request.action==='cancel'&&parsed.data.reservationId!==request.id)throw new CliFailure('ADAPTER_CHANGED');
   return{subject,assessment};
  }));
  // Persist only after the source session (including cleanup) has successfully returned.
@@ -67,14 +67,16 @@ export async function inspectOperation(store:OperationStore,id:string,session:Op
  try{
  if(session){const evidence=await withOperationDeadline(options,outer=>session(store.secret,outer,async(source,inner)=>{const o=sessionOperationOptions(outer,inner);
   if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);
-  const evidence=await source.reconcile(r,o);assertOperationLive(o);
+  const evidence=r.action==='cancel'&&(r.receiptEvidence==='cancel_success'||r.receiptEvidence==='cancelled_record')?undefined:await source.reconcile(r,o);assertOperationLive(o);
   if(actor(await source.identity(store.secret,o))!==r.subject)throw new CliFailure('LOGIN_REQUIRED');assertOperationLive(o);
   if(r.action==='create'&&r.outcome==='unknown'&&r.receiptEvidence==='create_success'){
    const {matchesCreation,confirmedCreationSnapshot}=await import('./create.js');assertOperationLive(o);
    const proof=matchesCreation(r,evidence);if(proof)verifiedConfirmation=confirmedCreationSnapshot(r,proof);
+  }else if(r.action==='cancel'&&r.outcome==='unknown'){
+   const {matchesCancellation,cancelledSnapshot}=await import('./cancel.js');assertOperationLive(o);const proof=matchesCancellation(r,evidence);if(proof)verifiedConfirmation=cancelledSnapshot(r,proof);
   }
   return evidence;
- }));assertOperationLive(options);if(r.action==='create'&&r.outcome==='unknown'&&r.receiptEvidence==='create_success'){const {confirmCreation}=await import('./create.js');r=await confirmCreation(store,r,evidence,now());}}
+ }));assertOperationLive(options);if(r.action==='create'&&r.outcome==='unknown'&&r.receiptEvidence==='create_success'){const {confirmCreation}=await import('./create.js');r=await confirmCreation(store,r,evidence,now());}else if(r.action==='cancel'&&r.outcome==='unknown'){const {matchesCancellation,confirmCancellation}=await import('./cancel.js');const proof=matchesCancellation(r,evidence);if(proof)r=await confirmCancellation(store,r,proof,now());}}
  r=await store.read(id,now());return operationReceipt('booking operation',r);
  }catch(e){return operationFailure('booking operation',e,operationData(verifiedConfirmation??r));}
 }
