@@ -45,4 +45,3 @@ Booking、Portal、SIS默认handler用例改为`tmpdir()+join()+随机名称`，
 - `npm run typecheck`、`actionlint .github/workflows/ci.yml`、`git diff --check`通过。
 - 一次独立内部检查未发现可确认缺陷；补跑严格时钟/链接策略14项通过。这不替代用户审查，也不计入450之外的新增覆盖。
 - 文档本地链接检查通过，最终只涉及测试、CI及对应说明。Windows远端全套尚未执行，日常安装/候选包未更新；完成后停下，不推送。
-
