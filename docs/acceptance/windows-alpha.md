@@ -1,8 +1,10 @@
 # Windows 适配与验证记录
 
-## 当前状态（2026-11-01）
+## 当前状态（2026-11-02）
 
-用户确认上一版本alpha.3已完成Windows验证。现有文字未提供具体系统版本、测试者或逐项结果，因此先记录该结论，不替用户补造明细，也不据此认定第二名学生验收或alpha.4回归已完成。alpha.4的Windows升级与回归仍待记录。
+收到另一位同学的alpha.4升级与实测报告：Windows NT10.0.26300、Node24.22.1、CLI/Skill alpha.4且status=current；四项Booking真实查询、构建/类型及安装升级专项通过。默认445项套件仍有14失败、99跳过，另跑42项图书馆Chrome合成用例通过；不能称Windows全量验收或真实预约能力通过。报告范围与本轮测试/CI修复记录见[Windows测试可移植性交付](windows-test-portability.md)。操作系统产品Caption尚未提供，不单凭NT构建号补写Windows11 SKU。
+
+上一版本alpha.3曾由用户确认Windows验证。本轮新增CI尚未推送执行；本地macOS回归与Windows实机报告分别记录。
 
 ## alpha.2适配交付记录（2026-10-29）
 
