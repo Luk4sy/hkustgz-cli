@@ -67,3 +67,6 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 2026-11-01用户已审查通过M5 bff9796＋d3331d7并保留两项轻微建议，之后明确要求继续。按Spec下一步已将已审查alpha.4候选离线同步到现有日常Node24 CLI，再dry-run并显式同步Codex归属Skill。实际CLI/Skill均alpha.4、status=current，五个文件匹配随包版本，doctor五项pass，24项中17verified/7pending不变。未改产品代码或候选、未访问真实账号/预约/取消、未清理登录态或未决状态、未push/merge/publish。记录见docs/acceptance/alpha4-local-sync.md；客户端自动发现/热刷新及真实校园查询未单独验收。M0三项缺口继续保留，不能因M5实现或安装完成启用学校写入。
 
 2026-11-01文档与推送：用户补充上一版本alpha.3已在Windows验证，alpha.4 Windows升级/回归尚未记录，具体系统/逐项范围待补，不自动计为第二名学生验收。用户明确要求更新Markdown并push，已同步README、安装和Windows记录的当前状态；推送当前feat/cli-foundation分支，未授权自动合并main或npm发布。批准的alpha.4 tgz/已安装CLI/Skill保持原内容，两项轻微建议继续保留。本次仅仓库文档变更，不重打包覆盖已审查产物。
+
+
+2026-11-02当前用户授权：检查专用登录会话能读取的账号权限/规则并修订Spec，完成后停下审查。新增调研docs/research/library-booking-account-rules-2026-11-02.md；第二阶段Spec §5.1～§5.3提出“可读条件必检、学校最终裁决项明示、未知副作用阻断”的受限场景门槛，尚待用户批准。M0未知位/完整额度/维护及临界证据不伪造关闭，真实新路线和alpha.4实现保持原样。本轮只读、无实际预约/取消，无产品代码/Skill/候选/安装更新，不push/merge/publish；不得将本次文档提案当成启用许可。

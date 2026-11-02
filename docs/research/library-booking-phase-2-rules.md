@@ -4,6 +4,8 @@
 
 依据：[Spec](../superpowers/specs/2026-11-01-library-booking-phase-2-spec.md)、[已有创建/取消证据](library-booking-phase-2.md)。先前真实预约已取消，本轮不重复创建、取消、占位或签到。以下区分**当前响应/页面观察、公开代码、合成输入观察、仍未证实**，不能用其中一类替代另一类。
 
+> 本文保留2026-11-01证据及当时门槛，不回写为新证据。2026-11-02新增[登录后账号与规则核对、门槛修订提案](library-booking-account-rules-2026-11-02.md)，对应Spec §5.1～§5.3待用户审查；尚未启用真实操作。
+
 ## 1. 可复核来源
 
 公开来源origin：`https://libroombooking.hkust-gz.edu.cn`。以下SHA-256为脚本文本UTF-8编码摘要；位置是从0起算的JavaScript字符串偏移，并非源码行号。
