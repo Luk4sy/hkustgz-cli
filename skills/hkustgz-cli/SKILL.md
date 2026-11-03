@@ -2,8 +2,8 @@
 name: hkustgz-cli
 description: Use when a HKUST(GZ) student asks about campus courses, timetables, notices, Canvas assignments or agenda, library room availability or reservation operations, or needs help with the local hkustgz-cli installation and authentication. 适用于港科广课程、课表、公告、作业、日程、图书馆预约与校园CLI请求。
 metadata:
-  version: 0.1.0-alpha.5
-  compatible_cli: 0.1.0-alpha.5
+  version: 0.1.0-alpha.6
+  compatible_cli: 0.1.0-alpha.6
   schemaVersion: '1'
 ---
 
@@ -46,7 +46,7 @@ metadata:
 
 ## 图书馆操作
 
-alpha.5 将图书馆详情、预览、创建、取消预览和取消标为 experimental。创建只支持本人单人、已取证的四楼研修间规则族。预览使用 participantIds: ["self"] 和实际用途。额度和资格中由学校最终判断的项目须展示为待裁决。取消仅支持匹配规则族的本人精确记录，且距离开始严格超过10分钟。pending 时说明未开放。用户对具体预览确认后才能发送一次。
+alpha.6 将图书馆详情、预览、创建、取消预览和取消标为 experimental。创建只支持本人单人、已取证的四楼研修间规则族。预览使用 participantIds: ["self"] 和实际用途。额度和资格中由学校最终判断的项目须展示为待裁决。取消仅支持匹配规则族的本人精确记录，且距离开始严格超过10分钟。pending 时说明未开放。用户对具体预览确认后才能发送一次。
 
 当本机对应路线为verified或experimental时，按[操作示例与结果](references/examples.md)执行：查询 → 创建预览 → 展示完整目标/检查/后果/截止 → 用户明确确认该预览 → create一次 → 只读核对；取消另用精确来源预约ID生成cancel-preview，展示并独立确认后cancel一次。每次以该预览返回的operationId和confirmationDigest调用，不能复用创建摘要取消；参数、账号、规则变化或300秒过期需新预览新确认。ready/摘要不是授权，收到用户对该精确预览的明确确认后无需再问一遍。不要猜参与人ID，--input -从stdin读意图，不把成员/用途放shell历史。
 
