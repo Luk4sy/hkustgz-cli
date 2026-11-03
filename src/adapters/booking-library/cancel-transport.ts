@@ -13,7 +13,10 @@ export function createLibraryCancelTransport(page:Page,lookup:(target:CancelTarg
     try{
      const u=new URL(request.url());
      const current=lookup(target);
-     if(done||forwarded||!live()||request.method()!=='POST'||u.origin!==LIBRARY_ORIGIN||u.pathname!=='/ic-web/reserve/delete'||u.searchParams.size!==1||u.searchParams.get('uuid')!==entry.uuid||(request.postData()??'')!==''||!current||current.uuid!==entry.uuid||current.account!==entry.account)throw Error();
+     const contentType=request.headers()['content-type']?.split(';',1)[0]?.trim().toLowerCase();
+     // Match the school client's single-field JSON serialization, including the exact bound UUID.
+     const bodyMatches=contentType==='application/json'&&request.postData()===JSON.stringify({uuid:entry.uuid});
+     if(done||forwarded||!live()||request.method()!=='POST'||u.href!==LIBRARY_ORIGIN+'/ic-web/reserve/delete'||!bodyMatches||!current||current.uuid!==entry.uuid||current.account!==entry.account)throw Error();
      forwarded=true;const response=await route.fetch({maxRedirects:0,maxRetries:0,timeout:Math.max(1,Math.min(30000,options.deadlineMs-Date.now()))});let value:unknown;try{value=await response.json();}catch{}
      const ack=z.object({code:z.literal(0),message:z.literal('删除成功'),data:z.null()}).safeParse(value);const confirmed=response.status()===200&&ack.success;
      finish(confirmed?{kind:'cancel_ack',authority:'m0_delete_success',reservationId:target.reservationId}:{kind:'unknown'});
@@ -25,7 +28,7 @@ export function createLibraryCancelTransport(page:Page,lookup:(target:CancelTarg
     const v=[...document.querySelectorAll('*')].map(e=>(e as any).__vue__).find(v=>v?.$axios?.post&&v?.$store?.state?.userInfo);
     if(!v||location.origin!=='https://libroombooking.hkust-gz.edu.cn'||v.$store.state.userInfo.accNo!==account)throw Error('Unsupported client');
     const base=new URL(v.$axios.defaults?.baseURL,location.href);if(base.origin!==location.origin||base.pathname.replace(/\/$/,'')!=='/ic-web')throw Error('Unsupported client');
-    await v.$axios.post('/reserve/delete',undefined,{params:{uuid}});
+    await v.$axios.post('/reserve/delete',{uuid});
    },entry).then(cancel,cancel);
    return await result;
   }catch{return{kind:'unknown'};}finally{clearTimeout(timer);options.signal?.removeEventListener('abort',cancel);done=true;}
