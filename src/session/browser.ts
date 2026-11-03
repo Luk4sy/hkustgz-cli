@@ -45,15 +45,17 @@ async function guardRedirects(context:BrowserContext,page:Page,allowed:ReadonlyS
  });
  await client.send('Fetch.enable',{patterns:[{urlPattern:'*',resourceType:'Document',requestStage:'Request'}]});
 }
-type Launch=(profile:string,options:SessionOptions&{timeout:number})=>Promise<BrowserContext>;
-export async function launchBrowser(profile:string,options:SessionOptions&{timeout:number},config:{platform?:NodeJS.Platform;env?:NodeJS.ProcessEnv;probe?:(path:string)=>Promise<boolean>}={}):Promise<BrowserContext>{
+type LaunchOptions=SessionOptions&{timeout:number;blockServiceWorkers?:boolean};
+type Launch=(profile:string,options:LaunchOptions)=>Promise<BrowserContext>;
+export async function launchBrowser(profile:string,options:LaunchOptions,config:{platform?:NodeJS.Platform;env?:NodeJS.ProcessEnv;probe?:(path:string)=>Promise<boolean>}={}):Promise<BrowserContext>{
  const {chromium}=await import('playwright');
  const platform=config.platform??process.platform;
  const executablePath=platform==='win32'&&options.browser==='chrome'?await findChrome(platform,config.env??process.env,config.probe):null;
  if(platform==='win32'&&options.browser==='chrome'&&!executablePath)throw new CliFailure('BROWSER_UNAVAILABLE');
  try{return await chromium.launchPersistentContext(profile,{...(options.browser==='chromium'?{}:{channel:options.browser==='edge'?'msedge':'chrome'}),
   ...executablePath?{executablePath}:{},
-  headless:options.headless,timeout:options.timeout,acceptDownloads:false,chromiumSandbox:true,
+  headless:options.headless,timeout:options.timeout,
+  ...(options.blockServiceWorkers?{serviceWorkers:'block' as const}:{}),acceptDownloads:false,chromiumSandbox:true,
   ignoreDefaultArgs:['--password-store=basic','--use-mock-keychain','--unsafely-disable-devtools-self-xss-warnings']});}
  catch(e){if(e instanceof Error&&e.name==='TimeoutError')throw new CliFailure('QUERY_TIMEOUT');throw new CliFailure('BROWSER_UNAVAILABLE');}
 };
@@ -80,7 +82,7 @@ export function createSessionRunner(paths:DataPaths,dependencies:{launch?:Launch
   try{
    await claimDirectory(profile);
    if(cancelled)throw cancelled;
-   context=await start(profile,{...options,timeout:Math.max(1,Math.min(30000,options.deadlineMs-Date.now()))});
+   context=await start(profile,{...options,...service==='booking-library'?{blockServiceWorkers:true}:{},timeout:Math.max(1,Math.min(30000,options.deadlineMs-Date.now()))});
    if(cancelled)throw cancelled;
    await context.route('**/*',async route=>{
     const req=route.request();

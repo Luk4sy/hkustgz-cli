@@ -11,3 +11,12 @@ export function normalizeIntent(value:unknown,now:number):LibraryBookingIntent{
  if(a<now||a>=b||school(a).slice(0,10)!==school(b).slice(0,10)||new Set(r.participantIds).size!==r.participantIds.length||r.purpose&&(/[\u0000-\u001f\u007f]|https?:\/\/|(?:token|password|cookie|secret)\s*[:=]/i.test(r.purpose)))throw new CliFailure('INVALID_ARGUMENT');
  return{roomId:r.roomId,startsAt:school(a),endsAt:school(b),participantIds:[...r.participantIds].sort((a,b)=>Number(a)-Number(b)),...r.purpose?{purpose:r.purpose}:{}};
 }
+
+/** Resolve the self alias only after the authenticated subject has been checked. */
+export function normalizePreviewInput(value:unknown,now:number):LibraryBookingIntent {
+ if(value && typeof value==='object' && 'participantIds' in value && Array.isArray(value.participantIds) &&
+    value.participantIds.length===1 && value.participantIds[0]==='self'){
+  return {...normalizeIntent({...value,participantIds:['1']},now),participantIds:['self']};
+ }
+ return normalizeIntent(value,now);
+}

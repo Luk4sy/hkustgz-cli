@@ -25,6 +25,7 @@ export function requireCapability(items: Capability[], id: string): Capability {
     case 'pending': throw new CliFailure('CAPABILITY_PENDING');
     case 'unsupported': throw new CliFailure('UNSUPPORTED_CAPABILITY');
     case 'disabled': throw new CliFailure('ADAPTER_CHANGED');
+    case 'experimental':
     case 'verified': return result.data;
   }
 }

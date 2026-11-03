@@ -73,3 +73,5 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 
 
 2026-11-02 Windows测试专项：用户提供另一位同学alpha.4报告并明确要求修复日期、symlink权限、POSIX路径三类测试问题和补全Windows CI，完成停审、不推送。仅调整测试夹具/辅助与CI；日期文件逐用例仅mock Date，目录Windows用junction，文件symlink缺权限仅非严格环境明确skip，CI HKUSTGZ_REQUIRE_SYMLINK_TESTS=1必须失败而非跳过。Windows CI启用全量Chrome npm test；额外修复同类Canvas路径。最终本机严格Chrome全量450/450、0跳过，build/typecheck/actionlint通过；Windows远端尚未运行。详见docs/acceptance/windows-test-portability.md。产品源码、能力、版本、已安装CLI/Skill和候选不变；图书馆Spec提案尚待用户审查。本轮本地提交后停下，不push/merge/publish。
+
+2026-11-02用户要求“解除pending”：按已展示Spec §5.1～§5.3的受限场景提案继续实现，不是对任意实际预约的授权。计划见docs/superpowers/plans/2026-11-02-library-operation-enablement-plan.md。每模块完成停审及安装封装分批约定继续；不推送，不自动真实写入，不将合成/只读证据说成真实CLI创建验收。

@@ -70,7 +70,7 @@ export async function getDoctorReport(deps:CliDependencies):Promise<DoctorReport
  if(!safe)add('browser','warn','BROWSER_NOT_CHECKED','Resolve the unsafe data directory before checking browser selection.');
  const skill=await probes.skill(deps.env??process.env);
  add('skill',skill.state==='current'?'pass':'warn',skill.state==='current'?'SKILL_CURRENT':skill.state==='outdated'?'SKILL_OUTDATED':skill.state==='absent'?'SKILL_ABSENT':'SKILL_NEEDS_ATTENTION',skill.state==='current'?'The installed management Skill matches this CLI.':'Inspect skill status and explicitly install or synchronize the bundled Skill; terminal queries do not require it.');
- const capabilities={verified:0,pending:0,unsupported:0,disabled:0};for(const item of deps.capabilities)capabilities[item.state]++;
+ const capabilities={verified:0,experimental:0,pending:0,unsupported:0,disabled:0};for(const item of deps.capabilities)capabilities[item.state]++;
  const {osRelease,...base}=runtime;
  return DoctorReportSchema.parse({cliVersion:version,...base,...osRelease&&/^\d+(?:\.\d+){1,3}$/.test(osRelease)?{osRelease}:{},checks,capabilities});
 }
