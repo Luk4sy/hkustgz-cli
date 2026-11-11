@@ -16,6 +16,8 @@ Git 文档基线已建立，工作分支 feat/cli-foundation。按用户指定�
 
 先完成本轮功能开发与审查，再更新封装、Skill、帮助和打包验证。本地commit、推送GitHub、合并主分支和发布分别处理；用户后续明确要求同步时再push或创建/合并PR，不因已有origin自动推送。保留现有提交历史，不擅自压缩或改写已共享历史。
 
+每次交付项目更新时，先核对并更新 README.md 中受影响的版本、能力范围和使用示例，再提交该批更新。README 引用的版本徽标和安装指南也应与实际交付版本一致。
+
 ## CLI 与 Skill 版本同步（2026-10-30 用户约定）
 
 后续封装将 CLI 与随包 Skill 作为同一版本交付，不能只迭代 CLI 而沿用过时 Skill。当前 alpha 阶段使用精确匹配：package.json、package-lock.json 根包版本、Skill metadata.version 和 compatible_cli 必须一致；schemaVersion 单独表示输出契约版本，不随每次发行机械递增。
@@ -67,3 +69,11 @@ Agent 每次开始本项目查询工作流应先检查实际执行的 CLI --vers
 2026-11-01用户已审查通过M5 bff9796＋d3331d7并保留两项轻微建议，之后明确要求继续。按Spec下一步已将已审查alpha.4候选离线同步到现有日常Node24 CLI，再dry-run并显式同步Codex归属Skill。实际CLI/Skill均alpha.4、status=current，五个文件匹配随包版本，doctor五项pass，24项中17verified/7pending不变。未改产品代码或候选、未访问真实账号/预约/取消、未清理登录态或未决状态、未push/merge/publish。记录见docs/acceptance/alpha4-local-sync.md；客户端自动发现/热刷新及真实校园查询未单独验收。M0三项缺口继续保留，不能因M5实现或安装完成启用学校写入。
 
 2026-11-01文档与推送：用户补充上一版本alpha.3已在Windows验证，alpha.4 Windows升级/回归尚未记录，具体系统/逐项范围待补，不自动计为第二名学生验收。用户明确要求更新Markdown并push，已同步README、安装和Windows记录的当前状态；推送当前feat/cli-foundation分支，未授权自动合并main或npm发布。批准的alpha.4 tgz/已安装CLI/Skill保持原内容，两项轻微建议继续保留。本次仅仓库文档变更，不重打包覆盖已审查产物。
+
+
+2026-11-02当前用户授权：检查专用登录会话能读取的账号权限/规则并修订Spec，完成后停下审查。新增调研docs/research/library-booking-account-rules-2026-11-02.md；第二阶段Spec §5.1～§5.3提出“可读条件必检、学校最终裁决项明示、未知副作用阻断”的受限场景门槛，尚待用户批准。M0未知位/完整额度/维护及临界证据不伪造关闭，真实新路线和alpha.4实现保持原样。本轮只读、无实际预约/取消，无产品代码/Skill/候选/安装更新，不push/merge/publish；不得将本次文档提案当成启用许可。
+
+
+2026-11-02 Windows测试专项：用户提供另一位同学alpha.4报告并明确要求修复日期、symlink权限、POSIX路径三类测试问题和补全Windows CI，完成停审、不推送。仅调整测试夹具/辅助与CI；日期文件逐用例仅mock Date，目录Windows用junction，文件symlink缺权限仅非严格环境明确skip，CI HKUSTGZ_REQUIRE_SYMLINK_TESTS=1必须失败而非跳过。Windows CI启用全量Chrome npm test；额外修复同类Canvas路径。最终本机严格Chrome全量450/450、0跳过，build/typecheck/actionlint通过；Windows远端尚未运行。详见docs/acceptance/windows-test-portability.md。产品源码、能力、版本、已安装CLI/Skill和候选不变；图书馆Spec提案尚待用户审查。本轮本地提交后停下，不push/merge/publish。
+
+2026-11-02用户要求“解除pending”：按已展示Spec §5.1～§5.3的受限场景提案继续实现，不是对任意实际预约的授权。计划见docs/superpowers/plans/2026-11-02-library-operation-enablement-plan.md。每模块完成停审及安装封装分批约定继续；不推送，不自动真实写入，不将合成/只读证据说成真实CLI创建验收。

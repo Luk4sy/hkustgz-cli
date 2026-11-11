@@ -11,7 +11,7 @@ for (const mode of ['rebind', 'replace']) {
   const browser = await chromium.launch({channel:'chrome',headless:true});
   try {
    const page = await browser.newPage();
-   page.setDefaultTimeout(1500);
+   page.setDefaultTimeout(5000);
    const requestedFloors:string[] = [];
    await page.route('**/*', route => {
     const url = new URL(route.request().url());
@@ -36,12 +36,12 @@ for (const mode of ['rebind', 'replace']) {
    });
    await page.goto(LIBRARY_ORIGIN+'/#/ic/researchSpace/2/1');
    const reader=createLibraryPageReader(page,[{id:'1',name:'Floor 1'},{id:'2',name:'Floor 2'}]);
-   const rooms=await queryLibraryRooms({},{refresh:false,deadlineMs:Date.now()+5000},reader);
+   const rooms=await queryLibraryRooms({},{refresh:false,deadlineMs:Date.now()+12000},reader);
    assert.equal(rooms.meta.coverage,'complete',JSON.stringify(requestedFloors));
    assert.deepEqual(rooms.data.items.map(r=>r.floorId),['1','2']);
    assert.deepEqual(requestedFloors,['1','2'],'one request per target; never invoke a stale component');
    const {queryLibraryAvailability}=await import('../src/adapters/booking-library/index.js');
-   const availability=await queryLibraryAvailability({roomId:'20',date:'2026-11-01'},{refresh:false,deadlineMs:Date.now()+5000},reader);
+   const availability=await queryLibraryAvailability({roomId:'20',date:'2026-11-01'},{refresh:false,deadlineMs:Date.now()+12000},reader);
    assert.equal(availability.meta.coverage,'complete');
    assert.equal(availability.data.roomId,'20');
    assert.deepEqual(requestedFloors,['1','2','1','2'],'also wait when switching back to the first floor');

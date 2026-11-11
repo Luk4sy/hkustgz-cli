@@ -34,7 +34,7 @@ test('logout refuses busy and foreign profiles, then clears only owned browser d
  const chrome=join(paths.profile,'chrome');await claimDirectory(chrome);await writeFile(join(chrome,'synthetic-cookie'),'secret');
  const lock=await acquireProfileLock(chrome);const env={HKUSTGZ_CLI_HOME:paths.root};
  assert.equal((await executeCommand(['auth','logout'],{env})).exitCode,9);assert.equal(await readFile(join(chrome,'synthetic-cookie'),'utf8'),'secret');await lock.release();
- const foreign=join(root,'personal');await mkdir(foreign);await writeFile(join(foreign,'keep'),'keep');await symlink(foreign,join(paths.profile,'edge'));
+ const foreign=join(root,'personal');await mkdir(foreign);await writeFile(join(foreign,'keep'),'keep');await symlink(foreign,join(paths.profile,'edge'),process.platform==='win32'?'junction':'dir');
  assert.equal((await executeCommand(['auth','logout'],{env})).exitCode,2);assert.equal(await readFile(join(chrome,'synthetic-cookie'),'utf8'),'secret');await rm(join(paths.profile,'edge'));
  const result=await executeCommand(['auth','logout'],{env});assert.equal(result.exitCode,0,result.stdout);await assert.rejects(access(chrome));assert.equal(await readFile(join(foreign,'keep'),'utf8'),'keep');assert.equal(JSON.parse(result.stdout).data.schoolSessionsRevoked,false);
 });

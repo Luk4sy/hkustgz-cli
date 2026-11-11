@@ -46,14 +46,16 @@ jobs:
         run: git diff --check
 
   windows:
-    name: Windows / Node 24 / contracts and installation
+    name: Windows / Node 24 / full Chrome suite and installation
     runs-on: windows-2025
-    timeout-minutes: 25
+    timeout-minutes: 35
     defaults:
       run:
         shell: bash
     env:
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      HKUSTGZ_TEST_BROWSER: '1'
+      HKUSTGZ_REQUIRE_SYMLINK_TESTS: '1'
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -75,7 +77,12 @@ jobs:
           JS
       - run: npm run build
       - run: npm run typecheck
-      - name: Windows contracts, packaging and upgrade
-        run: node --import tsx --test tests/windows.test.ts tests/cli.test.ts tests/skill-contract.test.ts tests/package.test.ts tests/package-install.test.ts
+      # No subset: browser races, operation state, unsafe paths, packaging and upgrade
+      # all run here. Missing file-symlink privilege is a failure, never a silent skip.
+      - name: Full Windows regression including Chrome and file-link safety
+        # Run the full suite serially to avoid overlapping Chrome processes on the Windows runner.
+        run: node --import tsx --test --test-concurrency=1 tests/*.test.ts
+      - name: Check tracked whitespace
+        run: git diff --check
       - name: Windows Chrome loopback smoke (no school access)
         run: node bin/windows-smoke.mjs

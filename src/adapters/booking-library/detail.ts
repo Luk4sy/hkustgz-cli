@@ -8,6 +8,8 @@ import {LIBRARY_ORIGIN,LIBRARY_URL} from './manifest.js';
 import {LibraryIdentityReadError} from './identity.js';
 export interface CreationExpectation {participantIds:readonly string[];purpose:string|null}
 export interface LibraryInspectionReader {
+ resolveSelf?:()=>string;
+ operationContext?:(participantIds:readonly string[],signal:AbortSignal)=>Promise<unknown>;
  /** Publish private page handles only after all detail/page validation succeeds. */
  acceptPage?:(value:unknown)=>void;
  cancellationBinding?:(target:CancelTarget,secret:Uint8Array)=>string|undefined;
@@ -47,6 +49,6 @@ export async function queryLibraryDetail(input:{id:string;range:DateRange;expect
  // Only ordinary list failures may retain previously verified records.
  if(!boundaryIdentityVerified||!reader.identityVerified)throw new CliFailure(collected.failure?.code??'ADAPTER_CHANGED');
  const match=collected.items.find(x=>x.id===input.id)??null;
- const result=buildQueryResult({...collected,items:match?[match]:[]},{schemaVersion:'1',command:'booking detail',service:'booking-library',sourceUrl:LIBRARY_URL,fetchedAt:new Date().toISOString(),timezone:'Asia/Shanghai',readMethod:'response',cache:{hit:false,storedAt:null},warnings:[{code:'SCOPED_DETAIL',message:'Only the requested date window and normal visible status options were searched. Absence does not prove cancellation or nonexistence.'},{code:'BOOKING_RULES_UNKNOWN',message:'Current cancellation permission is not established; no write action is enabled.'}]});
+ const result=buildQueryResult({...collected,items:match?[match]:[]},{schemaVersion:'1',command:'booking detail',service:'booking-library',sourceUrl:LIBRARY_URL,fetchedAt:new Date().toISOString(),timezone:'Asia/Shanghai',readMethod:'response',cache:{hit:false,storedAt:null},warnings:[{code:'SCOPED_DETAIL',message:'Only the requested date window and normal visible status options were searched. Absence does not prove cancellation or nonexistence.'},{code:'BOOKING_RULES_UNKNOWN',message:'Use a separate cancellation preview to check the current permission and exact target.'}]});
  return{...result,data:{id:input.id,from:range.from,to:range.to,sourceStatusScope:'visible_options',statusFilter:filter??null,record:match,absence:match?null:collected.coverage==='complete'?'not_found_in_scope':'unknown'}};
 }

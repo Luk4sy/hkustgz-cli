@@ -13,7 +13,7 @@ async function json(response:Response):Promise<any>{
  if(body?.code===300)throw new CliFailure('LOGIN_REQUIRED');if(body?.code!==0)throw new CliFailure('ADAPTER_CHANGED');return body;
 }
 export function createLibraryInspectionReader(page:Page):LibraryInspectionReader {
- let binding:LibraryIdentity|undefined;let lastRequest=0;let identityVerified=false;const targets=new Map<string,{target:CancelTarget;uuid:string;account:number}>();
+ let binding:LibraryIdentity|undefined;let accountState:{account:number;status:unknown;localstatus:unknown}|undefined;let lastRequest=0;let identityVerified=false;const targets=new Map<string,{target:CancelTarget;uuid:string;account:number}>();
  const lookup=(target:CancelTarget)=>{if(!identityVerified||!binding||new URL(page.url()).origin!==LIBRARY_ORIGIN)return;const entry=targets.get(target.reservationId);if(!entry||!binding.owns(entry.account)||JSON.stringify(entry.target.roomIds)!==JSON.stringify(target.roomIds)||Date.parse(entry.target.startsAt)!==Date.parse(target.startsAt)||Date.parse(entry.target.endsAt)!==Date.parse(target.endsAt)||entry.target.memberCount!==target.memberCount)return;return entry;};
  const pendingPages=new WeakMap<object,()=>void>();
  const submitCancel=createLibraryCancelTransport(page,lookup);
@@ -29,10 +29,18 @@ export function createLibraryInspectionReader(page:Page):LibraryInspectionReader
   await page.evaluate(()=>{const store=[...document.querySelectorAll('*')].map(e=>(e as any).__vue__?.$store).find(s=>s?._actions?.disCaseUserInfo);void store.dispatch('disCaseUserInfo').catch(()=>{});});
   const body=await json(await waiting);lastRequest=Date.now();check(signal);
   if(binding)binding.assertFresh(body);else binding=bindLibraryIdentity(body);
-  identityVerified=true;
+  accountState={account:body.data.accNo,status:body.data.status,localstatus:body.data.localstatus};identityVerified=true;
   }catch(failure){targets.clear();throw new LibraryIdentityReadError(failure);}
  };
- return{acceptPage(value){if(value&&typeof value==='object'){const commit=pendingPages.get(value);pendingPages.delete(value);commit?.();}},submitCancel,cancellationBinding(target,secret){const entry=lookup(target);if(!entry||secret.byteLength<32)return;return createHmac('sha256',secret).update(JSON.stringify({uuid:entry.uuid,target:entry.target})).digest('hex');},fingerprint(secret){if(!identityVerified||!binding)throw new CliFailure('LOGIN_REQUIRED');return binding.fingerprint(secret);},get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal,expectation)=>{
+ return{resolveSelf(){if(!identityVerified||!accountState)throw new CliFailure('LOGIN_REQUIRED');return String(accountState.account);},operationContext:async(participantIds,signal)=>{
+  await assertIdentity(signal);await pace(signal);
+  const waiting=page.waitForResponse(r=>r.request().method()==='GET'&&new URL(r.url()).origin===LIBRARY_ORIGIN&&new URL(r.url()).pathname==='/ic-web/reserve/punishInfo');void waiting.catch(()=>{});
+  await page.evaluate(()=>{const store=[...document.querySelectorAll('*')].map(e=>(e as any).__vue__?.$store).find(s=>s?._actions?.disReservePunishInfo);if(!store)throw Error('Unsupported account reader');void store.dispatch('disReservePunishInfo').catch(()=>{});});
+  const response=await json(await waiting);lastRequest=Date.now();check(signal);if(!Array.isArray(response.data))throw new CliFailure('ADAPTER_CHANGED');
+  const config=await page.evaluate(()=>{const store=[...document.querySelectorAll('*')].map(e=>(e as any).__vue__?.$store).find(s=>s?.state?.userInfo);if(!store)throw Error('Unsupported configuration');return Object.fromEntries(['resvTheme','resvthememust','resvthemefix','resvCode','resvThemeIgnoreNumLimit','cancelTimeReduceMinutes'].map(k=>[k,store.state.config?.[k]]));});
+  await assertIdentity(signal);check(signal);
+  return{selfOnly:participantIds.length===0||participantIds.length===1&&binding!.owns(Number(participantIds[0])),enabled:accountState?.status===1&&accountState?.localstatus===1,punishmentCount:response.data.length,config};
+ },acceptPage(value){if(value&&typeof value==='object'){const commit=pendingPages.get(value);pendingPages.delete(value);commit?.();}},submitCancel,cancellationBinding(target,secret){const entry=lookup(target);if(!entry||secret.byteLength<32)return;return createHmac('sha256',secret).update(JSON.stringify({uuid:entry.uuid,target:entry.target})).digest('hex');},fingerprint(secret){if(!identityVerified||!binding)throw new CliFailure('LOGIN_REQUIRED');return binding.fingerprint(secret);},get identityVerified(){return identityVerified;},assertIdentity,page:async(range,p,signal,expectation)=>{
   if(p===1)targets.clear();check(signal);if(!binding)throw new CliFailure('LOGIN_REQUIRED');
   if(new URL(page.url()).hash!=='#/ic/userinfo')await page.goto(LIBRARY_ORIGIN+'/#/ic/userinfo',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>[...document.querySelectorAll('*')].some(e=>typeof (e as any).__vue__?.initTable==='function'&&(e as any).__vue__?.search?.date&&Array.isArray((e as any).__vue__?.statusOption)));

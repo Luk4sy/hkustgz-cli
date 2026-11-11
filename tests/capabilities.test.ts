@@ -20,3 +20,12 @@ test('capability state blocks reads with the documented error', () => {
 test('missing capability cannot authorize a read', () => {
   assert.throws(() => requireCapability([], 'sis.timetable'));
 });
+
+test('library operation capabilities are enabled experimentally without claiming live CLI verification',async()=>{
+ const {DEFAULT_CAPABILITIES}=await import('../src/core/capabilities.js');
+ for(const action of ['detail','preview','create','cancel-preview','cancel']){
+  const cap=requireCapability(DEFAULT_CAPABILITIES,'booking.library.'+action);
+  assert.equal(cap.state,'experimental');assert.match(cap.reason!,/restricted|experimental/i);assert.ok(cap.evidenceId);
+ }
+ assert.equal(requireCapability(DEFAULT_CAPABILITIES,'booking.library.rooms').state,'verified');
+});

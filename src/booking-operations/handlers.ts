@@ -5,7 +5,7 @@ import type {CommandHandler,QueryOptions} from '../core/contracts.js';
 import {CliFailure} from '../core/errors.js';
 import {resolveDataPaths} from '../session/paths.js';
 import {withOperationStore} from './store.js';
-import {normalizeIntent} from './intent.js';
+import {normalizePreviewInput} from './intent.js';
 import {preparePreview,inspectOperation,operationFailure,type OperationSession} from './workflow.js';
 export async function readStdin(maxBytes:number):Promise<string>{
  let size=0;const chunks:Buffer[]=[];
@@ -18,7 +18,7 @@ export function createOperationHandlers(config:{session?:OperationSession}={}):R
   if(action==='preview'){
    if(args.input!=='-')throw new CliFailure('INVALID_ARGUMENT');const text=await(deps.readInput??readStdin)(65536);
    if(Buffer.byteLength(text)>65536)throw new CliFailure('INVALID_ARGUMENT');
-   try{intent=normalizeIntent(JSON.parse(text),deps.now());}catch{throw new CliFailure('INVALID_ARGUMENT');}
+   try{intent=normalizePreviewInput(JSON.parse(text),deps.now());}catch{throw new CliFailure('INVALID_ARGUMENT');}
   }
   const paths=resolveDataPaths(deps.env??process.env);
   const options:QueryOptions={refresh:false,deadlineMs:Number(args.deadlineMs)};

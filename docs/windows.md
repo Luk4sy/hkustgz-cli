@@ -1,6 +1,6 @@
 # Windows 使用与验证（alpha.4）
 
-本指南面向Windows11＋Google Chrome稳定版＋Node24＋Codex。用户已确认上一版本alpha.3完成Windows验证；当前alpha.4的Windows升级与回归验证尚未记录。上一版本的具体系统版本及命令覆盖待补，不自动扩展为alpha.4全部功能已通过。
+本指南面向Windows11＋Google Chrome稳定版＋Node24＋Codex。已有同学报告alpha.4的CLI/Skill升级、四项Booking真实查询及安装专项验证通过；完整套件仍暴露测试可移植性问题，本轮修复及Windows完整CI待后续推送验证。具体范围见[本轮验证记录](acceptance/windows-test-portability.md)，不宣称alpha.4全部功能已通过。
 
 Windows10/Server、WSL、Edge和其他Agent不在本次支持目标内。详细版本记录见[Windows验收记录](acceptance/windows-alpha.md)。
 

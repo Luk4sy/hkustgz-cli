@@ -21,3 +21,13 @@ test('source preview must describe the exact canonical intent before confirmatio
 test('an intent that becomes past during source checks cannot produce a ready preview',async()=>fixture(async(s,m)=>{
  let clock=now;await assert.rejects(m.preparePreview(s,async(_k:any,_o:any,run:any)=>run(source({createAssessment:async()=>{clock=Date.parse(intent.startsAt)+1;return assessment;}})),{action:'create',intent},options(),()=>clock),{code:'INVALID_ARGUMENT'});
 }));
+
+test('self alias binds the authenticated participant and shares the existing duplicate guard',async()=>fixture(async(store,workflow)=>{
+ const session=async(_secret:any,_options:any,run:any)=>run(source({resolveSelf:()=>intent.participantIds[0]}));
+ const preview=await workflow.preparePreview(store,session,{action:'create',intent:{...intent,participantIds:['self']}},options(),()=>now);
+ assert.equal(preview.ok,true);
+ assert.deepEqual(preview.data.preview.participantIds,intent.participantIds);
+ const duplicate=await workflow.preparePreview(store,session,{action:'create',intent},options(),()=>now);
+ assert.equal(duplicate.error.code,'DUPLICATE_INTENT');
+ assert.equal(duplicate.data.operationId,preview.data.operationId);
+}));

@@ -27,7 +27,8 @@ test('installed_bin_is_cwd_independent and install_has_no_campus_or_client_side_
     const result=JSON.parse(run(bin,['capabilities'],cwd,env));
     assert.equal(result.data.items.length,24);
     assert.equal(result.data.items.filter((v:{state:string})=>v.state==='verified').length,17);
-    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='pending').length,7);
+    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='pending').length,2);
+    assert.equal(result.data.items.filter((v:{state:string})=>v.state==='experimental').length,5);
     assert.equal(existsSync(events),false);
     assert.deepEqual(tree(home),before);
     assert.equal(realpathSync(JSON.parse(run(bin,['skill','path'],cwd,env)).data.path),realpathSync(join(installed,'skills/hkustgz-cli')));
@@ -83,7 +84,7 @@ test('accepted alpha3 source upgrades to the M5 candidate without rewriting Skil
   for(const file of ['operations/state.json','operations/key','profiles/chrome/session-canary']){const path=join(home,'campus',file);mkdirSync(join(path,'..'),{recursive:true});writeFileSync(path,'SYNTHETIC_UNRESOLVED_DO_NOT_RESET');}
   install(b.artifact);assert.equal(run(bin,['--version'],home,env).trim(),current);assert.equal(readFileSync(join(home,'codex/skills/hkustgz-cli/SKILL.md'),'utf8'),oldSkill);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'outdated');
   assert.match(run(bin,['booking','cancel','--help'],home,env),/--operation/);const caps=JSON.parse(run(bin,['capabilities'],home,env)).data.items;assert.equal(caps.length,24);assert.equal(caps.filter((x:any)=>x.state==='verified').length,17);
-  const pending=spawnSync(process.execPath,[bin,'booking','cancel-preview','--provider','library','--id','7'],{cwd:home,env,encoding:'utf8'});assert.equal(pending.status,8,pending.stdout);assert.equal(JSON.parse(pending.stdout).error.code,'CAPABILITY_PENDING');
+  const pending=spawnSync(process.execPath,[bin,'sis','history'],{cwd:home,env,encoding:'utf8'});assert.equal(pending.status,8,pending.stdout);assert.equal(JSON.parse(pending.stdout).error.code,'CAPABILITY_PENDING');
   run(bin,['skill','install','--dry-run'],home,env);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'outdated');run(bin,['skill','install'],home,env);assert.equal(JSON.parse(run(bin,['skill','status'],home,env)).data.state,'current');
   for(const file of ['operations/state.json','operations/key','profiles/chrome/session-canary'])assert.equal(readFileSync(join(home,'campus',file),'utf8'),'SYNTHETIC_UNRESOLVED_DO_NOT_RESET');
  }finally{rmSync(old.root,{recursive:true,force:true});rmSync(next.root,{recursive:true,force:true});}
