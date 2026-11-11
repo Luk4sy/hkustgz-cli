@@ -19,7 +19,7 @@ test('unowned data and symlink homes are refused without changing their files', 
   await assert.rejects(ensureDataPaths(resolveDataPaths({HKUSTGZ_CLI_HOME:root})),{code:'INVALID_DATA_HOME'});
   assert.equal(await readFile(join(root,'personal.txt'),'utf8'),'keep');
   const link=root+'-link';await symlink(root,link,process.platform==='win32'?'junction':'dir');t.after(()=>rm(link,{force:true}));
-  await assert.rejects(ensureDataPaths(resolveDataPaths({HKUSTGZ_CLI_HOME:link})),{code:'INVALID_DATA_HOME'});
+  await assert.rejects(async()=>ensureDataPaths(resolveDataPaths({HKUSTGZ_CLI_HOME:link})),{code:'INVALID_DATA_HOME'});
 });
 test('same profile rejected as busy, independent browser profiles remain separate',async t=>{
   const root=await mkdtemp(join(tmpdir(),'hkust-lock-'));t.after(()=>rm(root,{recursive:true,force:true}));

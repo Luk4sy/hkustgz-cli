@@ -80,7 +80,8 @@ jobs:
       # No subset: browser races, operation state, unsafe paths, packaging and upgrade
       # all run here. Missing file-symlink privilege is a failure, never a silent skip.
       - name: Full Windows regression including Chrome and file-link safety
-        run: npm test
+        # Run the full suite serially to avoid overlapping Chrome processes on the Windows runner.
+        run: node --import tsx --test --test-concurrency=1 tests/*.test.ts
       - name: Check tracked whitespace
         run: git diff --check
       - name: Windows Chrome loopback smoke (no school access)

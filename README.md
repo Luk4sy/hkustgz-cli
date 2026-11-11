@@ -184,7 +184,7 @@ npm pack
 
 升级回归测试会读取 alpha.3 提交 `3be2d3b`，浅克隆需先补齐 Git 历史。安装与升级测试使用临时目录，不更新日常 CLI / Skill，也不访问学校。
 
-[CI 配置](.github/workflows/ci.yml)包含 macOS 的 Chrome 合成测试、Windows 的命令契约与安装升级检查，以及本机回环页面测试；这些检查不替代学校账号的实测。
+[CI 配置](.github/workflows/ci.yml)包含 macOS 的 Chrome 合成测试、Windows 的完整 Chrome 回归、命令契约与安装升级检查，以及本机回环页面测试；这些检查不替代学校账号的实测。
 
 本地安装包和校验文件由维护者提供，`artifacts/` 不纳入 Git；GitHub 源码更新不等于 npm 发布。
 
