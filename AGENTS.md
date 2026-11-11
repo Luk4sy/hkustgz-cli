@@ -16,6 +16,8 @@ Git 文档基线已建立，工作分支 feat/cli-foundation。按用户指定�
 
 先完成本轮功能开发与审查，再更新封装、Skill、帮助和打包验证。本地commit、推送GitHub、合并主分支和发布分别处理；用户后续明确要求同步时再push或创建/合并PR，不因已有origin自动推送。保留现有提交历史，不擅自压缩或改写已共享历史。
 
+每次交付项目更新时，先核对并更新 README.md 中受影响的版本、能力范围和使用示例，再提交该批更新。README 引用的版本徽标和安装指南也应与实际交付版本一致。
+
 ## CLI 与 Skill 版本同步（2026-10-30 用户约定）
 
 后续封装将 CLI 与随包 Skill 作为同一版本交付，不能只迭代 CLI 而沿用过时 Skill。当前 alpha 阶段使用精确匹配：package.json、package-lock.json 根包版本、Skill metadata.version 和 compatible_cli 必须一致；schemaVersion 单独表示输出契约版本，不随每次发行机械递增。

@@ -7,7 +7,7 @@
 <p align="center"><strong>把港科广校园信息带进终端与 Codex。</strong></p>
 
 <p align="center">
-  <a href="docs/installation.md"><img src="docs/assets/badges/version.svg" alt="版本 0.1.0-alpha.4"></a>
+  <a href="docs/installation.md"><img src="docs/assets/badges/version.svg" alt="版本 0.1.0-alpha.6"></a>
   <a href="LICENSE"><img src="docs/assets/badges/license.svg" alt="MIT 许可证"></a>
   <a href="docs/installation.md"><img src="docs/assets/badges/node.svg" alt="需要 Node.js 24"></a>
   <a href="#codex-集成"><img src="docs/assets/badges/codex.svg" alt="提供 Codex Skill"></a>
@@ -26,7 +26,7 @@
 hkustgz-cli catalog search AIAA5032 --format table
 ```
 
-> **Alpha 阶段**：当前版本为 `0.1.0-alpha.4`，CLI 与 Skill 已完成本地同步，尚未发布到 npm。macOS + Chrome 已有实测记录；Windows 上一版本 alpha.3 已验证，alpha.4 的 Windows 升级与回归验证待完成。Linux 暂不支持。
+> **Alpha 阶段**：当前版本为 `0.1.0-alpha.6`，CLI 与 Skill 已完成本地同步，尚未发布到 npm。macOS + Chrome 已有实测记录；Windows 已有旧版验证记录，alpha.6 的 Windows 升级和回归待验证。Linux 暂不支持。
 
 ## 核心能力
 
@@ -39,7 +39,7 @@ hkustgz-cli catalog search AIAA5032 --format table
 | **Booking / Library** | 查预约入口、图书馆房间、指定日开放与占用、本人预约记录 | 可查询，不保证可订；本人记录仅覆盖来源默认状态 |
 | **Codex** | 用自然语言调用 CLI，解释结果与查询范围 | 提供随包 Skill，需显式安装并匹配版本 |
 
-目前有 **17 项已验证的校园查询**。已安装的 alpha.4 仍有 7 项 pending。待审查的 alpha.5 源码将图书馆详情、创建预览、创建、取消预览和取消列为 experimental。创建限本人单人和已取证的四楼研修间规则族。SIS 课程历史和成绩保持 pending。
+目前有 **17 项已验证的校园查询**和 **5 项图书馆实验能力**，包括详情、创建预览、创建、取消预览和取消。四楼 403 已完成一次本人单人预约和取消实测，适用范围为已验证的四楼研修间规则。多人预约暂缓，SIS 课程历史和成绩仍为 `pending`。
 
 其他预约供应商目前只提供入口信息。已验证表示读取路线有验证记录，不保证所有账号权限或来源覆盖都相同。
 
@@ -53,10 +53,10 @@ hkustgz-cli capabilities --format table
 
 ### 1. 准备与安装
 
-需要 **Node.js 24.x、npm 和 Google Chrome**。取得维护者提供的 `0.1.0-alpha.4` 安装包及SHA-256校验值，核对文件后从本地绝对路径安装：
+需要 **Node.js 24.x、npm 和 Google Chrome**。取得维护者提供的 `0.1.0-alpha.6` 安装包及SHA-256校验值，核对文件后从本地绝对路径安装：
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.4.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.6.tgz'
 hkustgz-cli --version
 hkustgz-cli doctor
 ```
@@ -101,7 +101,7 @@ hkustgz-cli canvas courses --format table
 hkustgz-cli canvas assignments --course '<课程ID>' --format table
 ```
 
-### 5. 查询图书馆房间
+### 5. 查询和预约图书馆房间
 
 先查看房间目录，使用返回的房间 ID 查询指定日期的开放与占用情况：
 
@@ -136,6 +136,7 @@ hkustgz-cli skill status
 $hkustgz-cli 查一下 AIAA5032 的课程信息
 $hkustgz-cli 看看我今天的课表
 $hkustgz-cli 列出图书馆的房间
+$hkustgz-cli 帮我预览图书馆四楼 403 的本人预约
 ```
 
 私人查询仍需本人在学校认证窗口登录。**CLI 与 Skill 版本必须精确一致**；升级 CLI 后，再运行 `skill install --target codex` 同步。`skill status` 检查安装文件状态，不代表当前 Codex 会话已经发现 Skill；浏览器执行还取决于客户端权限，不能以安装成功代替实际调用验证。
@@ -144,7 +145,7 @@ $hkustgz-cli 列出图书馆的房间
 
 **本机与认证。** 使用专用浏览器会话，不读取日常浏览器的 Cookie。登录由本人完成，无需在聊天中提供密码、验证码或 Token。会话默认保存在 `~/.hkustgz-cli`，同一会话目录的浏览器命令需串行运行。`hkustgz-cli auth logout` 清理本工具保存的登录会话，不代表学校所有设备全局退出。
 
-**校园业务边界。** 当前可用的学校业务均为只读。图书馆创建和取消尚未开放，不能将实现完成当成已经可用；后续启用也需分别展示预览、取得对该次操作的明确确认，结果未知时不能重复发送。不选退课、不提交作业、不修改公告已读或 Planner 状态。Skill 安装与卸载属于显式的本地文件操作。
+**图书馆预约和取消。** 创建和取消各有一份预览，各需确认后提交一次。学校最终校验额度、权限和冲突。结果为 `unknown` 时，用 `booking operation <操作ID> --refresh` 只读核对。完整流程见[图书馆操作示例](skills/hkustgz-cli/references/examples.md)。
 
 **按来源理解结果。**
 
@@ -195,7 +196,7 @@ npm pack
 | 命令与结果 | [完整命令参考](skills/hkustgz-cli/references/commands.md) · [CLI 输出协议](docs/cli-contract.md) · [错误处理](docs/errors.md) |
 | Codex 与隐私 | [随包 Skill 指引](skills/hkustgz-cli/SKILL.md) · [隐私说明](skills/hkustgz-cli/references/privacy.md) |
 | 开发与设计 | [技术方案](docs/superpowers/specs/2026-10-26-hkustgz-cli-design.md) · [开发 Spec](docs/superpowers/specs/2026-10-26-hkustgz-cli-development-spec.md) · [开发计划](docs/superpowers/plans/2026-10-26-hkustgz-cli-development-plan.md) |
-| 第二阶段 | [图书馆预约 Spec](docs/superpowers/specs/2026-11-01-library-booking-phase-2-spec.md) · [M5 实现验收](docs/acceptance/library-booking-phase-2-m5.md) · [alpha.4 本地同步](docs/acceptance/alpha4-local-sync.md) |
+| 第二阶段 | [图书馆预约 Spec](docs/superpowers/specs/2026-11-01-library-booking-phase-2-spec.md) · [M5 实现验收](docs/acceptance/library-booking-phase-2-m5.md) · [alpha.6 实测验收](docs/acceptance/library-booking-alpha6-live.md) |
 | 查询验收 | [Catalog](docs/acceptance/catalog.md) · [SIS](docs/acceptance/sis.md) · [Portal](docs/acceptance/portal.md) · [Canvas](docs/acceptance/canvas.md) · [Booking / Library](docs/acceptance/booking-library.md) |
 | Alpha 与平台验证 | [交付准备](docs/acceptance/alpha-release.md) · [独立学生验收](docs/acceptance/alpha-students.md) · [Codex 调用记录](docs/acceptance/alpha-agent.md) · [Windows 验证记录](docs/acceptance/windows-alpha.md) |
 

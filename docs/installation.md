@@ -1,13 +1,13 @@
 # Alpha 安装与使用
 
-当前版本0.1.0-alpha.4，CLI/随包Skill已获用户审查并完成维护者本地同步，尚未上传npm。macOS已有验收证据；Windows上一版本alpha.3已获用户确认验证，alpha.4的Windows升级与回归结果待补。跨账号独立试用以对应版本的记录为准，其他平台未验收。许可证为MIT。
+当前本地候选为 `0.1.0-alpha.6`，CLI 与随包 Skill 已完成本地同步和隔离安装验证，尚未上传 npm。macOS 已验证四楼 403 本人单人预约和取消，alpha.6 的 Windows 升级和回归待验证。许可证为 MIT。
 
 ## 安装明确版本产物
 
 在维护者确认分发后，取得对应版本tgz及SHA256，从本机绝对路径安装：
 
 ```bash
-npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.4.tgz'
+npm install --global '/absolute/path/hkustgz-cli-0.1.0-alpha.6.tgz'
 hkustgz-cli --version
 hkustgz-cli doctor
 hkustgz-cli --help
@@ -81,10 +81,10 @@ Windows用户使用npm.cmd/hkustgz-cli.cmd入口，完整PowerShell与loopback�
 
 2026-11-01个人本地alpha.3同步：CLI与Skill精确同版本，包含已验收的17项只读路线及图书馆规则/状态限制指引。旧alpha.1/alpha.2候选保留；本次不是npm发布、Windows真机或第二位学生验收。
 
-## alpha.4 安装与操作状态
+## alpha.6 安装与操作状态
 
-alpha.4实现与候选已获用户审查通过，维护者日常CLI及Codex归属Skill均已同步alpha.4、status=current。当前保留17项已验证查询；SIS历史/成绩及图书馆detail、preview、create、cancel-preview、cancel共7项pending。M0规则证据和CLI真实创建/取消验收尚未完成；不因有命令或Skill指引就启用业务写入。
+本版有 17 项已验证查询、5 项图书馆实验能力和 2 项待开发能力。图书馆详情、创建预览、创建、取消预览和取消均为 `experimental`。预约适用于本人单人及已验证的四楼研修间规则。实测范围见[验收记录](acceptance/library-booking-alpha6-live.md)。
 
-升级CLI不会自动升级Skill；版本精确匹配后才由Agent调用。显式skill install之前旧Skill应显示outdated，dry-run不改变它；刷新客户端后再检查实际识别。npm升级/卸载、auth logout均不删除operations未决状态，不删除key/state或未知锁“恢复重试”。本机防重只覆盖同一CLI_HOME，不提供跨设备全局exactly-once。
+升级 CLI 后，显式安装同版本 Skill，再刷新客户端以确认识别。升级、卸载或退出登录后，未决预约操作仍需通过原操作 ID 核对。本机防重仅覆盖同一 CLI 数据目录。
 
-未来路线verified时，从stdin生成创建预览，展示参数/规则/后果并取得该次确认后提交一次；取消另做独立预览/确认。操作命令输出meta.kind=operation，不套用查询分页语义。unknown只读booking operation <id> --refresh，不补发。完整协议和错误处理见cli-contract.md及errors.md。
+创建和取消分别生成预览并取得确认。操作结果为 `unknown` 时，使用 `booking operation <操作ID> --refresh` 只读核对。命令示例见[随包 Skill 指引](../skills/hkustgz-cli/references/examples.md)。
